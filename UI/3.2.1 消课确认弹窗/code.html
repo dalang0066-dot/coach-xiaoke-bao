@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>消课确认 - 教练消课宝</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#ffffff",
+                        "surface": "#f4fafd",
+                        "surface-container-low": "#eef5f7",
+                        "on-secondary-container": "#626566",
+                        "tertiary": "#b4271d",
+                        "on-tertiary-fixed-variant": "#910807",
+                        "surface-container": "#e8eff1",
+                        "primary-fixed": "#6bfe9c",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed-variant": "#454748",
+                        "on-primary-container": "#005027",
+                        "on-primary-fixed-variant": "#005228",
+                        "secondary-fixed": "#e1e3e4",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#ffb4a9",
+                        "tertiary-fixed": "#ffdad5",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#006d37",
+                        "surface-variant": "#dde4e6",
+                        "on-tertiary-fixed": "#410000",
+                        "secondary-fixed-dim": "#c5c7c8",
+                        "inverse-on-surface": "#ebf2f4",
+                        "surface-container-highest": "#dde4e6",
+                        "inverse-primary": "#4ae183",
+                        "secondary": "#5c5f60",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#191c1d",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#3d4a3e",
+                        "on-tertiary-container": "#8e0505",
+                        "tertiary-container": "#ff9687",
+                        "primary-fixed-dim": "#4ae183",
+                        "on-surface": "#161d1f",
+                        "inverse-surface": "#2b3234",
+                        "surface-dim": "#d4dbdd",
+                        "outline-variant": "#bbcbbb",
+                        "surface-bright": "#f4fafd",
+                        "error-container": "#ffdad6",
+                        "on-background": "#161d1f",
+                        "on-secondary": "#ffffff",
+                        "primary": "#006d37",
+                        "on-primary-fixed": "#00210c",
+                        "outline": "#6c7b6d",
+                        "background": "#f4fafd",
+                        "surface-container-high": "#e2e9ec",
+                        "secondary-container": "#e1e3e4",
+                        "primary-container": "#2ecc71"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "touch-target-min": "48px",
+                        "card-inner-padding": "20px",
+                        "container-padding": "16px",
+                        "section-margin": "24px",
+                        "stack-gap": "12px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["PingFang SC"],
+                        "headline-md": ["PingFang SC"],
+                        "body-main": ["PingFang SC"],
+                        "title-sm": ["PingFang SC"],
+                        "display-lg": ["PingFang SC"],
+                        "label-caps": ["lexend"],
+                        "numeric-data": ["lexend"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-main": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "title-sm": ["18px", {"lineHeight": "24px", "fontWeight": "500"}],
+                        "display-lg": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "numeric-data": ["22px", {"lineHeight": "24px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .blur-overlay {
+            backdrop-filter: blur(8px);
+            background-color: rgba(22, 29, 31, 0.4);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style data-stitch-cursor="">*{cursor:crosshair!important}[contenteditable="true"]:focus,.cursor-text:focus{cursor:text!important}</style><style data-stitch-scroll-lock="">html,body{overflow:hidden!important}</style></head>
+<body class="bg-background text-on-surface font-body-main min-h-screen flex flex-col relative overflow-hidden">
+<!-- Top App Bar (Background Content) -->
+<header class="bg-surface dark:bg-inverse-surface flex items-center justify-between px-container-padding w-full h-touch-target-min fixed top-0 z-10">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary" data-icon="menu">menu</span>
+<h1 class="font-headline-md text-headline-md font-semibold text-on-surface dark:text-surface-bright">教练消课宝</h1>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="notifications">notifications</span>
+</div>
+</header>
+<!-- Main Content (Blurred Background) -->
+<main class="mt-14 px-container-padding pb-24 space-y-4 filter blur-[2px]">
+<!-- Active Student List for Context -->
+<div class="bg-surface-container-lowest p-card-inner-padding rounded-xl shadow-[0px_4px_12px_rgba(0,0,0,0.04)] flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary-container/20 flex items-center justify-center overflow-hidden">
+<img alt="Avatar" class="w-10 h-10" data-alt="A vibrant, flat-style geometric illustration of a focused and friendly tiger character, serving as a student avatar. The character is set against a clean, soft mint green background, evoking a sense of athletic energy and professional growth. The overall aesthetic is minimalist and modern, matching a premium health and fitness application UI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDCZ9GzS_W2Auz9f_E0UsMEURqy7bmYydfWWciSo1x6zxXIAVTurujw8Zu70dI_q-2zPqMe1x8UGUM5hIwQMJqJWRZyMXMY3lI2SNr6kWO5xvlm6trOgDeb0SfNwtDA7LSIPjPpYVcBOraDrVehW2nbNcXG2Pf24pmS4ufEqmKAydoWGnipeD8AnvXus3siJIjZuW-e5gh4lhEVY2BH02uEnJ2NhETuQmMtmdcu-N-zRKXheS3F9s-R30NuNQ43iYc9X33U7LIwZA"/>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md">林小虎</h3>
+<p class="font-body-sm text-body-sm text-secondary">上次消课：2023-10-24</p>
+</div>
+</div>
+<div class="text-right">
+<span class="font-numeric-data text-numeric-data text-primary">12</span>
+<span class="font-label-caps text-label-caps text-secondary block">剩余课时</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-card-inner-padding rounded-xl shadow-[0px_4px_12px_rgba(0,0,0,0.04)] flex items-center justify-between border-2 border-primary/20">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden">
+<img alt="Avatar" class="w-10 h-10" data-alt="A stylized, minimalist geometric illustration of a calm panda character in a flat design style. The avatar is professional yet friendly, rendered with a clean palette of whites, blacks, and soft grays. The background is a subtle, airy light blue, maintaining the high-velocity, energetic minimalist feel of a sports coaching dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4O2q9-KTAzdXlZWz0eJYTUiR2eKwCyCTm7uOWgQbv6KOh0p4zLj02amESXlHbm2daO-0DlGvahGXGlGlSKcO7yuHznSgf11yymVTQJEC59IGyd4YDZoYaq5TyXmqBG80_Z6GBXAxdpsAcbOS2ze5-xrIgov3NKc8hBZiKprWVTuDocsWtMHVSxy4-5oFMAHA956lauIMwQK-ZmhWO6H6Uonh4c1eKbBinX_Y-JLVEaLRh5Vi_-EEzl14PRXaYeKeOUzzY8RgjRDc"/>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md">张大萌</h3>
+<p class="font-body-sm text-body-sm text-secondary">上次消课：昨天</p>
+</div>
+</div>
+<div class="text-right">
+<span class="font-numeric-data text-numeric-data text-error">2</span>
+<span class="font-label-caps text-label-caps text-error block">余额不足</span>
+</div>
+</div>
+</main>
+<!-- Full Screen Overlay (Confirm Dialog) -->
+<div class="fixed inset-0 z-[100] flex items-center justify-center px-container-padding blur-overlay">
+<!-- Dialog Container -->
+<div class="bg-surface-container-lowest w-full max-w-sm rounded-[28px] overflow-hidden shadow-[0px_8px_24px_rgba(0,109,55,0.08)]">
+<div class="p-8 text-center flex flex-col items-center">
+<!-- Icon/Illustration Space -->
+<div class="w-16 h-16 bg-primary-container/10 rounded-full flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-primary text-[32px]" style='font-variation-settings: "FILL" 1;'>check_circle</span>
+</div>
+<h2 class="font-display-lg text-display-lg text-on-surface mb-2">消课 1 节？</h2>
+<p class="font-body-main text-body-main text-secondary">确认后将为学员 <span class="font-semibold text-on-surface">张大萌</span> 扣除 1 次课时</p>
+</div>
+<!-- Action Buttons -->
+<div class="flex gap-3 p-6 pt-0 flex-row"><button class="flex-1 bg-transparent text-secondary border border-outline-variant font-headline-md text-headline-md h-[54px] rounded-xl active:bg-surface-container-high transition-colors flex items-center justify-center">
+                    取消
+                </button>
+<button class="flex-1 bg-primary text-on-primary font-headline-md text-headline-md h-[54px] rounded-xl active:opacity-80 active:scale-[0.98] transition-all flex items-center justify-center shadow-[0px_8px_24px_rgba(0,109,55,0.08)]">
+                    确认消课
+                </button></div>
+</div>
+</div>
+<!-- Bottom Nav Bar (Background Context) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 bg-surface dark:bg-inverse-surface shadow-[0px_-4px_12px_rgba(0,0,0,0.04)] rounded-t-xl filter blur-[2px]">
+<div class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim bg-primary-container/20 rounded-xl p-2">
+<span class="material-symbols-outlined" data-icon="group" style='font-variation-settings: "FILL" 1;'>group</span>
+<span class="font-label-caps text-label-caps">学员</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim p-2">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-caps text-label-caps">数据</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim p-2">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-caps text-label-caps">我的</span>
+</div>
+</nav>
+</body></html>

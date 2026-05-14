@@ -182,10 +182,16 @@ Page({
     if (this.data.editing) {
       for (var i = 0; i < ss.length; i++) {
         if (ss[i].id == this.data.editId) {
+          var diff = fd.totalLessons - ss[i].remainingLessons
           ss[i].name = fd.name.trim(); ss[i].avatarEmoji = fd.avatarEmoji
           ss[i].remainingLessons = fd.totalLessons; ss[i].totalLessons = fd.totalLessons
           ss[i].expiryDate = fd.expiryDate; ss[i].note = fd.note.trim(); ss[i].lastModified = Date.now()
           if (!ss[i].history) ss[i].history = []
+          if (diff > 0) {
+            ss[i].history.unshift({ type: U.REC.RECHARGE, amount: diff, time: U.today() + ' ' + U.formatTime(), ts: Date.now() })
+          } else if (diff < 0) {
+            ss[i].history.unshift({ type: U.REC.DEDUCT, amount: Math.abs(diff), time: U.today() + ' ' + U.formatTime(), ts: Date.now() })
+          }
           if (!ss[i].lastClassDate) ss[i].lastClassDate = ''
           break
         }
@@ -199,26 +205,7 @@ Page({
       })
     }
     app.globalData.students = ss; app.save()
-    this.setData({ showForm: false, editing: false })
-    this.showOk()
-    if (this.data.editing) {
-      var list = this.data.list.slice()
-      for (var j = 0; j < list.length; j++) {
-        if (list[j].id == this.data.editId) {
-          list[j].name = fd.name.trim(); list[j].avatarEmoji = fd.avatarEmoji
-          list[j].remainingLessons = fd.totalLessons; list[j].expiryDate = fd.expiryDate
-          list[j].note = fd.note.trim(); list[j].lastModified = Date.now()
-          list[j].exp = U.isExp(list[j])
-          list[j].low = !list[j].exp && list[j].remainingLessons <= 3 && list[j].remainingLessons > 0
-          break
-        }
-      }
-      list.sort(function (x, y) {
-        if (x.exp !== y.exp) return x.exp ? 1 : -1
-        return (y.lastModified || 0) - (x.lastModified || 0)
-      })
-      this.setData({ list: list, _openIx: -1 })
-    }
+    this.setData({ showForm: false, editing: false }); this.showOk(); this.reload()
   },
 
   // ===== 删除 =====
@@ -289,7 +276,6 @@ Page({
           if (!rm && s.history[i].type === U.REC.DEDUCT) { rm = true; continue }
           nh.push(s.history[i])
         }
-        nh.unshift({ type: U.REC.UNDO, amount: 1, time: U.today() + " " + U.formatTime(), ts: Date.now() })
         s.remainingLessons = a.rb; s.lastClassDate = a.lcd || s.lastClassDate; s.history = nh; s.lastModified = Date.now()
       }
       return s

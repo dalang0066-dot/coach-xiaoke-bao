@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>添加学员 - 教练消课宝</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#ffffff",
+                        "surface": "#f4fafd",
+                        "surface-container-low": "#eef5f7",
+                        "on-secondary-container": "#626566",
+                        "tertiary": "#b4271d",
+                        "on-tertiary-fixed-variant": "#910807",
+                        "surface-container": "#e8eff1",
+                        "primary-fixed": "#6bfe9c",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed-variant": "#454748",
+                        "on-primary-container": "#005027",
+                        "on-primary-fixed-variant": "#005228",
+                        "secondary-fixed": "#e1e3e4",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#ffb4a9",
+                        "tertiary-fixed": "#ffdad5",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#006d37",
+                        "surface-variant": "#dde4e6",
+                        "on-tertiary-fixed": "#410000",
+                        "secondary-fixed-dim": "#c5c7c8",
+                        "inverse-on-surface": "#ebf2f4",
+                        "surface-container-highest": "#dde4e6",
+                        "inverse-primary": "#4ae183",
+                        "secondary": "#5c5f60",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#191c1d",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#3d4a3e",
+                        "on-tertiary-container": "#8e0505",
+                        "tertiary-container": "#ff9687",
+                        "primary-fixed-dim": "#4ae183",
+                        "on-surface": "#161d1f",
+                        "inverse-surface": "#2b3234",
+                        "surface-dim": "#d4dbdd",
+                        "outline-variant": "#bbcbbb",
+                        "surface-bright": "#f4fafd",
+                        "error-container": "#ffdad6",
+                        "on-background": "#161d1f",
+                        "on-secondary": "#ffffff",
+                        "primary": "#006d37",
+                        "on-primary-fixed": "#00210c",
+                        "outline": "#6c7b6d",
+                        "background": "#f4fafd",
+                        "surface-container-high": "#e2e9ec",
+                        "secondary-container": "#e1e3e4",
+                        "primary-container": "#2ecc71"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "touch-target-min": "48px",
+                        "card-inner-padding": "20px",
+                        "container-padding": "16px",
+                        "section-margin": "24px",
+                        "stack-gap": "12px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["PingFang SC"],
+                        "headline-md": ["PingFang SC"],
+                        "body-main": ["PingFang SC"],
+                        "title-sm": ["PingFang SC"],
+                        "display-lg": ["PingFang SC"],
+                        "label-caps": ["Lexend"],
+                        "numeric-data": ["Lexend"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-main": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "title-sm": ["18px", {"lineHeight": "24px", "fontWeight": "500"}],
+                        "display-lg": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "numeric-data": ["22px", {"lineHeight": "24px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body-main text-on-surface min-h-screen flex items-center justify-center">
+<!-- Dialog Overlay -->
+<div class="fixed inset-0 bg-on-surface/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+<!-- Add Student Dialog Canvas -->
+<div class="w-full max-w-md bg-surface-container-lowest rounded-[2rem] overflow-hidden shadow-[0px_24px_48px_rgba(0,0,0,0.12)] flex flex-col">
+<!-- Header -->
+<header class="flex items-center justify-center h-touch-target-min px-container-padding relative border-b border-surface-variant/30">
+<h1 class="font-headline-md text-headline-md text-on-surface">添加学员</h1>
+</header>
+<!-- Form Body -->
+<div class="p-6 overflow-y-auto max-h-[618px] hide-scrollbar space-y-4">
+<!-- Avatar Selection -->
+<div class="flex flex-col items-center justify-center space-y-2">
+<button class="relative w-24 h-24 rounded-full bg-primary-container/10 flex items-center justify-center group overflow-hidden ring-4 ring-primary/5 hover:ring-primary/20 transition-all active:scale-95">
+<img alt="Student Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCaan00IsP6O8VFiyYiVDD7UPTlYDSpJZjDTTGdwdY-qjNJl1EsGMFBI0WajCDz_ZwX2hYWiTdxFLF5Ole_xX9UGe4zEAEpSHK-YQHE9JjyOz89ooogKIzxkAoW8yF5IK92itehu_eB5aAHlprB6JlCTP4Jv5aIsgHqzBgagiOGhCcBDArFCIFBjgptUiA3UIicyS3Cfvg2AnEFEyDFgO0CZYqlFjeidpxdfkU8kX3EAmn1RVAnf5qKgCJ7wmzNuzbkrbxSV774ybY"/>
+<div class="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+<span class="material-symbols-outlined text-white text-display-lg" data-icon="refresh">refresh</span>
+</div>
+</button>
+</div>
+<!-- Basic Info -->
+<div class="space-y-4">
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-secondary px-1">姓名</label>
+<input class="w-full h-touch-target-min bg-surface-container border-0 border-b-2 border-outline-variant focus:border-primary focus:ring-0 rounded-t-lg px-3 text-body-main transition-colors" placeholder="输入学员姓名" type="text"/>
+</div>
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-secondary px-1">课时数</label>
+<input class="w-full h-touch-target-min bg-surface-container border-0 border-b-2 border-outline-variant focus:border-primary focus:ring-0 rounded-t-lg px-3 text-body-main font-numeric-data transition-colors" placeholder="0" type="number"/>
+</div>
+</div>
+<!-- Quick Selection Buttons -->
+<div class="flex gap-2">
+<button class="flex-1 py-2 rounded-xl border border-outline-variant text-on-surface-variant font-numeric-data text-body-main hover:bg-primary-container/20 hover:border-primary/30 transition-all active:scale-95">12节</button>
+<button class="flex-1 py-2 rounded-xl border border-outline-variant text-on-surface-variant font-numeric-data text-body-main hover:bg-primary-container/20 hover:border-primary/30 transition-all active:scale-95">24节</button>
+<button class="flex-1 py-2 rounded-xl border-2 border-primary bg-primary-container/10 text-primary font-numeric-data text-body-main active:scale-95">36节</button>
+</div>
+<!-- Validity Period - Removed Clear Icon -->
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-secondary px-1">有效期至（默认6个月）</label>
+<div class="relative">
+<input class="w-full h-touch-target-min bg-surface-container border-0 border-b-2 border-outline-variant focus:border-primary focus:ring-0 rounded-t-lg px-3 text-body-main transition-colors cursor-pointer" readonly="" type="text" value="2026-05-12"/>
+</div>
+</div>
+<!-- Remarks -->
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-secondary px-1">备注</label>
+<textarea class="w-full bg-surface-container border-0 border-b-2 border-outline-variant focus:border-primary focus:ring-0 rounded-t-lg p-3 text-body-main resize-none transition-colors" placeholder="例如：有腰椎损伤，重点进行核心训练" rows="2"></textarea>
+</div>
+</div>
+<!-- Footer Buttons -->
+<footer class="p-6 pt-2 flex gap-4">
+<button class="flex-1 h-touch-target-min rounded-full border border-outline-variant text-secondary font-title-sm text-title-sm hover:bg-surface-container-high transition-colors active:scale-95">
+                    取消
+                </button>
+<button class="flex-[1.5] h-touch-target-min rounded-full bg-primary text-on-primary font-title-sm text-title-sm shadow-[0px_8px_24px_rgba(0,109,55,0.16)] hover:opacity-90 transition-all active:scale-95">
+                    添加学员
+                </button>
+</footer>
+</div>
+</div>
+<!-- Background Decoration (Mimicking Home Screen) -->
+<div class="fixed inset-0 -z-10 opacity-40 overflow-hidden">
+<div class="p-4 space-y-4 max-w-sm mx-auto mt-10">
+<div class="h-20 bg-white rounded-xl shadow-sm"></div>
+<div class="h-20 bg-white rounded-xl shadow-sm"></div>
+<div class="h-20 bg-white rounded-xl shadow-sm"></div>
+<div class="h-20 bg-white rounded-xl shadow-sm"></div>
+</div>
+</div>
+</body></html>

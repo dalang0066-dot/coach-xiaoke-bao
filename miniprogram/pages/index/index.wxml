@@ -197,13 +197,13 @@
       <scroll-view class="mh-body" scroll-y="true" show-scrollbar="false">
         <text class="mhb-lbl">记录详情</text>
         <block wx:for="{{histData.records}}" wx:for-index="idx" wx:key="idx">
-          <view class="hrec {{item.type==='recharge'?'hrec-g':''}}">
+          <view class="hrec {{item.type==='recharge'?'hrec-g':''}}" wx:if="{{item.type !== 'undo'}}">
             <view class="hrec-l">
-              <view class="hrec-ico {{item.type==='deduct'?'hri-red':(item.type==='undo'?'hri-yel':'hri-gr')}}">
-                <text>{{item.type==='deduct'?'−':(item.type==='undo'?'↩':'✓')}}</text>
+              <view class="hrec-ico {{item.type==='deduct'?'hri-red':'hri-gr'}}">
+                <text>{{item.type==='deduct'?'−':'✓'}}</text>
               </view>
               <view class="hrec-info">
-                <text class="hrec-act">{{item.type==='deduct'?'消课':(item.type==='undo'?'撤销消课':'新增')}} <text class="hrec-num {{item.type==='deduct'?'c-red':(item.type==='undo'?'c-yel':'c-green')}}">{{item.amount}}</text> 节</text>
+                <text class="hrec-act">{{item.type==='deduct'?'消课':'新增'}} <text class="hrec-num {{item.type==='deduct'?'c-red':'c-green'}}">{{item.amount}}</text> 节</text>
                 <text class="hrec-time">{{item.time}}</text>
               </view>
             </view>

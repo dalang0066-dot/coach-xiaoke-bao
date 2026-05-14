@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>教练消课宝 - 初始状态</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#ffffff",
+                        "surface": "#f4fafd",
+                        "surface-container-low": "#eef5f7",
+                        "on-secondary-container": "#626566",
+                        "tertiary": "#b4271d",
+                        "on-tertiary-fixed-variant": "#910807",
+                        "surface-container": "#e8eff1",
+                        "primary-fixed": "#6bfe9c",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed-variant": "#454748",
+                        "on-primary-container": "#005027",
+                        "on-primary-fixed-variant": "#005228",
+                        "secondary-fixed": "#e1e3e4",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#ffb4a9",
+                        "tertiary-fixed": "#ffdad5",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#006d37",
+                        "surface-variant": "#dde4e6",
+                        "on-tertiary-fixed": "#410000",
+                        "secondary-fixed-dim": "#c5c7c8",
+                        "inverse-on-surface": "#ebf2f4",
+                        "surface-container-highest": "#dde4e6",
+                        "inverse-primary": "#4ae183",
+                        "secondary": "#5c5f60",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#191c1d",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#3d4a3e",
+                        "on-tertiary-container": "#8e0505",
+                        "tertiary-container": "#ff9687",
+                        "primary-fixed-dim": "#4ae183",
+                        "on-surface": "#161d1f",
+                        "inverse-surface": "#2b3234",
+                        "surface-dim": "#d4dbdd",
+                        "outline-variant": "#bbcbbb",
+                        "surface-bright": "#f4fafd",
+                        "error-container": "#ffdad6",
+                        "on-background": "#161d1f",
+                        "on-secondary": "#ffffff",
+                        "primary": "#006d37",
+                        "on-primary-fixed": "#00210c",
+                        "outline": "#6c7b6d",
+                        "background": "#f4fafd",
+                        "surface-container-high": "#e2e9ec",
+                        "secondary-container": "#e1e3e4",
+                        "primary-container": "#2ecc71"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "touch-target-min": "48px",
+                        "card-inner-padding": "20px",
+                        "container-padding": "16px",
+                        "section-margin": "24px",
+                        "stack-gap": "12px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["PingFang SC"],
+                        "headline-md": ["PingFang SC"],
+                        "body-main": ["PingFang SC"],
+                        "title-sm": ["PingFang SC"],
+                        "display-lg": ["PingFang SC"],
+                        "label-caps": ["lexend"],
+                        "numeric-data": ["lexend"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-main": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "title-sm": ["18px", {"lineHeight": "24px", "fontWeight": "500"}],
+                        "display-lg": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "numeric-data": ["22px", {"lineHeight": "24px", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            -webkit-tap-highlight-color: transparent;
+            background-color: #f4fafd;
+        }
+        .guide-carousel-gradient {
+            background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(244,250,253,1) 90%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen text-on-surface font-body-main selection:bg-primary-container/30">
+<!-- Top Navigation Bar -->
+<header class="bg-surface sticky top-0 z-50 w-full h-touch-target-min flex items-center px-container-padding justify-center">
+<h1 class="font-headline-md text-headline-md font-semibold text-on-surface">教练消课宝</h1>
+</header>
+<!-- Main Content: Empty State -->
+<main class="flex-grow flex flex-col items-center">
+<!-- Guided Illustration Area (60% Height) -->
+<section class="relative w-full h-[530px] overflow-hidden bg-surface-container-lowest">
+<div class="absolute inset-0 flex items-center justify-center p-8">
+<!-- Static Guide Image Placeholder (Representing Sliding Guide) -->
+<div class="relative w-full max-w-sm h-full rounded-xl overflow-hidden shadow-sm">
+<img alt="Professional fitness coaching environment" class="w-full h-full object-cover rounded-xl" data-alt="A professional and clean gym environment with modern fitness equipment under soft, bright daylight. A focused athletic coach is guiding a student during a workout. The scene is depicted in a high-key light mode aesthetic with fresh green and white accents, creating a sense of health, vitality, and professional sports management." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsp6rxzwXuCuHLMw65MkuTBIMYJd51N7MGS2Qub0Aqz63VR8xSZ05mQOlTdsTXonLVd0Oy5rbDseJMIEvIo-lxpsi_CMFUOZnzwQ_WEtHH-RgkAwz1ZcRhRYiwW8IjN33AQcG_PaYUOAmqXsljkhWeOAe2fF3sUCoC31ThUtbqta0FraOC3ZzpmZbx_3hiOsj6gR29I5E4rI1WXfiRZgHVEX60hv8dvGGguJ8vJ_vS95dNY7diP-iqh_B2WSVQwVs53027Kn9zCy0"/>
+<!-- Overlay Text for Guide -->
+<div class="absolute bottom-12 left-0 right-0 px-6 text-center">
+<h2 class="font-display-lg text-display-lg text-white drop-shadow-md mb-2">简单、高效、专业</h2>
+<p class="font-body-sm text-body-sm text-white/90 drop-shadow-sm">记录每一份成长，管理每一节课堂</p>
+</div>
+<!-- Carousel Dots Indicator -->
+<div class="absolute bottom-6 left-0 right-0 flex justify-center gap-2">
+<div class="w-2 h-2 rounded-full bg-white"></div>
+<div class="w-2 h-2 rounded-full bg-white/40"></div>
+<div class="w-2 h-2 rounded-full bg-white/40"></div>
+</div>
+</div>
+</div>
+<!-- Transition Gradient to White Background -->
+</section>
+<!-- Lower Middle Action Area -->
+<section class="flex-grow w-full flex flex-col items-center justify-start pt-12 px-container-padding">
+<div class="text-center mb-6">
+<p class="font-title-sm text-title-sm text-secondary font-medium tracking-wide">点击添加你的第一个学员</p>
+</div>
+<!-- Prominent Green Plus Button -->
+<button class="w-28 h-28 rounded-full bg-primary text-on-primary shadow-[0px_8px_24px_rgba(0,109,55,0.3)] active:scale-95 transition-transform flex items-center justify-center group w-36 h-36">
+<span class="material-symbols-outlined !text-7xl" style="font-variation-settings: 'wght' 600;">add</span>
+</button>
+</section>
+</main>
+<!-- Navigation Shell (Contextual Check: Hidden for transactional/onboarding flow) -->
+<!-- According to PRD 1.1 "初始空状态", no footer navigation is explicitly requested, keeping it clean as per "Energetic Minimalism" -->
+<!-- Secondary Bottom Indication (Minimal) -->
+<!-- Bottom Nav Bar Anchor (From JSON, hidden for this specific Empty State UI logic) -->
+</body></html>

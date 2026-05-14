@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>教练消课宝 - 学员管理</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#ffffff",
+                    "surface": "#f4fafd",
+                    "surface-container-low": "#eef5f7",
+                    "on-secondary-container": "#626566",
+                    "tertiary": "#b4271d",
+                    "on-tertiary-fixed-variant": "#910807",
+                    "surface-container": "#e8eff1",
+                    "primary-fixed": "#6bfe9c",
+                    "on-error": "#ffffff",
+                    "on-secondary-fixed-variant": "#454748",
+                    "on-primary-container": "#005027",
+                    "on-primary-fixed-variant": "#005228",
+                    "secondary-fixed": "#e1e3e4",
+                    "error": "#ba1a1a",
+                    "tertiary-fixed-dim": "#ffb4a9",
+                    "tertiary-fixed": "#ffdad5",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-tint": "#006d37",
+                    "surface-variant": "#dde4e6",
+                    "on-tertiary-fixed": "#410000",
+                    "secondary-fixed-dim": "#c5c7c8",
+                    "inverse-on-surface": "#ebf2f4",
+                    "surface-container-highest": "#dde4e6",
+                    "inverse-primary": "#4ae183",
+                    "secondary": "#5c5f60",
+                    "on-error-container": "#93000a",
+                    "on-secondary-fixed": "#191c1d",
+                    "on-primary": "#ffffff",
+                    "on-surface-variant": "#3d4a3e",
+                    "on-tertiary-container": "#8e0505",
+                    "tertiary-container": "#ff9687",
+                    "primary-fixed-dim": "#4ae183",
+                    "on-surface": "#161d1f",
+                    "inverse-surface": "#2b3234",
+                    "surface-dim": "#d4dbdd",
+                    "outline-variant": "#bbcbbb",
+                    "surface-bright": "#f4fafd",
+                    "error-container": "#ffdad6",
+                    "on-background": "#161d1f",
+                    "on-secondary": "#ffffff",
+                    "primary": "#006d37",
+                    "on-primary-fixed": "#00210c",
+                    "outline": "#6c7b6d",
+                    "background": "#f4fafd",
+                    "surface-container-high": "#e2e9ec",
+                    "secondary-container": "#e1e3e4",
+                    "primary-container": "#2ecc71"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "touch-target-min": "48px",
+                    "card-inner-padding": "20px",
+                    "container-padding": "16px",
+                    "section-margin": "24px",
+                    "stack-gap": "12px"
+            },
+            "fontFamily": {
+                    "body-sm": ["PingFang SC"],
+                    "headline-md": ["PingFang SC"],
+                    "body-main": ["PingFang SC"],
+                    "title-sm": ["PingFang SC"],
+                    "display-lg": ["PingFang SC"],
+                    "label-caps": ["Lexend"],
+                    "numeric-data": ["Lexend"]
+            },
+            "fontSize": {
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-main": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "title-sm": ["18px", {"lineHeight": "24px", "fontWeight": "500"}],
+                    "display-lg": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "numeric-data": ["22px", {"lineHeight": "24px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .swiped-left {
+            transform: translateX(-240px);
+        }
+        .card-shadow {
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.04);
+        }
+        body {
+            font-family: 'PingFang SC', sans-serif;
+            background-color: #f4fafd;
+        }
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+<!-- Top AppBar -->
+<header class="bg-surface dark:bg-inverse-surface flex items-center justify-between px-container-padding w-full h-touch-target-min fixed top-0 z-50">
+<div class="flex-1"></div>
+<div class="flex items-center gap-2">
+<h1 class="font-headline-md text-headline-md font-semibold text-on-surface dark:text-surface-bright">教练消课宝</h1>
+</div>
+<div class="flex-1 flex justify-end"></div>
+</header>
+<main class="flex-1 mt-12 mb-20">
+<!-- Sleepy Student Banner -->
+<div class="bg-[#FEF3C7] px-container-padding py-3 flex items-center justify-between animate-fade-in">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#92400E]" style="font-variation-settings: 'FILL' 1;">error_outline</span>
+<p class="text-body-sm text-[#92400E]">张小明学员超过30天没上课了！</p>
+</div>
+<span class="material-symbols-outlined text-[#92400E] text-body-sm cursor-pointer opacity-70">close</span>
+</div>
+<!-- Student List Container -->
+<div class="px-container-padding py-section-margin space-y-stack-gap">
+<!-- Student Card: Normal -->
+<div class="relative overflow-hidden rounded-xl bg-surface-container-lowest card-shadow group">
+<div class="flex items-center p-card-inner-padding relative z-10 bg-surface-container-lowest transition-transform duration-300">
+<div class="w-12 h-12 rounded-full bg-primary-container/20 flex items-center justify-center mr-4 shrink-0 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A stylized geometric illustration of a focused orange tiger against a vibrant green background, representing an energetic student persona." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmCeOMyE0ikCxwX7cr_afZucLEygquRFPtajtJkdkWgF1M4uwuYLMVYmsmbPNSCRbxrtqjk7JPy47nHweVTVHjVWkv5EJSGlEeoa2Iv-PGUIw6T5aKfp8WkJqc1O3qdBluN3mO-IrmBEb4FZq1CTR3sJshynnqO2I-doSKDehlfBRqOcZLutP_7WwzyQo6LI79gEUu11onjWNzlN4YUs4c7exFqxBbvw0PZTK0FNAdNN0igtIE7huny604QQtKEIMii_6kUTGRdxY"/>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-headline-md text-headline-md text-on-surface truncate">李华</h3>
+<p class="font-body-sm text-body-sm text-secondary truncate">备注信息</p>
+</div>
+<div class="text-right">
+<span class="font-numeric-data text-numeric-data text-primary">12</span>
+<p class="font-label-caps text-label-caps text-secondary uppercase">剩余课时</p>
+</div>
+</div>
+</div>
+<!-- Student Card: Swiped Demonstration -->
+<div class="relative overflow-hidden rounded-xl bg-surface-container-lowest card-shadow">
+<!-- Action Buttons -->
+<div class="absolute inset-0 flex justify-end">
+<button class="w-[80px] h-full bg-[#3498db] text-white flex flex-col items-center justify-center gap-1 active:opacity-80">
+<span class="material-symbols-outlined">edit</span>
+<span class="text-xs font-medium">编辑</span>
+</button>
+<button class="w-[80px] h-full bg-[#f39c12] text-white flex flex-col items-center justify-center gap-1 active:opacity-80">
+<span class="material-symbols-outlined">history</span>
+<span class="text-xs font-medium">历史</span>
+</button>
+<button class="w-[80px] h-full bg-error text-white flex flex-col items-center justify-center gap-1 active:opacity-80">
+<span class="material-symbols-outlined">delete</span>
+<span class="text-xs font-medium">删除</span>
+</button>
+</div>
+<!-- Swiped Content -->
+<div class="flex items-center p-card-inner-padding relative z-10 bg-surface-container-lowest swiped-left transition-transform duration-500 ease-out">
+<div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center mr-4 shrink-0 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A minimalist digital illustration of a calm, serene panda bear." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvnT8vBQICvqfw4cgcP-v6PoASywHDstQaBwmHiji5TIRpzgxtB2q7hlE5Qk5Bv46qR3frimtdQ9mbiUQjcGpQOfV_TDx2VPM8Yt9cIWRPKoxat7iGEF752q5Zw4oRVWcoLX3PKw3Ii7L5MZulE1TzPO-HmdnjEksj4v_RRDUp-kNTJ34nCxSOHwKM5BORSCunlqBrcEggHgpul9UBCdcj-5QVVS1unpEh2aMJXFEgHpubfE2yyJq-lDQwO7Rr-GhAscvFlp3I-Uk"/>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-headline-md text-headline-md text-on-surface truncate">王强</h3>
+<p class="font-body-sm text-body-sm text-secondary truncate">备注信息</p>
+</div>
+<div class="text-right">
+<span class="font-numeric-data text-numeric-data text-primary">8</span>
+<p class="font-label-caps text-label-caps text-secondary uppercase">剩余课时</p>
+</div>
+</div>
+</div>
+<!-- Student Card: Low Balance Warning -->
+<div class="relative overflow-hidden rounded-xl bg-tertiary-container/10 card-shadow">
+<div class="flex items-center p-card-inner-padding relative z-10 bg-tertiary-container/10 transition-transform duration-300 border-l-4 border-error">
+<div class="w-12 h-12 rounded-full bg-tertiary-container/30 flex items-center justify-center mr-4 shrink-0 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A geometric art style animal placeholder of an energetic rabbit." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDp5byHZkVME2rssU6JYUvoeNt9FspWwRaRZF2-_a5GZAZyWc2TbDPdN_y7LSoKk-fC-_Wvk7yHYqCqqfHjvR2z1wYr7aqIWcIKQDMCFIyviLD8dynYiJJIHlImAjdcnklaIFVsVbv8MAEV0cZom2PDjbodypbc0wEIYBtJNv2l3nqRl4AKJV-_XJfDdWCbY8w6YVAfZfGUVPGIgk75SnYb5ye414cQ1iLonEf8i3QHtgoJlrwuENt_iNFLLVz5TA5_JUGYddaMaL8"/>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-headline-md text-headline-md text-on-surface truncate">陈晨</h3>
+<p class="font-body-sm text-body-sm text-secondary truncate">备注信息</p>
+</div>
+<div class="text-right">
+<span class="font-numeric-data text-numeric-data text-error">2</span>
+<p class="font-label-caps text-label-caps uppercase text-secondary">剩余课时</p>
+</div>
+</div>
+</div>
+<!-- Student Card: Expired/Inactive -->
+<div class="relative overflow-hidden rounded-xl bg-surface-container card-shadow opacity-60">
+<div class="flex items-center p-card-inner-padding relative z-10 bg-surface-container">
+<div class="w-12 h-12 rounded-full bg-secondary-fixed flex items-center justify-center mr-4 shrink-0 grayscale">
+<span class="material-symbols-outlined text-secondary">person</span>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-headline-md text-headline-md text-secondary truncate">赵敏</h3>
+<p class="font-body-sm text-body-sm text-on-secondary-container truncate">备注信息</p>
+</div>
+<div class="text-right">
+<span class="font-numeric-data text-numeric-data text-secondary">0</span>
+<p class="font-label-caps text-label-caps text-secondary uppercase">剩余课时</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Action Area -->
+<div class="fixed bottom-0 left-0 w-full bg-surface-container-lowest px-4 flex gap-3 items-center z-[60] shadow-[0px_-8px_24px_rgba(0,0,0,0.04)] py-5">
+<div class="flex-1 relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary">search</span>
+<input class="w-full pl-10 pr-4 bg-surface-container border-none rounded-xl text-body-main focus:ring-2 focus:ring-primary/20 h-14" placeholder="搜索学员..." type="text"/>
+</div>
+<button class="bg-primary text-on-primary px-6 rounded-xl font-title-sm flex items-center justify-center gap-2 active:scale-95 transition-transform h-14">
+<span class="material-symbols-outlined">add</span>
+<span>添加学员</span>
+</button>
+</div>
+<!-- Success Toast (Hidden) -->
+<div class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-inverse-surface text-surface px-4 py-3 rounded-full flex items-center gap-3 shadow-lg opacity-0 transition-opacity">
+<span class="text-body-main">✅ 操作成功</span>
+</div>
+</body></html>
