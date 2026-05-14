@@ -95,7 +95,7 @@ Page({
 
   getById: function (id) {
     var ss = app.globalData.students || []
-    for (var i = 0; i < ss.length; i++) { if (ss[i].id === id) return ss[i] }
+    for (var i = 0; i < ss.length; i++) { if (ss[i].id == id) return ss[i] }
     return null
   },
 
@@ -175,7 +175,7 @@ Page({
     this.closeAll()
     this.setData({
       showForm: true, editing: true, editId: id,
-      fd: { avatarEmoji: s.avatarEmoji || '🐯', name: s.name, totalLessons: s.totalLessons || s.remainingLessons, expiryDate: s.expiryDate || '', note: s.note || '' }
+      fd: { avatarEmoji: s.avatarEmoji || '🐯', name: s.name, totalLessons: s.remainingLessons, expiryDate: s.expiryDate || '', note: s.note || '' }
     })
   },
 
@@ -186,7 +186,7 @@ Page({
     var ss = app.globalData.students.slice()
     if (this.data.editing) {
       for (var i = 0; i < ss.length; i++) {
-        if (ss[i].id === this.data.editId) {
+        if (ss[i].id == this.data.editId) {
           ss[i].name = fd.name.trim(); ss[i].avatarEmoji = fd.avatarEmoji
           ss[i].remainingLessons = fd.totalLessons; ss[i].totalLessons = fd.totalLessons
           ss[i].expiryDate = fd.expiryDate; ss[i].note = fd.note.trim(); ss[i].lastModified = Date.now()
@@ -212,7 +212,7 @@ Page({
   closeDel: function () { this.setData({ showDel: false }) },
   doDel: function () {
     var tid = this.data.delTarget.id
-    app.globalData.students = app.globalData.students.map(function (s) { if (s.id === tid) { s.deleted = true; s.deletedAt = U.today() } return s })
+    app.globalData.students = app.globalData.students.map(function (s) { if (s.id == tid) { s.deleted = true; s.deletedAt = U.today() } return s })
     app.save(); this.setData({ showDel: false })
     var hasActive = false, ss = app.globalData.students
     for (var i = 0; i < ss.length; i++) { if (!ss[i].deleted) { hasActive = true; break } }
@@ -268,14 +268,14 @@ Page({
   undoClass: function () {
     var a = this.data.lastUndo; if (!a) return
     app.globalData.students = app.globalData.students.map(function (s) {
-      if (s.id === a.id) {
+      if (s.id == a.id) {
         var nh = [], rm = false
         for (var i = 0; i < (s.history || []).length; i++) {
           if (!rm && s.history[i].type === U.REC.DEDUCT) { rm = true; continue }
           nh.push(s.history[i])
         }
         nh.unshift({ type: U.REC.UNDO, amount: 1, time: U.today() + ' ' + U.formatTime(), ts: Date.now() })
-        s.remainingLessons = a.rb; s.lastClassDate = a.lcd || s.lastClassDate; s.history = nh
+        s.remainingLessons = a.rb; s.lastClassDate = a.lcd || s.lastClassDate; s.history = nh; s.lastModified = Date.now()
       }
       return s
     })
