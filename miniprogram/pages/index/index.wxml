@@ -34,7 +34,7 @@
       <view class="banner-x" bindtap="dismissMember"><text>✕</text></view>
     </view>
 
-    <scroll-view class="list-scroll" scroll-y="true" bindscroll="onScroll">
+    <scroll-view class="list-scroll" scroll-y="true" scroll-top="{{scrollTop}}" bindscroll="onScroll">
       <view class="list-wrap" bindtap="onTapBlank">
         <block wx:for="{{list}}" wx:key="id">
           <view class="card-box {{item.open ? 'card-open' : ''}}">

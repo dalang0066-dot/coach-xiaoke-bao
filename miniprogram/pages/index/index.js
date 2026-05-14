@@ -17,7 +17,7 @@ Page({
     showUndo: false, lastUndo: null,
     showLowT: false, lowMsg: '',
     showOkT: false,
-    isPro: false, activeCnt: 0,
+    isPro: false, activeCnt: 0, scrollTop: 0,
     _tsX: 0, _tsY: 0, _openIx: -1
   },
 
@@ -205,7 +205,9 @@ Page({
       })
     }
     app.globalData.students = ss; app.save()
+    var wasEditing = this.data.editing
     this.setData({ showForm: false, editing: false }); this.showOk(); this.reload()
+    if (wasEditing) this.scrollToTop()
   },
 
   // ===== 删除 =====
@@ -254,6 +256,7 @@ Page({
     })
 
     that.setData({ showClass: false, list: newList, showUndo: true, _openIx: -1 })
+    that.scrollToTop()
 
     if (that._ut) clearTimeout(that._ut)
     that._ut = setTimeout(function () { that.setData({ showUndo: false, lastUndo: null }) }, 10000)
@@ -298,6 +301,7 @@ Page({
     })
 
     this.setData({ showUndo: false, lastUndo: null, list: list, _openIx: -1 })
+    this.scrollToTop()
   },
 
   // ===== 弹窗 =====
@@ -322,6 +326,12 @@ Page({
   closeHist: function () { this.setData({ showHist: false }) },
 
   onTapBlank: function () { this.closeAll() },
+
+  scrollToTop: function () {
+    var that = this
+    that.setData({ scrollTop: 1 })
+    setTimeout(function () { that.setData({ scrollTop: 0 }) }, 100)
+  },
 
   nop: function () { }
 })
