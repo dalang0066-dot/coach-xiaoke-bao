@@ -48,7 +48,8 @@
 
 .card-main{ display:flex; align-items:center; padding:36rpx; position:relative; z-index:2; background:#fff; transition:transform .25s ease }
 .card-swiped{ transform:translateX(-354rpx) }
-.card-hl{ box-shadow:0 0 0 4rpx rgba(0,109,55,.3), 0 8rpx 24rpx rgba(0,0,0,.04) }
+.card-hl-green{ box-shadow:0 0 0 4rpx rgba(0,109,55,.35), 0 8rpx 24rpx rgba(0,0,0,.04) }
+.card-hl-red{ box-shadow:0 0 0 4rpx rgba(186,26,26,.35), 0 8rpx 24rpx rgba(0,0,0,.04) }
 .card-gray.card-main{ background:#e5eaec }
 .card-red.card-main{ background:#fff5f5; border-left:8rpx solid #ba1a1a }
 

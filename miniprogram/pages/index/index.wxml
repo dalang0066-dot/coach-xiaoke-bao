@@ -37,7 +37,7 @@
     <scroll-view class="list-scroll" scroll-y="true" scroll-top="{{scrollTop}}" bindscroll="onScroll">
       <view class="list-wrap" bindtap="onTapBlank">
         <block wx:for="{{list}}" wx:key="id">
-          <view class="card-box {{item.open ? 'card-open' : ''}} {{item.highlight ? 'card-hl' : ''}}">
+          <view class="card-box {{item.open ? 'card-open' : ''}} {{item.highlight}}">
             <view class="card-actions">
               <view class="act-btn act-edit" bindtap="onEdit" data-id="{{item.id}}"><text>编辑</text></view>
               <view class="act-btn act-hist" bindtap="onHist" data-id="{{item.id}}"><text>历史</text></view>

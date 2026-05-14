@@ -255,9 +255,13 @@ Page({
       return (b.lastModified || 0) - (a.lastModified || 0)
     })
 
+    var targetItem = null
+    for (var k = 0; k < newList.length; k++) { if (newList[k].id == t.id) { targetItem = newList[k]; break } }
     that.setData({ showClass: false, list: newList, showUndo: true, _openIx: -1 })
-    that.scrollToTop()
-    that.highlightTop(newList)
+    if (targetItem) {
+      if (targetItem.exp) { that.scrollToBot() } else { that.scrollToTop() }
+      that.flashCard(newList, targetItem)
+    }
 
     if (that._ut) clearTimeout(that._ut)
     that._ut = setTimeout(function () { that.setData({ showUndo: false, lastUndo: null }) }, 10000)
@@ -301,9 +305,13 @@ Page({
       return (y.lastModified || 0) - (x.lastModified || 0)
     })
 
+    var undoItem = null
+    for (var j = 0; j < list.length; j++) { if (list[j].id == a.id) { undoItem = list[j]; break } }
     this.setData({ showUndo: false, lastUndo: null, list: list, _openIx: -1 })
-    this.scrollToTop()
-    this.highlightTop(list)
+    if (undoItem) {
+      if (undoItem.exp) { this.scrollToBot() } else { this.scrollToTop() }
+      this.flashCard(list, undoItem)
+    }
   },
 
   // ===== 弹窗 =====
@@ -335,16 +343,22 @@ Page({
     setTimeout(function () { that.setData({ scrollTop: 0 }) }, 100)
   },
 
-  highlightTop: function (list) {
-    if (list && list.length > 0) {
-      list[0].highlight = true
-      var that = this
+  scrollToBot: function () {
+    var that = this
+    that.setData({ scrollTop: 99999 })
+  },
+
+  flashCard: function (list, item) {
+    if (!list || !list.length || !item) return
+    var that = this
+    // 确定光环颜色：正常=绿，低课时=红，过期=绿
+    var hlClass = item.low ? 'card-hl-red' : 'card-hl-green'
+    item.highlight = hlClass
+    that.setData({ list: list.slice() })
+    setTimeout(function () {
+      item.highlight = ''
       that.setData({ list: list.slice() })
-      setTimeout(function () {
-        list[0].highlight = false
-        that.setData({ list: list.slice() })
-      }, 300)
-    }
+    }, 300)
   },
 
   nop: function () { }
