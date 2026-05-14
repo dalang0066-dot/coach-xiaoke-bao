@@ -123,14 +123,16 @@
 .mff-ok{ flex:1; background:#006d37; color:#fff; border-radius:88rpx; box-shadow:0 16rpx 48rpx rgba(0,109,55,.16) }
 
 /* 删除 */
-.modal-del{ max-width:560rpx; padding:56rpx 40rpx 40rpx; display:flex; flex-direction:column; align-items:center }
-.md-icon{ width:88rpx; height:88rpx; border-radius:50%; background:#ffdad6; display:flex; align-items:center; justify-content:center; margin-bottom:40rpx; font-size:44rpx }
-.md-title{ font-size:44rpx; font-weight:600; color:#161d1f; margin-bottom:28rpx; text-align:center }
-.md-desc{ font-size:32rpx; color:#3d4a3e; text-align:center; margin-bottom:56rpx; line-height:1.5 }
-.md-btns{ display:flex; gap:20rpx; width:100% }
+.modal-del{ max-width:600rpx }
+.md-body{ padding:64rpx 64rpx 0; text-align:center; display:flex; flex-direction:column; align-items:center }
+.md-circle{ width:128rpx; height:128rpx; border-radius:50%; background:#ffdad6; display:flex; align-items:center; justify-content:center; margin-bottom:48rpx }
+.md-ico{ font-size:64rpx }
+.md-title{ font-size:48rpx; font-weight:600; color:#161d1f; margin-bottom:16rpx }
+.md-desc{ font-size:32rpx; color:#3d4a3e; margin-bottom:0; line-height:1.5 }
+.md-btns{ display:flex; gap:24rpx; padding:48rpx }
 .md-btn{ flex:1; height:88rpx; border-radius:88rpx; display:flex; align-items:center; justify-content:center; font-size:34rpx; font-weight:500 }
 .md-btn:active{ opacity:.8 }
-.md-cancel{ border:2rpx solid #6c7b6d; color:#161d1f }
+.md-cancel{ border:2rpx solid #bbcbbb; color:#5c5f60 }
 .md-ok{ background:#b4271d; color:#fff }
 
 /* 课时过期 */

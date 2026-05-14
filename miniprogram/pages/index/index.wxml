@@ -137,9 +137,11 @@
   <!-- ===== 删除确认弹窗 ===== -->
   <view class="modal" wx:if="{{showDel}}" catchtap="closeDel">
     <view class="modal-box modal-del" catchtap="nop">
-      <view class="md-icon"><text>🗑</text></view>
-      <text class="md-title">确定要删除学员吗？</text>
-      <text class="md-desc"><text class="b">{{delTarget.name}}</text> 的所有历史记录将无法恢复。</text>
+      <view class="md-body">
+        <view class="md-circle"><text class="md-ico">🗑</text></view>
+        <text class="md-title">确定要删除学员吗？</text>
+        <text class="md-desc"><text class="b">{{delTarget.name}}</text> 的所有历史记录将无法恢复。</text>
+      </view>
       <view class="md-btns">
         <view class="md-btn md-cancel" bindtap="closeDel"><text>取消</text></view>
         <view class="md-btn md-ok" bindtap="doDel"><text>确定删除</text></view>
