@@ -46,7 +46,7 @@
 .act-hist{ background:#f39c12 }
 .act-del{ background:#ba1a1a }
 
-.card-main{ display:flex; align-items:center; padding:36rpx; position:relative; z-index:2; background:#fff; transition:transform .25s ease }
+.card-main{ display:flex; align-items:center; padding:36rpx; position:relative; z-index:2; background:#fff; transition:transform .35s cubic-bezier(0.25, 0.46, 0.45, 0.94) }
 .card-swiped{ transform:translateX(-360rpx) }
 .card-gray.card-main{ background:#e5eaec }
 .card-red.card-main{ background:#fff5f5; border-left:8rpx solid #ba1a1a }

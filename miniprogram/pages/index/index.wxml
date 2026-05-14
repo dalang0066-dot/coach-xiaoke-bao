@@ -43,8 +43,9 @@
               <view class="act-btn act-hist" bindtap="onHist" data-id="{{item.id}}"><text>历史</text></view>
               <view class="act-btn act-del" bindtap="onDel" data-id="{{item.id}}"><text>删除</text></view>
             </view>
-            <view 
-              class="card-main {{item.open ? 'card-swiped' : ''}} {{item.exp ? 'card-gray' : (item.low ? 'card-red' : '')}}"
+            <view
+              class="card-main {{item.exp ? 'card-gray' : (item.low ? 'card-red' : '')}}"
+              style="transform:translateX({{item._drag ? item._dx : (item.open ? -360 : 0)}}rpx);transition:{{item._drag ? 'none' : 'transform .35s cubic-bezier(0.25,0.46,0.45,0.94)'}}"
               data-id="{{item.id}}"
               data-ix="{{index}}"
               bindtouchstart="ts"
