@@ -61,7 +61,7 @@ Page({
         id: s.id, name: s.name, avatarEmoji: s.avatarEmoji,
         note: s.note || '', remainingLessons: s.remainingLessons,
         expiryDate: s.expiryDate, lastClassDate: s.lastClassDate,
-        exp: U.isExp(s), low: !U.isExp(s) && s.remainingLessons <= 3 && s.remainingLessons > 0,
+        lastModified: s.lastModified || 0, exp: U.isExp(s), low: !U.isExp(s) && s.remainingLessons <= 3 && s.remainingLessons > 0,
         open: false
       }
       r.push(item)
@@ -189,7 +189,7 @@ Page({
         if (ss[i].id === this.data.editId) {
           ss[i].name = fd.name.trim(); ss[i].avatarEmoji = fd.avatarEmoji
           ss[i].remainingLessons = fd.totalLessons; ss[i].totalLessons = fd.totalLessons
-          ss[i].expiryDate = fd.expiryDate; ss[i].note = fd.note.trim()
+          ss[i].expiryDate = fd.expiryDate; ss[i].note = fd.note.trim(); ss[i].lastModified = Date.now()
           if (!ss[i].history) ss[i].history = []
           if (!ss[i].lastClassDate) ss[i].lastClassDate = ''
           break
@@ -200,7 +200,7 @@ Page({
         id: app.globalData.nextId++, name: fd.name.trim(), avatarEmoji: fd.avatarEmoji,
         remainingLessons: fd.totalLessons, totalLessons: fd.totalLessons,
         expiryDate: fd.expiryDate, note: fd.note.trim(),
-        lastClassDate: '', history: [{ type: U.REC.RECHARGE, amount: fd.totalLessons, time: U.today() + ' ' + U.formatTime(), ts: Date.now() }], deleted: false, createdAt: U.today()
+        lastClassDate: '', history: [{ type: U.REC.RECHARGE, amount: fd.totalLessons, time: U.today() + ' ' + U.formatTime(), ts: Date.now() }], deleted: false, createdAt: U.today(), lastModified: Date.now()
       })
     }
     app.globalData.students = ss; app.save()
@@ -228,7 +228,7 @@ Page({
 
     app.globalData.students = app.globalData.students.map(function (s) {
       if (s.id == t.id) {
-        s.remainingLessons = Math.max(0, s.remainingLessons - 1); s.lastClassDate = td
+        s.remainingLessons = Math.max(0, s.remainingLessons - 1); s.lastClassDate = td; s.lastModified = Date.now()
         s.history = [{ type: U.REC.DEDUCT, amount: 1, time: td + " " + tm, ts: Date.now() }].concat(s.history || [])
       }
       return s
@@ -243,20 +243,13 @@ Page({
         id: s.id, name: s.name, avatarEmoji: s.avatarEmoji,
         note: s.note || "", remainingLessons: s.remainingLessons,
         expiryDate: s.expiryDate, lastClassDate: s.lastClassDate,
-        exp: U.isExp(s), low: !U.isExp(s) && s.remainingLessons <= 3 && s.remainingLessons > 0,
+        lastModified: s.lastModified || 0, exp: U.isExp(s), low: !U.isExp(s) && s.remainingLessons <= 3 && s.remainingLessons > 0,
         open: false
       })
     }
     newList.sort(function (a, b) {
       if (a.exp !== b.exp) return a.exp ? 1 : -1
-      if (a.lastClassDate && b.lastClassDate) {
-        if (a.lastClassDate > b.lastClassDate) return -1
-        if (a.lastClassDate < b.lastClassDate) return 1
-        return 0
-      }
-      if (a.lastClassDate) return -1
-      if (b.lastClassDate) return 1
-      return 0
+      return (b.lastModified || 0) - (a.lastModified || 0)
     })
 
     that.setData({ showClass: false, list: newList, showUndo: true, _openIx: -1 })
