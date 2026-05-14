@@ -74,13 +74,8 @@ Page({
     var kw = (this.data.keyword || '').trim().toLowerCase()
     if (kw) { r = r.filter(function (x) { return x.name.toLowerCase().indexOf(kw) !== -1 }) }
     r.sort(function (a, b) {
-      if (a.exp && !b.exp) return 1
-      if (!a.exp && b.exp) return -1
-      var da = a.lastClassDate || '', db = b.lastClassDate || ''
-      if (da && db) return db.localeCompare(da)
-      if (da && !db) return -1
-      if (!da && db) return 1
-      return 0
+      if (a.exp !== b.exp) return a.exp ? 1 : -1
+      return (b.lastModified || 0) - (a.lastModified || 0)
     })
 
     this.setData({
@@ -267,6 +262,7 @@ Page({
 
   undoClass: function () {
     var a = this.data.lastUndo; if (!a) return
+
     app.globalData.students = app.globalData.students.map(function (s) {
       if (s.id == a.id) {
         var nh = [], rm = false
@@ -274,12 +270,29 @@ Page({
           if (!rm && s.history[i].type === U.REC.DEDUCT) { rm = true; continue }
           nh.push(s.history[i])
         }
-        nh.unshift({ type: U.REC.UNDO, amount: 1, time: U.today() + ' ' + U.formatTime(), ts: Date.now() })
+        nh.unshift({ type: U.REC.UNDO, amount: 1, time: U.today() + " " + U.formatTime(), ts: Date.now() })
         s.remainingLessons = a.rb; s.lastClassDate = a.lcd || s.lastClassDate; s.history = nh; s.lastModified = Date.now()
       }
       return s
     })
-    app.save(); this.setData({ showUndo: false, lastUndo: null }); this.reload()
+    app.save()
+
+    var list = this.data.list.slice()
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id == a.id) {
+        list[i].remainingLessons = a.rb
+        list[i].lastModified = Date.now()
+        list[i].exp = U.isExp(list[i])
+        list[i].low = !list[i].exp && list[i].remainingLessons <= 3 && list[i].remainingLessons > 0
+        break
+      }
+    }
+    list.sort(function (x, y) {
+      if (x.exp !== y.exp) return x.exp ? 1 : -1
+      return (y.lastModified || 0) - (x.lastModified || 0)
+    })
+
+    this.setData({ showUndo: false, lastUndo: null, list: list, _openIx: -1 })
   },
 
   // ===== 弹窗 =====
