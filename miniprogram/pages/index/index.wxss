@@ -7,7 +7,7 @@
 .topbar-tt{ font-size:40rpx; font-weight:600; color:#161d1f; line-height:88rpx }
 
 /* 空状态 */
-.empty-scroll{ flex:1; height:0 }
+.empty-scroll{ flex:1; min-height:400rpx }
 .guide-box{ width:100%; height:530px; position:relative; overflow:hidden; background:#fff }
 .guide-sw{ width:100%; height:100% }
 .guide-s1,.guide-s2,.guide-s3{ width:100%; height:100%; display:flex; align-items:center; justify-content:center; position:relative }
@@ -33,7 +33,7 @@
 .banner-x text{ font-size:28rpx; color:#92400E }
 
 /* 列表 */
-.list-scroll{ flex:1; height:0 }
+.list-scroll{ flex:1; min-height:400rpx }
 .list-wrap{ padding:40rpx 32rpx }
 .pad-bot{ height:40rpx }
 
@@ -93,10 +93,10 @@
 .mc-ok{ background:#006d37; color:#fff; box-shadow:0 16rpx 48rpx rgba(0,109,55,.08) }
 
 /* 表单 */
-.modal-form{ max-width:640rpx; width:100%; max-height:80vh; display:flex; flex-direction:column; box-sizing:border-box; overflow:hidden }
-.mf-head{ display:flex; align-items:center; justify-content:center; height:96rpx; border-bottom:2rpx solid rgba(221,228,230,.3); flex-shrink:0 }
-.mf-title{ font-size:40rpx; font-weight:600; color:#161d1f }
-.mf-body{ flex:1; padding:24rpx 32rpx; overflow-x:hidden; height:0; box-sizing:border-box }
+.modal-form{ max-width:640rpx; width:100%; max-height:85vh; display:flex; flex-direction:column; box-sizing:border-box; overflow:hidden }
+.mf-head{ display:flex; align-items:center; justify-content:center; min-height:88rpx; border-bottom:2rpx solid rgba(221,228,230,.3); flex-shrink:0 }
+.mf-title{ font-size:40rpx; font-weight:600; color:#161d1f; line-height:88rpx }
+.mf-body{ flex:1; padding:24rpx 32rpx; overflow-x:hidden; min-height:500rpx; box-sizing:border-box }
 .mf-av{ width:140rpx; height:140rpx; border-radius:50%; margin:0 auto 24rpx; background:rgba(46,204,113,.1); display:flex; align-items:center; justify-content:center; position:relative; border:6rpx solid rgba(0,109,55,.05); flex-shrink:0 }
 .mf-av:active{ transform:scale(.95) }
 .mf-av-emoji{ font-size:84rpx; line-height:1 }
@@ -174,7 +174,7 @@
 .mhs-name{ display:block; font-size:36rpx; font-weight:600; color:#161d1f; margin-bottom:6rpx }
 .mhs-badge{ display:inline-flex; background:rgba(46,204,113,.15); padding:5rpx 18rpx; border-radius:96rpx }
 .mhs-badge text{ font-size:24rpx; font-weight:600; color:#006d37 }
-.mh-body{ flex:1; padding:0 28rpx; height:0 }
+.mh-body{ flex:1; padding:0 28rpx; min-height:300rpx }
 .mhb-lbl{ display:block; font-size:32rpx; font-weight:600; color:#5c5f60; padding-bottom:16rpx }
 .hrec{ background:#fff; border-radius:20rpx; border:2rpx solid rgba(221,228,230,.3); padding:18rpx; margin-bottom:16rpx; box-sizing:border-box; overflow:hidden }
 .hrec-g{ border-left:6rpx solid #2ecc71 }

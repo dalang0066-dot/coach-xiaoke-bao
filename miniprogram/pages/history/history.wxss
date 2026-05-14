@@ -13,7 +13,7 @@
 .hs-badge{ display:inline-flex; background:rgba(46,204,113,.15); padding:5rpx 18rpx; border-radius:96rpx }
 .hs-badge text{ font-size:24rpx; font-weight:600; color:#006d37 }
 
-.h-list{ flex:1; height:0; padding:0 32rpx }
+.h-list{ flex:1; min-height:300rpx; padding:0 32rpx }
 .hl-head{ padding:0 8rpx 16rpx }
 .hl-lbl{ font-size:32rpx; font-weight:600; color:#5c5f60 }
 
