@@ -152,10 +152,14 @@
   <!-- ===== 课时过期弹窗 ===== -->
   <view class="modal" wx:if="{{showExpModal}}" catchtap="closeExpModal">
     <view class="modal-box modal-exp" catchtap="nop">
-      <view class="me-outer"><view class="me-inner"><text class="me-mark">!</text></view></view>
-      <text class="me-title">该学员课时已过期</text>
-      <text class="me-desc">请先前往编辑页面添加课时</text>
-      <view class="me-btn-wrap"><view class="me-btn" bindtap="closeExpModal"><text>确定</text></view></view>
+      <view class="me-body">
+        <view class="me-circle"><text class="me-mark">!</text></view>
+        <text class="me-title">该学员课时已过期</text>
+        <text class="me-desc">请先前往编辑页面添加课时</text>
+      </view>
+      <view class="me-btns">
+        <view class="me-btn" bindtap="closeExpModal"><text>确定</text></view>
+      </view>
     </view>
   </view>
 

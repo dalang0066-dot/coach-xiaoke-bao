@@ -136,15 +136,15 @@
 .md-ok{ background:#b4271d; color:#fff }
 
 /* 课时过期 */
-.modal-exp{ max-width:560rpx; padding:56rpx 0 0; display:flex; flex-direction:column; align-items:center }
-.me-outer{ width:120rpx; height:120rpx; border-radius:50%; background:#fef9c3; display:flex; align-items:center; justify-content:center; margin-bottom:40rpx }
-.me-inner{ width:88rpx; height:88rpx; border-radius:50%; background:#fef08a; display:flex; align-items:center; justify-content:center; border:4rpx solid #fff }
-.me-mark{ font-size:52rpx; color:#ca8a04; font-weight:700 }
-.me-title{ font-size:40rpx; font-weight:600; color:#161d1f; margin-bottom:12rpx }
-.me-desc{ font-size:28rpx; color:#5c5f60; margin-bottom:56rpx }
-.me-btn-wrap{ width:100%; padding:0 36rpx 36rpx; display:flex; justify-content:center }
-.me-btn{ width:auto; height:88rpx; border-radius:88rpx; padding:0 120rpx; background:#006d37; display:flex; align-items:center; justify-content:center; color:#fff; font-size:34rpx; font-weight:500; box-shadow:0 16rpx 48rpx rgba(0,109,55,.16) }
-.me-btn:active{ transform:scale(.95) }
+.modal-exp{ max-width:600rpx }
+.me-body{ padding:64rpx 64rpx 0; text-align:center; display:flex; flex-direction:column; align-items:center }
+.me-circle{ width:128rpx; height:128rpx; border-radius:50%; background:#fef9c3; display:flex; align-items:center; justify-content:center; margin-bottom:48rpx }
+.me-mark{ font-size:64rpx; color:#ca8a04; font-weight:700 }
+.me-title{ font-size:48rpx; font-weight:600; color:#161d1f; margin-bottom:16rpx }
+.me-desc{ font-size:32rpx; color:#5c5f60; margin-bottom:0 }
+.me-btns{ display:flex; gap:24rpx; padding:48rpx; justify-content:center }
+.me-btn{ flex:1; height:88rpx; border-radius:88rpx; display:flex; align-items:center; justify-content:center; font-size:34rpx; font-weight:500; background:#006d37; color:#fff; box-shadow:0 16rpx 48rpx rgba(0,109,55,.16) }
+.me-btn:active{ transform:scale(.98); opacity:.8 }
 
 /* 升级 */
 .modal-upg{ max-width:600rpx }
