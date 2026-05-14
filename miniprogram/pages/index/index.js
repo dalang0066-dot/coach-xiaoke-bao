@@ -18,7 +18,7 @@ Page({
     showLowT: false, lowMsg: '',
     showOkT: false,
     isPro: false, activeCnt: 0, kbHeight: 0,
-    _tsX: 0, _tsY: 0, _openIx: -1
+    _openIx: -1
   },
 
   _searchTimer: null,
@@ -66,7 +66,7 @@ Page({
         note: s.note || '', remainingLessons: s.remainingLessons,
         expiryDate: s.expiryDate, lastClassDate: s.lastClassDate,
         exp: U.isExp(s), low: !U.isExp(s) && s.remainingLessons <= 3 && s.remainingLessons > 0,
-        open: false
+        _x: 0, open: false
       }
       r.push(item)
     }
@@ -112,24 +112,29 @@ Page({
 
   onSearchBlur: function () { this.setData({ keyword: '' }); this.reload() },
 
-  // ===== 左滑（比率判断，兼顾滚动与左滑）=====
-  ts: function (e) { this.data._tsX = e.touches[0].clientX; this.data._tsY = e.touches[0].clientY },
-  tm: function (e) {},
-  te: function (e) {
-    var dx = e.changedTouches[0].clientX - this.data._tsX
-    var dy = e.changedTouches[0].clientY - this.data._tsY
-    var adx = Math.abs(dx), ady = Math.abs(dy)
+  // ===== 左滑（movable-view，无手势冲突）=====
+  onSwipeChg: function (e) {
     var ix = e.currentTarget.dataset.ix
-    // 左滑条件：水平位移>30 且 水平/垂直>2倍，或者 水平>60（明确意图）
-    var isSwipe = (adx > 30 && (ady === 0 || adx / Math.max(ady, 1) > 2)) || adx > 60
-    if (isSwipe) {
-      if (this.data._openIx !== -1 && this.data._openIx !== ix) { this.closeIt(this.data._openIx) }
-      if (dx < -20) { this.openIt(ix) } else if (dx > 20) { this.closeIt(ix) }
+    var list = this.data.list
+    if (!list[ix]) return
+    list[ix]._x = e.detail.x
+  },
+  onSwipeEnd: function (e) {
+    var ix = e.currentTarget.dataset.ix
+    var list = this.data.list
+    if (!list[ix]) return
+    var x = list[ix]._x
+    // 超过一半按钮宽度时弹开，否则收回
+    if (x < -180) {
+      if (this.data._openIx !== -1 && this.data._openIx !== ix) { list[this.data._openIx]._x = 0; list[this.data._openIx].open = false }
+      list[ix]._x = -360; list[ix].open = true; this.setData({ list: list, _openIx: ix })
+    } else {
+      list[ix]._x = 0; list[ix].open = false; this.setData({ list: list, _openIx: -1 })
     }
   },
-  openIt: function (ix) { var list = this.data.list; if (!list[ix]) return; list[ix].open = true; this.setData({ list: list, _openIx: ix }) },
-  closeIt: function (ix) { var list = this.data.list; if (ix < 0 || !list[ix]) return; list[ix].open = false; this.setData({ list: list, _openIx: -1 }) },
-  closeAll: function () { var l = this.data.list, i = this.data._openIx; if (i >= 0 && l[i]) { l[i].open = false; this.setData({ list: l, _openIx: -1 }) } },
+  openIt: function (ix) { var list = this.data.list; if (!list[ix]) return; list[ix]._x = -360; list[ix].open = true; this.setData({ list: list, _openIx: ix }) },
+  closeIt: function (ix) { var list = this.data.list; if (ix < 0 || !list[ix]) return; list[ix]._x = 0; list[ix].open = false; this.setData({ list: list, _openIx: -1 }) },
+  closeAll: function () { var l = this.data.list, i = this.data._openIx; if (i >= 0 && l[i]) { l[i]._x = 0; l[i].open = false; this.setData({ list: l, _openIx: -1 }) } },
   onScroll: function () { if (this.data._openIx >= 0) this.closeAll() },
 
   onCardTap: function (e) {
