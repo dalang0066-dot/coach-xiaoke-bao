@@ -38,18 +38,18 @@
 .pad-bot{ height:140rpx }
 
 /* 卡片 */
-.card-area{ position:relative; width:100%; height:136rpx; margin-bottom:24rpx; border-radius:24rpx; box-shadow:0 8rpx 24rpx rgba(0,0,0,.04); background:#fff; overflow:hidden }
+.card-box{ position:relative; border-radius:24rpx; margin-bottom:24rpx; overflow:hidden; box-shadow:0 8rpx 24rpx rgba(0,0,0,.04); background:#fff }
 .card-actions{ position:absolute; top:0; right:0; bottom:0; display:flex; z-index:1 }
-
+.card-box.card-open .card-actions{ z-index:3 }
 .act-btn{ width:120rpx; height:100%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:24rpx; font-weight:500 }
 .act-edit{ background:#3498db }
 .act-hist{ background:#f39c12 }
 .act-del{ background:#ba1a1a }
 
-.card-main{ display:flex; align-items:center; padding:36rpx; height:136rpx; width:100%; background:#fff; box-sizing:border-box }
-
-.card-gray .card-main,.card-gray.card-main{ background:#e5eaec }
-.card-red .card-main,.card-red.card-main{ background:#fff5f5; border-left:8rpx solid #ba1a1a }
+.card-main{ display:flex; align-items:center; padding:36rpx; position:relative; z-index:2; background:#fff; transition:transform .25s ease }
+.card-swiped{ transform:translateX(-360rpx) }
+.card-gray.card-main{ background:#e5eaec }
+.card-red.card-main{ background:#fff5f5; border-left:8rpx solid #ba1a1a }
 
 .card-av{ width:96rpx; height:96rpx; border-radius:50%; margin-right:28rpx; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:rgba(46,204,113,.2) }
 .av-gray{ background:#e1e3e4 }

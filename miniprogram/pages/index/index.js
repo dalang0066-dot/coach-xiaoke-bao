@@ -18,7 +18,7 @@ Page({
     showLowT: false, lowMsg: '',
     showOkT: false,
     isPro: false, activeCnt: 0, kbHeight: 0,
-    _openIx: -1
+    _tsX: 0, _tsY: 0, _openIx: -1
   },
 
   _searchTimer: null,
@@ -66,7 +66,7 @@ Page({
         note: s.note || '', remainingLessons: s.remainingLessons,
         expiryDate: s.expiryDate, lastClassDate: s.lastClassDate,
         exp: U.isExp(s), low: !U.isExp(s) && s.remainingLessons <= 3 && s.remainingLessons > 0,
-        _x: 0, open: false
+        open: false
       }
       r.push(item)
     }
@@ -112,29 +112,28 @@ Page({
 
   onSearchBlur: function () { this.setData({ keyword: '' }); this.reload() },
 
-  // ===== 左滑（movable-view，无手势冲突）=====
-  onSwipeChg: function (e) {
-    var ix = e.currentTarget.dataset.ix
-    var list = this.data.list
-    if (!list[ix]) return
-    list[ix]._x = e.detail.x
+  // ===== 左滑 =====
+  ts: function (e) { this.data._tsX = e.touches[0].clientX; this.data._tsY = e.touches[0].clientY; this.data._lockSwipe = false; this.data._lockScroll = false },
+  tm: function (e) {
+    if (this.data._lockSwipe || this.data._lockScroll) return
+    var dx = e.touches[0].clientX - this.data._tsX
+    var dy = e.touches[0].clientY - this.data._tsY
+    if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.3) { this.data._lockSwipe = true }
+    if (Math.abs(dy) > 8 && Math.abs(dy) > Math.abs(dx) * 1.3) { this.data._lockScroll = true }
   },
-  onSwipeEnd: function (e) {
+  te: function (e) {
+    var dx = e.changedTouches[0].clientX - this.data._tsX
+    var dy = e.changedTouches[0].clientY - this.data._tsY
     var ix = e.currentTarget.dataset.ix
-    var list = this.data.list
-    if (!list[ix]) return
-    var x = list[ix]._x
-    // 超过一半按钮宽度时弹开，否则收回
-    if (x < -180) {
-      if (this.data._openIx !== -1 && this.data._openIx !== ix) { list[this.data._openIx]._x = 0; list[this.data._openIx].open = false }
-      list[ix]._x = -360; list[ix].open = true; this.setData({ list: list, _openIx: ix })
-    } else {
-      list[ix]._x = 0; list[ix].open = false; this.setData({ list: list, _openIx: -1 })
+    var isSwipe = this.data._lockSwipe || (!this.data._lockScroll && Math.abs(dx) > 15 && Math.abs(dx) * 1.3 > Math.abs(dy))
+    if (isSwipe) {
+      if (this.data._openIx !== -1 && this.data._openIx !== ix) { this.closeIt(this.data._openIx) }
+      if (dx < -15) { this.openIt(ix) } else if (dx > 15) { this.closeIt(ix) }
     }
   },
-  openIt: function (ix) { var list = this.data.list; if (!list[ix]) return; list[ix]._x = -360; list[ix].open = true; this.setData({ list: list, _openIx: ix }) },
-  closeIt: function (ix) { var list = this.data.list; if (ix < 0 || !list[ix]) return; list[ix]._x = 0; list[ix].open = false; this.setData({ list: list, _openIx: -1 }) },
-  closeAll: function () { var l = this.data.list, i = this.data._openIx; if (i >= 0 && l[i]) { l[i]._x = 0; l[i].open = false; this.setData({ list: l, _openIx: -1 }) } },
+  openIt: function (ix) { var list = this.data.list; if (!list[ix]) return; list[ix].open = true; this.setData({ list: list, _openIx: ix }) },
+  closeIt: function (ix) { var list = this.data.list; if (ix < 0 || !list[ix]) return; list[ix].open = false; this.setData({ list: list, _openIx: -1 }) },
+  closeAll: function () { var l = this.data.list, i = this.data._openIx; if (i >= 0 && l[i]) { l[i].open = false; this.setData({ list: l, _openIx: -1 }) } },
   onScroll: function () { if (this.data._openIx >= 0) this.closeAll() },
 
   onCardTap: function (e) {

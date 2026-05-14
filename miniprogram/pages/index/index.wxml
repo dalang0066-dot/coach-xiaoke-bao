@@ -37,23 +37,20 @@
     <scroll-view class="list-scroll" scroll-y="true" enhanced="true" show-scrollbar="false" bindscroll="onScroll">
       <view class="list-wrap" bindtap="onTapBlank">
         <block wx:for="{{list}}" wx:key="id">
-          <movable-area class="card-area">
+          <view class="card-box {{item.open ? 'card-open' : ''}}">
             <view class="card-actions">
               <view class="act-btn act-edit" bindtap="onEdit" data-id="{{item.id}}"><text>编辑</text></view>
               <view class="act-btn act-hist" bindtap="onHist" data-id="{{item.id}}"><text>历史</text></view>
               <view class="act-btn act-del" bindtap="onDel" data-id="{{item.id}}"><text>删除</text></view>
             </view>
-            <movable-view
+            <view 
               class="card-main {{item.open ? 'card-swiped' : ''}} {{item.exp ? 'card-gray' : (item.low ? 'card-red' : '')}}"
-              direction="horizontal"
-              x="{{item._x}}"
-              out-of-bounds="{{false}}"
-              damping="{{40}}"
-              bindchange="onSwipeChg"
-              bindtouchend="onSwipeEnd"
-              catchtap="onCardTap"
               data-id="{{item.id}}"
               data-ix="{{index}}"
+              bindtouchstart="ts"
+              bindtouchmove="tm"
+              bindtouchend="te"
+              catchtap="onCardTap"
             >
               <view class="card-av {{item.exp ? 'av-gray' : ''}}"><text class="av-emoji">{{item.avatarEmoji}}</text></view>
               <view class="card-info">
@@ -64,8 +61,8 @@
                 <text class="num-val {{item.exp ? 'c-gray' : (item.low ? 'c-red' : 'c-green')}}">{{item.exp ? '已过期' : item.remainingLessons}}</text>
                 <text class="num-lbl {{item.exp ? 'c-gray' : ''}}">剩余课时</text>
               </view>
-            </movable-view>
-          </movable-area>
+            </view>
+          </view>
         </block>
         <view class="no-result" wx:if="{{list.length===0 && keyword}}"><text class="c-gray2">未找到匹配的学员</text></view>
         <view class="pad-bot"></view>
