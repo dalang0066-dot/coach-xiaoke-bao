@@ -339,10 +339,11 @@ Page({
     if (list && list.length > 0) {
       list[0].highlight = true
       var that = this
+      that.setData({ list: list.slice() })
       setTimeout(function () {
         list[0].highlight = false
-        that.setData({ list: list })
-      }, 500)
+        that.setData({ list: list.slice() })
+      }, 1000)
     }
   },
 
