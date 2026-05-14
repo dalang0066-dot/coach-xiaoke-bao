@@ -17,7 +17,7 @@ Page({
     showUndo: false, lastUndo: null,
     showLowT: false, lowMsg: '',
     showOkT: false,
-    isPro: false, activeCnt: 0, kbHeight: 0,
+    isPro: false, activeCnt: 0,
     _tsX: 0, _tsY: 0, _openIx: -1
   },
 
@@ -25,10 +25,6 @@ Page({
 
   onLoad: function () {
     this.setData({ sbh: app.globalData.statusBarHeight || 20 })
-    var that = this
-    wx.onKeyboardHeightChange(function (res) {
-      that.setData({ kbHeight: res.height })
-    })
     this.reload()
   },
 
@@ -80,17 +76,20 @@ Page({
     r.sort(function (a, b) {
       if (a.exp && !b.exp) return 1
       if (!a.exp && b.exp) return -1
-      if (!a.exp) { var da = a.lastClassDate || '0000', db = b.lastClassDate || '0000'; return db.localeCompare(da) }
+      var da = a.lastClassDate || '', db = b.lastClassDate || ''
+      if (da && db) return db.localeCompare(da)
+      if (da && !db) return -1
+      if (!da && db) return 1
       return 0
     })
 
     this.setData({
-      students: ss, isPro: pro,
+      students: ss.slice(), isPro: pro,
       showSleepy: sl, sleepyName: sn,
       showExpiry: ex, expiryName: en, expiryDay: ed,
       showMember: mb,
       activeCnt: ac, empty: ac === 0,
-      list: r, _openIx: -1
+      list: r.slice(), _openIx: -1
     })
   },
 
@@ -233,8 +232,10 @@ Page({
       }
       return s
     })
-    app.save(); that.setData({ showClass: false }); that.reload()
-    that.setData({ showUndo: true })
+    app.save(); that.setData({ showClass: false }, function () {
+      that.reload()
+      that.setData({ showUndo: true })
+    })
     if (that._ut) clearTimeout(that._ut)
     that._ut = setTimeout(function () { that.setData({ showUndo: false, lastUndo: null }) }, 10000)
     var nr = t.remainingLessons - 1
