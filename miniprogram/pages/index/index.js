@@ -257,6 +257,7 @@ Page({
 
     that.setData({ showClass: false, list: newList, showUndo: true, _openIx: -1 })
     that.scrollToTop()
+    that.highlightTop(newList)
 
     if (that._ut) clearTimeout(that._ut)
     that._ut = setTimeout(function () { that.setData({ showUndo: false, lastUndo: null }) }, 10000)
@@ -302,6 +303,7 @@ Page({
 
     this.setData({ showUndo: false, lastUndo: null, list: list, _openIx: -1 })
     this.scrollToTop()
+    this.highlightTop(list)
   },
 
   // ===== 弹窗 =====
@@ -331,6 +333,17 @@ Page({
     var that = this
     that.setData({ scrollTop: 1 })
     setTimeout(function () { that.setData({ scrollTop: 0 }) }, 100)
+  },
+
+  highlightTop: function (list) {
+    if (list && list.length > 0) {
+      list[0].highlight = true
+      var that = this
+      setTimeout(function () {
+        list[0].highlight = false
+        that.setData({ list: list })
+      }, 500)
+    }
   },
 
   nop: function () { }

@@ -44,7 +44,7 @@
               <view class="act-btn act-del" bindtap="onDel" data-id="{{item.id}}"><text>删除</text></view>
             </view>
             <view 
-              class="card-main {{item.open ? 'card-swiped' : ''}} {{item.exp ? 'card-gray' : (item.low ? 'card-red' : '')}}"
+              class="card-main {{item.open ? 'card-swiped' : ''}} {{item.exp ? 'card-gray' : (item.low ? 'card-red' : '')}} {{item.highlight ? 'card-hl' : ''}}"
               data-id="{{item.id}}"
               data-ix="{{index}}"
               bindtouchstart="ts"
