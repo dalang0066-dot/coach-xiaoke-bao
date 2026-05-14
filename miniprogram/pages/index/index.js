@@ -265,10 +265,10 @@ Page({
 
     if (that._ut) clearTimeout(that._ut)
     that._ut = setTimeout(function () { that.setData({ showUndo: false, lastUndo: null }) }, 10000)
-    var nr = t.remainingLessons - 1
-    if (nr > 0 && (nr === 4 || nr === 1)) {
+    var nr = that.data.lastUndo.rb - 1
+    if (nr === 3) {
       that._lt = setTimeout(function () {
-        that.setData({ showLowT: true, lowMsg: "该学员剩余 " + nr + " 节课，记得提醒续费哦～" })
+        that.setData({ showLowT: true, lowMsg: "该学员剩余3节课，记得提醒续费哦～" })
         that._lt = setTimeout(function () { that.setData({ showLowT: false }) }, 2000)
       }, 500)
     }
