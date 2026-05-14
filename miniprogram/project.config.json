@@ -1,0 +1,22 @@
+{
+  "setting": {
+    "es6": true,
+    "postcss": true,
+    "minified": false,
+    "enhance": true,
+    "useMultiFrameRuntime": true,
+    "useApiHook": true,
+    "compileHotReLoad": false,
+    "urlCheck": true,
+    "coverView": true,
+    "showShadowRootInWxmlPanel": true,
+    "checkInvalidKey": true,
+    "ignoreDevUnusedFiles": true
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.3.4",
+  "appid": "wxa828e8f8da671c8c",
+  "projectname": "miniprogram1",
+  "condition": {},
+  "packOptions": { "ignore": [], "include": [] }
+}

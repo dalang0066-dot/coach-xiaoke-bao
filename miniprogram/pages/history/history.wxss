@@ -1,0 +1,39 @@
+
+.tb{ display:flex; align-items:center; height:88rpx; background:#f4fafd; flex-shrink:0; padding-left:16rpx; padding-right:32rpx }
+.tb-back{ width:80rpx; height:88rpx; display:flex; align-items:center; padding-left:8rpx }
+.tb-arr{ font-size:48rpx; color:#006d37 }
+.tb-tt{ flex:1; text-align:center; font-size:40rpx; font-weight:600; color:#161d1f }
+.tb-sp{ width:80rpx }
+
+.h-sum{ display:flex; align-items:center; gap:28rpx; margin:0 32rpx 20rpx; padding:32rpx; background:#eef5f7; border-radius:32rpx; flex-shrink:0 }
+.hs-av{ width:100rpx; height:100rpx; border-radius:50%; background:rgba(46,204,113,.2); display:flex; align-items:center; justify-content:center; border:4rpx solid #e8eff1; flex-shrink:0 }
+.hs-emoji{ font-size:60rpx }
+.hs-info{ flex:1 }
+.hs-name{ display:block; font-size:36rpx; font-weight:600; color:#161d1f; margin-bottom:6rpx }
+.hs-badge{ display:inline-flex; background:rgba(46,204,113,.15); padding:5rpx 18rpx; border-radius:96rpx }
+.hs-badge text{ font-size:24rpx; font-weight:600; color:#006d37 }
+
+.h-list{ flex:1; height:0; padding:0 32rpx }
+.hl-head{ padding:0 8rpx 16rpx }
+.hl-lbl{ font-size:32rpx; font-weight:600; color:#5c5f60 }
+
+.rec{ background:#fff; border-radius:20rpx; border:2rpx solid rgba(221,228,230,.3); padding:20rpx; margin-bottom:16rpx }
+.rec-g{ border-left:6rpx solid #2ecc71 }
+.rec-l{ display:flex; align-items:center; gap:16rpx }
+.rec-ico{ width:56rpx; height:56rpx; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:32rpx }
+.ri-red{ background:rgba(186,26,26,.1); color:#ba1a1a }
+.ri-yel{ background:#fef9c3; color:#ca8a04 }
+.ri-gr{ background:rgba(46,204,113,.2); color:#006d37 }
+.rec-info{ flex:1 }
+.rec-act{ display:block; font-size:32rpx; color:#161d1f }
+.rec-num{ font-weight:600 }
+.rec-time{ display:block; font-size:26rpx; color:#5c5f60; margin-top:4rpx }
+
+
+
+
+.rec-empty{ text-align:center; padding:120rpx 0 }
+.rec-spacer{ height:32rpx }
+
+.h-foot{ padding:20rpx 32rpx; padding-bottom:calc(20rpx + env(safe-area-inset-bottom)); border-top:2rpx solid rgba(221,228,230,.2); flex-shrink:0 }
+.hf-btn{ width:100%; height:84rpx; border-radius:84rpx; background:#006d37; display:flex; align-items:center; justify-content:center; color:#fff; font-size:32rpx; font-weight:500; box-shadow:0 12rpx 40rpx rgba(0,109,55,.16) }

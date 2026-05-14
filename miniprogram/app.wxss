@@ -1,0 +1,12 @@
+button { padding: 0; margin: 0; line-height: inherit; background: none }
+button::after { border: none }
+page { background-color: #f4fafd; font-family: 'PingFang SC', -apple-system, sans-serif; font-size: 32rpx; color: #161d1f; line-height: 1.5 }
+
+.c-green { color: #006d37 }
+.c-red { color: #ba1a1a }
+.c-gray2 { color: #5c5f60 }
+.b { font-weight: 600; color: #161d1f }
+
+.pg { display: flex; flex-direction: column; height: 100vh; background: #f4fafd; overflow: hidden }
+.tb { display: flex; align-items: center; height: 88rpx; background: #f4fafd; flex-shrink: 0 }
+.tb-tt { flex: 1; text-align: center; font-size: 40rpx; font-weight: 600; color: #161d1f }

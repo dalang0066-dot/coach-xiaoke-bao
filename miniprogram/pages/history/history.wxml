@@ -1,0 +1,40 @@
+<view class="pg">
+  <view class="tb" style="padding-top:{{sbh}}px">
+    <view class="tb-back" bindtap="goBack"><text class="tb-arr">←</text></view>
+    <text class="tb-tt">历史记录</text>
+    <view class="tb-sp"></view>
+  </view>
+
+  <view class="h-sum">
+    <view class="hs-av"><text class="hs-emoji">{{emoji}}</text></view>
+    <view class="hs-info">
+      <text class="hs-name">{{studentName}}</text>
+      <view class="hs-badge"><text>剩余 {{remaining}} 节</text></view>
+    </view>
+  </view>
+
+  <scroll-view class="h-list" scroll-y="true" show-scrollbar="false">
+    <view class="hl-head"><text class="hl-lbl">记录详情</text></view>
+
+    <block wx:for="{{records}}" wx:for-index="idx" wx:key="idx">
+      <view class="rec {{item.type==='recharge'?'rec-g':''}}">
+        <view class="rec-l">
+          <view class="rec-ico {{item.type==='deduct'?'ri-red':(item.type==='undo'?'ri-yel':'ri-gr')}}">
+            <text>{{item.type==='deduct'?'−':(item.type==='undo'?'↩':'✓')}}</text>
+          </view>
+          <view class="rec-info">
+            <text class="rec-act">{{item.type==='deduct'?'消课':(item.type==='undo'?'撤消消课':'充值')}} <text class="rec-num {{item.type==='deduct'?'c-red':(item.type==='undo'?'c-yel':'c-green')}}">{{item.amount}}</text> 节</text>
+            <text class="rec-time">{{item.time}}</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <view wx:if="{{records.length===0}}" class="rec-empty"><text class="c-gray2">暂无上课记录</text></view>
+    <view class="rec-spacer"></view>
+  </scroll-view>
+
+  <view class="h-foot">
+    <view class="hf-btn" bindtap="goBack"><text>确认</text></view>
+  </view>
+</view>
