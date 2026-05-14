@@ -113,22 +113,22 @@ Page({
   onSearchBlur: function () { this.setData({ keyword: '' }); this.reload() },
 
   // ===== 左滑 =====
-  ts: function (e) { this.data._tsX = e.touches[0].clientX; this.data._tsY = e.touches[0].clientY; this.data._lockSwipe = false; this.data._lockScroll = false },
+  ts: function (e) { this.data._tsX = e.touches[0].clientX; this.data._tsY = e.touches[0].clientY; this.data._lock = false; this.data._vert = false },
   tm: function (e) {
-    if (this.data._lockSwipe || this.data._lockScroll) return
+    if (this.data._lock || this.data._vert) return
     var dx = e.touches[0].clientX - this.data._tsX
     var dy = e.touches[0].clientY - this.data._tsY
-    if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.3) { this.data._lockSwipe = true }
-    if (Math.abs(dy) > 8 && Math.abs(dy) > Math.abs(dx) * 1.3) { this.data._lockScroll = true }
+    if (Math.abs(dx) > 7 && Math.abs(dx) > Math.abs(dy) * 1.1) { this.data._lock = true; return }
+    if (Math.abs(dy) > 7) { this.data._vert = true }
   },
   te: function (e) {
     var dx = e.changedTouches[0].clientX - this.data._tsX
     var dy = e.changedTouches[0].clientY - this.data._tsY
     var ix = e.currentTarget.dataset.ix
-    var isSwipe = this.data._lockSwipe || (!this.data._lockScroll && Math.abs(dx) > 15 && Math.abs(dx) * 1.3 > Math.abs(dy))
+    var isSwipe = this.data._lock || (!this.data._vert && Math.abs(dx) > 10 && Math.abs(dx) * 1.1 > Math.abs(dy))
     if (isSwipe) {
       if (this.data._openIx !== -1 && this.data._openIx !== ix) { this.closeIt(this.data._openIx) }
-      if (dx < -15) { this.openIt(ix) } else if (dx > 15) { this.closeIt(ix) }
+      if (dx < -10) { this.openIt(ix) } else if (dx > 10) { this.closeIt(ix) }
     }
   },
   openIt: function (ix) { var list = this.data.list; if (!list[ix]) return; list[ix].open = true; this.setData({ list: list, _openIx: ix }) },
