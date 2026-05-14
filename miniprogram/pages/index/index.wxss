@@ -3,7 +3,7 @@
 
 .c-gray{ color:#5c5f60 }
 
-.topbar{ display:flex; align-items:center; justify-content:center; height:88rpx; background:#f4fafd; flex-shrink:0; z-index:50; padding-left:32rpx; padding-right:32rpx }
+.topbar{ display:flex; align-items:center; justify-content:center; height:88rpx; background:#fff; flex-shrink:0; z-index:50; padding-left:32rpx; padding-right:32rpx; border-bottom:2rpx solid #e8eff1 }
 .topbar-tt{ font-size:40rpx; font-weight:600; color:#161d1f; line-height:88rpx }
 
 /* 空状态 */
@@ -174,7 +174,7 @@
 .mhs-name{ display:block; font-size:36rpx; font-weight:600; color:#161d1f; margin-bottom:6rpx }
 .mhs-badge{ display:inline-flex; background:rgba(46,204,113,.15); padding:5rpx 18rpx; border-radius:96rpx }
 .mhs-badge text{ font-size:24rpx; font-weight:600; color:#006d37 }
-.mh-body{ flex:1; padding:0 28rpx; min-height:300rpx }
+.mh-body{ flex:1; padding:0 28rpx; min-height:200rpx; max-height:600rpx }
 .mhb-lbl{ display:block; font-size:32rpx; font-weight:600; color:#5c5f60; padding-bottom:16rpx }
 .hrec{ background:#fff; border-radius:20rpx; border:2rpx solid rgba(221,228,230,.3); padding:18rpx; margin-bottom:16rpx; box-sizing:border-box; overflow:hidden }
 .hrec-g{ border-left:6rpx solid #2ecc71 }

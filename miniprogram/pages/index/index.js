@@ -17,7 +17,7 @@ Page({
     showUndo: false, lastUndo: null,
     showLowT: false, lowMsg: '',
     showOkT: false,
-    isPro: false, activeCnt: 0,
+    isPro: false, activeCnt: 0, kbHeight: 0,
     _tsX: 0, _tsY: 0, _openIx: -1
   },
 
@@ -25,6 +25,10 @@ Page({
 
   onLoad: function () {
     this.setData({ sbh: app.globalData.statusBarHeight || 20 })
+    var that = this
+    wx.onKeyboardHeightChange(function (res) {
+      that.setData({ kbHeight: res.height })
+    })
     this.reload()
   },
 
@@ -103,6 +107,10 @@ Page({
     if (this._searchTimer) clearTimeout(this._searchTimer)
     this._searchTimer = setTimeout(function () { that.reload() }, 250)
   },
+
+  onSearchFocus: function () { this.closeAll() },
+
+  onSearchBlur: function () {},
 
   // ===== 左滑 =====
   ts: function (e) { this.data._tsX = e.touches[0].clientX; this.data._tsY = e.touches[0].clientY },

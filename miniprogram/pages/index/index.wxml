@@ -70,10 +70,10 @@
   </block>
 
   <!-- 底部栏 -->
-  <view class="bot-bar" wx:if="{{!empty}}">
+  <view class="bot-bar" wx:if="{{!empty}}" style="bottom:{{kbHeight}}px">
     <view class="search-wrap">
       <view class="search-icon-wrap"><text>🔍</text></view>
-      <input class="search-inp" placeholder="搜索学员..." value="{{keyword}}" bindinput="onSearch" confirm-type="search"/>
+      <input class="search-inp" placeholder="搜索学员..." value="{{keyword}}" bindinput="onSearch" bindfocus="onSearchFocus" bindblur="onSearchBlur" adjust-position="{{false}}" confirm-type="search"/>
     </view>
     <view class="add-btn2" bindtap="onAddTap"><text class="add-ico">+</text><text>添加学员</text></view>
   </view>
@@ -123,7 +123,7 @@
         </view>
         <view class="mf-f">
           <text class="mf-lbl">备注</text>
-          <textarea class="mf-ta" placeholder="例如：有腰椎损伤，重点进行核心训练" value="{{fd.note}}" bindinput="onFdNote" maxlength="100" auto-height="true"/>
+          <textarea class="mf-ta" placeholder="例如：腰椎损伤，加强核心" value="{{fd.note}}" bindinput="onFdNote" maxlength="100" auto-height="true"/>
         </view>
         <view class="mf-spacer"></view>
       </scroll-view>
