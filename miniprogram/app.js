@@ -16,21 +16,14 @@ App({
     var sys = wx.getSystemInfoSync()
     this.globalData.statusBarHeight = sys.statusBarHeight
 
-    // 静默登录：无弹窗，无授权，用户无感知
+    // 本地持久化身份（每次启动保持一致，数据不丢失）
+    this.globalData.openid = this.getLocalId()
+    this.loadData()
+
+    // 静默登录：获取微信code备用（后续对接后端换取真实openid后启用云端同步）
     wx.login({
       success: function (res) {
-        if (res.code) {
-          // 有code则用code作为临时身份标识
-          that.globalData.openid = 'wx_' + res.code
-        } else {
-          // fallback：本地设备标识
-          that.globalData.openid = that.getLocalId()
-        }
-        that.loadData()
-      },
-      fail: function () {
-        that.globalData.openid = that.getLocalId()
-        that.loadData()
+        if (res.code) { that.globalData._wxCode = res.code }
       }
     })
   },

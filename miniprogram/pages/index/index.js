@@ -30,6 +30,12 @@ Page({
 
   onShow: function () { this.reload() },
 
+  onHide: function () {
+    if (this._ut) { clearTimeout(this._ut); this._ut = null }
+    if (this._lt) { clearTimeout(this._lt); this._lt = null }
+    if (this._ot) { clearTimeout(this._ot); this._ot = null }
+  },
+
   onUnload: function () {
     if (this._ut) clearTimeout(this._ut)
     if (this._lt) clearTimeout(this._lt)
@@ -104,7 +110,7 @@ Page({
 
   onSearchFocus: function () { this.closeAll() },
 
-  onSearchBlur: function () { this.setData({ keyword: '' }); this.reload() },
+  onSearchBlur: function () { if (this.data.keyword) { this.setData({ keyword: '' }); this.reload() } },
 
   // ===== 左滑 =====
   ts: function (e) { this.data._tsX = e.touches[0].clientX; this.data._tsY = e.touches[0].clientY },
@@ -320,7 +326,7 @@ Page({
   closeUpg: function () { this.setData({ showUpg: false }) },
   onPlan: function (e) { this.setData({ plan: e.currentTarget.dataset.plan }) },
   doUpg: function () { wx.showToast({ title: '微信支付功能开发中', icon: 'none', duration: 2000 }); this.setData({ showUpg: false }) },
-  showOk: function () { var that = this; if (that.data.showUndo) { that.setData({ showUndo: false, lastUndo: null }); if (that._ut) { clearTimeout(that._ut); that._ut = null } } that.setData({ showOkT: true }); that._ot = setTimeout(function () { that.setData({ showOkT: false }) }, 2000) },
+  showOk: function () { var that = this; if (that.data.showUndo) { that.setData({ showUndo: false, lastUndo: null }); if (that._ut) { clearTimeout(that._ut); that._ut = null } } if (that._ot) clearTimeout(that._ot); that.setData({ showOkT: true }); that._ot = setTimeout(function () { that.setData({ showOkT: false }) }, 2000) },
 
   // ===== 历史 =====
   onHist: function (e) {
