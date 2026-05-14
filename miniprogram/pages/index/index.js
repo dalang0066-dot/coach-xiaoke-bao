@@ -225,23 +225,44 @@ Page({
   doClass: function () {
     var that = this, t = this.data.classTarget, td = U.today(), tm = U.formatTime()
     that.data.lastUndo = { id: t.id, rb: t.remainingLessons, lcd: t.lastClassDate }
+
+    var list = that.data.list.slice()
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === t.id) {
+        list[i].remainingLessons = Math.max(0, list[i].remainingLessons - 1)
+        list[i].lastClassDate = td
+        list[i].exp = U.isExp(list[i])
+        list[i].low = !list[i].exp && list[i].remainingLessons <= 3 && list[i].remainingLessons > 0
+        break
+      }
+    }
+    list.sort(function (a, b) {
+      if (a.exp && !b.exp) return 1
+      if (!a.exp && b.exp) return -1
+      var da = a.lastClassDate || "", db = b.lastClassDate || ""
+      if (da && db) return db.localeCompare(da)
+      if (da && !db) return -1
+      if (!da && db) return 1
+      return 0
+    })
+
     app.globalData.students = app.globalData.students.map(function (s) {
       if (s.id === t.id) {
         s.remainingLessons = Math.max(0, s.remainingLessons - 1); s.lastClassDate = td
-        s.history = [{ type: U.REC.DEDUCT, amount: 1, time: td + ' ' + tm, ts: Date.now() }].concat(s.history || [])
+        s.history = [{ type: U.REC.DEDUCT, amount: 1, time: td + " " + tm, ts: Date.now() }].concat(s.history || [])
       }
       return s
     })
-    app.save(); that.setData({ showClass: false }, function () {
-      that.reload()
-      that.setData({ showUndo: true })
-    })
+    app.save()
+
+    that.setData({ showClass: false, list: list, showUndo: true, _openIx: -1 })
+
     if (that._ut) clearTimeout(that._ut)
     that._ut = setTimeout(function () { that.setData({ showUndo: false, lastUndo: null }) }, 10000)
     var nr = t.remainingLessons - 1
     if (nr > 0 && (nr === 4 || nr === 1)) {
       that._lt = setTimeout(function () {
-        that.setData({ showLowT: true, lowMsg: '该学员剩余 ' + nr + ' 节课，记得提醒续费哦～' })
+        that.setData({ showLowT: true, lowMsg: "该学员剩余 " + nr + " 节课，记得提醒续费哦～" })
         that._lt = setTimeout(function () { that.setData({ showLowT: false }) }, 2000)
       }, 500)
     }
