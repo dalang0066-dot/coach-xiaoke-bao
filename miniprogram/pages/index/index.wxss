@@ -7,7 +7,7 @@
 .topbar-tt{ font-size:40rpx; font-weight:600; color:#161d1f; line-height:88rpx }
 
 /* 空状态 */
-.empty-scroll{ flex:1; min-height:400rpx }
+.empty-scroll{ flex:1; min-height:0 }
 .guide-box{ width:100%; height:530px; position:relative; overflow:hidden; background:#fff }
 .guide-sw{ width:100%; height:100% }
 .guide-s1,.guide-s2,.guide-s3{ width:100%; height:100%; display:flex; align-items:center; justify-content:center; position:relative }
@@ -33,7 +33,7 @@
 .banner-x text{ font-size:28rpx; color:#92400E }
 
 /* 列表 */
-.list-scroll{ flex:1; min-height:400rpx }
+.list-scroll{ flex:1; min-height:0 }
 .list-wrap{ padding:40rpx 32rpx }
 .pad-bot{ height:140rpx }
 
@@ -46,7 +46,7 @@
 .act-hist{ background:#f39c12 }
 .act-del{ background:#ba1a1a }
 
-.card-main{ display:flex; align-items:center; padding:36rpx; position:relative; z-index:2; background:#fff; transition:transform .35s cubic-bezier(0.25, 0.46, 0.45, 0.94) }
+.card-main{ display:flex; align-items:center; padding:36rpx; position:relative; z-index:2; background:#fff; transition:transform .25s ease }
 .card-swiped{ transform:translateX(-360rpx) }
 .card-gray.card-main{ background:#e5eaec }
 .card-red.card-main{ background:#fff5f5; border-left:8rpx solid #ba1a1a }

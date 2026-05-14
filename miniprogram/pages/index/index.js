@@ -66,7 +66,7 @@ Page({
         note: s.note || '', remainingLessons: s.remainingLessons,
         expiryDate: s.expiryDate, lastClassDate: s.lastClassDate,
         exp: U.isExp(s), low: !U.isExp(s) && s.remainingLessons <= 3 && s.remainingLessons > 0,
-        open: false, _dx: 0, _drag: false
+        open: false
       }
       r.push(item)
     }
@@ -113,52 +113,15 @@ Page({
   onSearchBlur: function () { this.setData({ keyword: '' }); this.reload() },
 
   // ===== 左滑 =====
-  ts: function (e) {
-    this.data._tsX = e.touches[0].clientX; this.data._tsY = e.touches[0].clientY
-    this.data._lock = false; this.data._vert = false; this.data._dragging = false
-    var ix = e.currentTarget.dataset.ix, list = this.data.list
-    if (ix >= 0 && list[ix]) { list[ix]._drag = true; list[ix]._dx = list[ix].open ? -360 : 0 }
-    this.setData({ list: list })
-  },
-  tm: function (e) {
-    if (this.data._vert) return
-    var dx = e.touches[0].clientX - this.data._tsX
-    var dy = e.touches[0].clientY - this.data._tsY
-    if (!this.data._dragging) {
-      if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.2) { this.data._dragging = true; this.data._lock = true }
-      else if (Math.abs(dy) > 8) { this.data._vert = true; return }
-      else return
-    }
-    var list = this.data.list, ix = this.data._swipedIx
-    if (ix < 0 || !list[ix]) return
-    var open = list[ix].open || false, base = open ? -360 : 0, nx = base + dx
-    if (nx > 0) nx = 0; if (nx < -360) nx = -360
-    list[ix]._dx = nx; list[ix]._drag = true
-    var now = Date.now()
-    if (!this.data._lastTm || now - this.data._lastTm > 30) {
-      this.data._lastTm = now
-      this.setData({ list: list })
-    }
-  },
+  ts: function (e) { this.data._tsX = e.touches[0].clientX; this.data._tsY = e.touches[0].clientY },
   te: function (e) {
-    this.data._lastTm = 0
     var dx = e.changedTouches[0].clientX - this.data._tsX
     var dy = e.changedTouches[0].clientY - this.data._tsY
     var ix = e.currentTarget.dataset.ix
-    if (this.data._vert) { this._resetDrag(ix); return }
-    var isSwipe = this.data._lock || (!this.data._vert && Math.abs(dx) > 18 && Math.abs(dx) * 1.2 > Math.abs(dy))
-    if (isSwipe) {
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
       if (this.data._openIx !== -1 && this.data._openIx !== ix) { this.closeIt(this.data._openIx) }
-      if (dx < -18) { this.openIt(ix) } else if (dx > 18) { this.closeIt(ix) }
-      else { this._resetDrag(ix) }
-    } else {
-      this._resetDrag(ix)
+      if (dx < -30) { this.openIt(ix) } else { this.closeIt(ix) }
     }
-  },
-  _resetDrag: function (ix) {
-    var list = this.data.list
-    if (ix >= 0 && list[ix]) { list[ix]._drag = false; list[ix]._dx = list[ix].open ? -360 : 0 }
-    this.setData({ list: list })
   },
   openIt: function (ix) { var list = this.data.list; if (!list[ix]) return; list[ix].open = true; this.setData({ list: list, _openIx: ix }) },
   closeIt: function (ix) { var list = this.data.list; if (ix < 0 || !list[ix]) return; list[ix].open = false; this.setData({ list: list, _openIx: -1 }) },
