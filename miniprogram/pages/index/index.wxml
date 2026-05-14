@@ -48,6 +48,7 @@
               data-id="{{item.id}}"
               data-ix="{{index}}"
               bindtouchstart="ts"
+              catchtouchmove="tm"
               bindtouchend="te"
               catchtap="onCardTap"
             >
@@ -70,7 +71,7 @@
   </block>
 
   <!-- 底部栏 -->
-  <view class="bot-bar" wx:if="{{!empty}}" style="bottom:{{kbHeight}}px">
+  <view class="bot-bar" wx:if="{{!empty}}" style="bottom:{{kbHeight>0 ? kbHeight-20 : 0}}px">
     <view class="search-wrap">
       <view class="search-icon-wrap"><text>🔍</text></view>
       <input class="search-inp" placeholder="搜索学员..." value="{{keyword}}" bindinput="onSearch" bindfocus="onSearchFocus" bindblur="onSearchBlur" adjust-position="{{false}}" cursor-spacing="{{12}}" confirm-type="search"/>
