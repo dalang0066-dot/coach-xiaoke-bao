@@ -112,18 +112,16 @@ Page({
 
   onSearchBlur: function () { this.setData({ keyword: '' }); this.reload() },
 
-  // ===== 左滑 =====
-  ts: function (e) { this.data._tsX = e.touches[0].clientX; this.data._tsY = e.touches[0].clientY; this.data._isSwipe = false },
-  tm: function (e) {
-    var dx = e.touches[0].clientX - this.data._tsX
-    var dy = e.touches[0].clientY - this.data._tsY
-    if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.5) { this.data._isSwipe = true }
-  },
+  // ===== 左滑（比率判断，兼顾滚动与左滑）=====
+  ts: function (e) { this.data._tsX = e.touches[0].clientX; this.data._tsY = e.touches[0].clientY },
+  tm: function (e) {},
   te: function (e) {
     var dx = e.changedTouches[0].clientX - this.data._tsX
     var dy = e.changedTouches[0].clientY - this.data._tsY
+    var adx = Math.abs(dx), ady = Math.abs(dy)
     var ix = e.currentTarget.dataset.ix
-    var isSwipe = this.data._isSwipe || (Math.abs(dx) > Math.abs(dy) * 1.2 && Math.abs(dx) > 20)
+    // 左滑条件：水平位移>30 且 水平/垂直>2倍，或者 水平>60（明确意图）
+    var isSwipe = (adx > 30 && (ady === 0 || adx / Math.max(ady, 1) > 2)) || adx > 60
     if (isSwipe) {
       if (this.data._openIx !== -1 && this.data._openIx !== ix) { this.closeIt(this.data._openIx) }
       if (dx < -20) { this.openIt(ix) } else if (dx > 20) { this.closeIt(ix) }

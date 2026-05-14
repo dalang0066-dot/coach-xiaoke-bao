@@ -48,7 +48,7 @@
               data-id="{{item.id}}"
               data-ix="{{index}}"
               bindtouchstart="ts"
-              catchtouchmove="tm"
+              bindtouchmove="tm"
               bindtouchend="te"
               catchtap="onCardTap"
             >
