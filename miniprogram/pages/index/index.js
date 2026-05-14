@@ -358,7 +358,7 @@ Page({
     setTimeout(function () {
       item.highlight = ''
       that.setData({ list: list.slice() })
-    }, 300)
+    }, 500)
   },
 
   nop: function () { }
