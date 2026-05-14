@@ -343,7 +343,7 @@ Page({
       setTimeout(function () {
         list[0].highlight = false
         that.setData({ list: list.slice() })
-      }, 1000)
+      }, 500)
     }
   },
 
