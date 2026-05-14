@@ -1,5 +1,5 @@
 <view class="pg" bindtap="onTapBlank">
-  <view class="topbar" style="padding-top:{{sbh}}px"><text class="topbar-tt">教练消课宝</text></view>
+  <view class="topbar" style="padding-top:{{sbh}}px"><text class="topbar-tt" bindlongpress="onDebug">教练消课宝</text></view>
 
   <!-- 空状态 -->
   <block wx:if="{{empty}}">
@@ -70,10 +70,11 @@
   </block>
 
   <!-- 底部栏 -->
-  <view class="bot-bar" wx:if="{{!empty}}">
+  <view class="bot-bar" wx:if="{{!empty}}" style="bottom:{{kbH}}px">
     <view class="search-wrap">
       <view class="search-icon-wrap"><text>🔍</text></view>
       <input class="search-inp" placeholder="搜索学员..." value="{{keyword}}" bindinput="onSearch" bindfocus="onSearchFocus" bindblur="onSearchBlur" adjust-position="{{false}}" cursor-spacing="{{12}}" confirm-type="search"/>
+      <view class="search-clear" wx:if="{{keyword}}" catchtap="onSearchClear"><text>✕</text></view>
     </view>
     <view class="add-btn2" bindtap="onAddTap"><text class="add-ico">+</text><text>添加学员</text></view>
   </view>
@@ -229,6 +230,56 @@
     <view class="toast-div"></view><text class="toast-link" catchtap="undoClass">点击撤销</text>
   </view>
   <view class="toast toast-top {{showLowT?'toast-on':''}}"><text class="toast-wt">{{lowMsg}}</text></view>
+  <!-- 调试面板 -->
+  <view class="modal" wx:if="{{showDebug}}" catchtap="closeDebug">
+    <view class="modal-box debug-panel" catchtap="nop">
+      <text class="debug-title">调试面板</text>
+
+      <view class="debug-row">
+        <text class="debug-label">日期偏移</text>
+        <view class="debug-btns">
+          <view class="dbg-btn {{debugOffset===-30?'dbg-on':''}}" bindtap="setDebugOffset" data-v="-30"><text>-30天</text></view>
+          <view class="dbg-btn {{debugOffset===-7?'dbg-on':''}}" bindtap="setDebugOffset" data-v="-7"><text>-7天</text></view>
+          <view class="dbg-btn {{debugOffset===0?'dbg-on':''}}" bindtap="setDebugOffset" data-v="0"><text>今天</text></view>
+          <view class="dbg-btn {{debugOffset===7?'dbg-on':''}}" bindtap="setDebugOffset" data-v="7"><text>+7天</text></view>
+          <view class="dbg-btn {{debugOffset===30?'dbg-on':''}}" bindtap="setDebugOffset" data-v="30"><text>+30天</text></view>
+        </view>
+      </view>
+
+      <view class="debug-row">
+        <text class="debug-label">课时有效期</text>
+        <view class="debug-btns">
+          <view class="dbg-btn {{debugExpDays===1?'dbg-on':''}}" bindtap="setDebugExp" data-v="1"><text>1天后</text></view>
+          <view class="dbg-btn {{debugExpDays===7?'dbg-on':''}}" bindtap="setDebugExp" data-v="7"><text>7天后</text></view>
+          <view class="dbg-btn {{debugExpDays===0?'dbg-on':''}}" bindtap="setDebugExp" data-v="0"><text>今天到期</text></view>
+          <view class="dbg-btn {{debugExpDays===-1?'dbg-on':''}}" bindtap="setDebugExp" data-v="-1"><text>已过期</text></view>
+        </view>
+      </view>
+
+      <view class="debug-row">
+        <text class="debug-label">会员状态</text>
+        <view class="debug-btns">
+          <view class="dbg-btn {{debugMember===0?'dbg-on':''}}" bindtap="setDebugMember" data-v="0"><text>正常</text></view>
+          <view class="dbg-btn {{debugMember===1?'dbg-on':''}}" bindtap="setDebugMember" data-v="1"><text>已到期</text></view>
+        </view>
+      </view>
+
+      <view class="debug-row">
+        <text class="debug-label">快捷操作</text>
+        <view class="debug-btns">
+          <view class="dbg-btn dbg-warn" bindtap="resetDebug"><text>恢复默认</text></view>
+          <view class="dbg-btn dbg-warn" bindtap="clearAllData"><text>清空数据</text></view>
+        </view>
+      </view>
+
+      <view class="debug-row">
+        <text class="debug-label">当前模拟: {{debugOffset===0?'今天':(debugOffset>0?'+'+debugOffset+'天':debugOffset+'天')}} | 会员{{app.globalData.memberExpired?'已到期':'正常'}}</text>
+      </view>
+
+      <view class="debug-close" bindtap="closeDebug"><text>关闭</text></view>
+    </view>
+  </view>
+
   <view class="toast toast-bot {{showOkT?'toast-on':''}}">
     <view class="toast-left"><text class="toast-gr">✓</text><text class="toast-wt">操作成功</text></view>
   </view>

@@ -17,7 +17,8 @@ Page({
     showUndo: false, lastUndo: null,
     showLowT: false, lowMsg: '',
     showOkT: false,
-    isPro: false, activeCnt: 0, scrollTop: 0,
+    isPro: false, activeCnt: 0, scrollTop: 0, kbH: 0,
+    showDebug: false, debugOffset: 0, debugExpDays: 0, debugMember: 0,
     _tsX: 0, _tsY: 0, _openIx: -1
   },
 
@@ -25,6 +26,8 @@ Page({
 
   onLoad: function () {
     this.setData({ sbh: app.globalData.statusBarHeight || 20 })
+    var that = this
+    wx.onKeyboardHeightChange(function (res) { that.setData({ kbH: res.height }) })
     this.reload()
   },
 
@@ -47,7 +50,7 @@ Page({
     var ss = app.globalData.students || []
     var pro = app.globalData.isProMember || false
     var bd = app.globalData.bannerDismissedToday || {}
-    var td = U.today()
+    var td = this.debugTD()
 
     // 单次遍历：检测沉睡、到期、计数、构建list
     var sl = false, sn = '', ex = false, en = '', ed = 0, ac = 0
@@ -110,7 +113,8 @@ Page({
 
   onSearchFocus: function () { this.closeAll() },
 
-  onSearchBlur: function () { if (this.data.keyword) { this.setData({ keyword: '' }); this.reload() } },
+  onSearchBlur: function () {},
+  onSearchClear: function () { this.setData({ keyword: '' }); this.reload() },
 
   // ===== 左滑 =====
   ts: function (e) { this.data._tsX = e.touches[0].clientX; this.data._tsY = e.touches[0].clientY },
@@ -272,11 +276,9 @@ Page({
     if (that._ut) clearTimeout(that._ut)
     that._ut = setTimeout(function () { that.setData({ showUndo: false, lastUndo: null }) }, 10000)
     var nr = that.data.lastUndo.rb - 1
-    if (nr === 3) {
-      that._lt = setTimeout(function () {
-        that.setData({ showLowT: true, lowMsg: "该学员剩余3节课，记得提醒续费哦～" })
-        that._lt = setTimeout(function () { that.setData({ showLowT: false }) }, 2000)
-      }, 500)
+    if (nr === 3 || nr === 1) {
+      that.setData({ showLowT: true, lowMsg: "该学员剩余" + nr + "节课，记得提醒续费哦～" })
+      that._lt = setTimeout(function () { that.setData({ showLowT: false }) }, 2000)
     }
   },
 
@@ -365,6 +367,67 @@ Page({
       item.highlight = ''
       that.setData({ list: list.slice() })
     }, 500)
+  },
+
+  _debugOffset: 0,
+
+  debugTD: function () {
+    var d = new Date(); d.setDate(d.getDate() + this._debugOffset)
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2)
+  },
+
+  onDebug: function () { this.setData({ showDebug: true }) },
+  closeDebug: function () { this.setData({ showDebug: false }) },
+
+  setDebugOffset: function (e) {
+    var v = parseInt(e.currentTarget.dataset.v); this._debugOffset = v
+    this.setData({ debugOffset: v }); this.reload()
+  },
+
+  setDebugExp: function (e) {
+    var v = parseInt(e.currentTarget.dataset.v)
+    this.setData({ debugExpDays: v })
+    var ss = app.globalData.students
+    if (v !== 0 && ss.length > 0) {
+      var td = this.debugTD(), target = new Date(td)
+      target.setDate(target.getDate() + v)
+      var ds = target.getFullYear() + '-' + ('0' + (target.getMonth() + 1)).slice(-2) + '-' + ('0' + target.getDate()).slice(-2)
+      // 更新所有活跃学员的有效期
+      for (var i = 0; i < ss.length; i++) { if (!ss[i].deleted) { ss[i].expiryDate = ds } }
+      app.save(); this.reload()
+    }
+  },
+
+  setDebugMember: function (e) {
+    var v = parseInt(e.currentTarget.dataset.v); app.globalData.memberExpired = (v === 1)
+    app.save(); this.setData({ debugMember: v }); this.reload()
+  },
+
+  resetDebug: function () {
+    this._debugOffset = 0; app.globalData.memberExpired = false
+    this.setData({ debugOffset: 0, debugExpDays: 0, debugMember: 0 })
+    // 恢复原始有效期（默认6个月后）
+    var ss = app.globalData.students, td = U.today()
+    for (var i = 0; i < ss.length; i++) {
+      if (!ss[i].deleted) { ss[i].expiryDate = U.addMonths(td, 6) }
+    }
+    app.save(); this.reload()
+  },
+
+  clearAllData: function () {
+    var that = this
+    wx.showModal({
+      title: '确认清空',
+      content: '将删除所有学员数据，不可恢复',
+      success: function (res) {
+        if (res.confirm) {
+          app.globalData.students = []; app.globalData.nextId = 0; app.globalData.memberExpired = false
+          app.save(); that._debugOffset = 0
+          that.setData({ showDebug: false, debugOffset: 0, debugExpDays: 0, debugMember: 0 })
+          that.reload()
+        }
+      }
+    })
   },
 
   nop: function () { }
