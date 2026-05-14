@@ -248,12 +248,14 @@ Page({
       })
     }
     newList.sort(function (a, b) {
-      if (a.exp && !b.exp) return 1
-      if (!a.exp && b.exp) return -1
-      var da = a.lastClassDate || "", db = b.lastClassDate || ""
-      if (da && db) return db.localeCompare(da)
-      if (da && !db) return -1
-      if (!da && db) return 1
+      if (a.exp !== b.exp) return a.exp ? 1 : -1
+      if (a.lastClassDate && b.lastClassDate) {
+        if (a.lastClassDate > b.lastClassDate) return -1
+        if (a.lastClassDate < b.lastClassDate) return 1
+        return 0
+      }
+      if (a.lastClassDate) return -1
+      if (b.lastClassDate) return 1
       return 0
     })
 
