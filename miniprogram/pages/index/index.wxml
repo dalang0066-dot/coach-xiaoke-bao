@@ -3,7 +3,7 @@
 
   <!-- 空状态 -->
   <block wx:if="{{empty}}">
-    <scroll-view class="empty-scroll" scroll-y="true" enhanced="true" show-scrollbar="false">
+    <scroll-view class="empty-scroll" scroll-y="true">
       <view class="guide-box">
         <swiper class="guide-sw" indicator-dots="true" indicator-color="rgba(255,255,255,0.4)" indicator-active-color="#fff" autoplay="true" circular="true">
           <swiper-item><view class="guide-s1"><view class="guide-txt"><text class="guide-h">简单、高效、专业</text><text class="guide-p">记录每一份成长，管理每一节课堂</text></view></view></swiper-item>
@@ -34,7 +34,7 @@
       <view class="banner-x" bindtap="dismissMember"><text>✕</text></view>
     </view>
 
-    <scroll-view class="list-scroll" scroll-y="true" enhanced="true" show-scrollbar="false" bindscroll="onScroll">
+    <scroll-view class="list-scroll" scroll-y="true" bindscroll="onScroll">
       <view class="list-wrap" bindtap="onTapBlank">
         <block wx:for="{{list}}" wx:key="id">
           <view class="card-box {{item.open ? 'card-open' : ''}}">
