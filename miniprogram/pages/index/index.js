@@ -199,7 +199,26 @@ Page({
       })
     }
     app.globalData.students = ss; app.save()
-    this.setData({ showForm: false, editing: false }); this.showOk(); this.reload()
+    this.setData({ showForm: false, editing: false })
+    this.showOk()
+    if (this.data.editing) {
+      var list = this.data.list.slice()
+      for (var j = 0; j < list.length; j++) {
+        if (list[j].id == this.data.editId) {
+          list[j].name = fd.name.trim(); list[j].avatarEmoji = fd.avatarEmoji
+          list[j].remainingLessons = fd.totalLessons; list[j].expiryDate = fd.expiryDate
+          list[j].note = fd.note.trim(); list[j].lastModified = Date.now()
+          list[j].exp = U.isExp(list[j])
+          list[j].low = !list[j].exp && list[j].remainingLessons <= 3 && list[j].remainingLessons > 0
+          break
+        }
+      }
+      list.sort(function (x, y) {
+        if (x.exp !== y.exp) return x.exp ? 1 : -1
+        return (y.lastModified || 0) - (x.lastModified || 0)
+      })
+      this.setData({ list: list, _openIx: -1 })
+    }
   },
 
   // ===== 删除 =====
