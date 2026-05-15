@@ -31,7 +31,7 @@
 /* 横幅 */
 .banner{ display:flex; align-items:center; justify-content:space-between; padding:10rpx 32rpx; background:#FEF3C7; flex-shrink:0; border-bottom:2rpx solid rgba(146,64,14,.15) }
 .banner-l{ display:flex; align-items:center; gap:12rpx; flex:1 }
-.banner-ico{ font-size:28rpx; color:#92400E; font-weight:700; width:40rpx; height:40rpx; border-radius:50%; background:rgba(146,64,14,.1); display:flex; align-items:center; justify-content:center; flex-shrink:0 }
+
 .banner-txt{ font-size:28rpx; color:#92400E; line-height:1.4 }
 .banner-x{ width:72rpx; height:72rpx; display:flex; align-items:center; justify-content:center; opacity:.7 }
 .banner-x text{ font-size:42rpx; color:#92400E; line-height:1 }
@@ -45,15 +45,16 @@
 .card-box{ position:relative; border-radius:24rpx; margin-bottom:24rpx; overflow:hidden; box-shadow:0 8rpx 24rpx rgba(0,0,0,.04); background:#fff }
 .card-actions{ position:absolute; top:1rpx; right:2rpx; bottom:1rpx; display:flex; z-index:1; border-radius:0 24rpx 24rpx 0; overflow:hidden }
 .card-box.card-open .card-actions{ z-index:3 }
-.act-btn{ width:140rpx; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; font-size:26rpx; font-weight:500; gap:8rpx }
-.act-ico{ width:44rpx; height:44rpx }
-.banner-ico-img{ width:32rpx; height:32rpx }
-.mu-crown-img{ width:64rpx; height:64rpx }
-.mc-check-img{ width:64rpx; height:64rpx }
-.toast-gr-img{ width:28rpx; height:28rpx }
-.md-ico-img{ width:64rpx; height:64rpx }
-.me-mark-img{ width:64rpx; height:64rpx }
-.hrec-ico-img{ width:36rpx; height:36rpx }
+.act-btn{ width:140rpx; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; font-size:22rpx; font-weight:500; gap:0 }
+.act-btn text{ margin-top:-2rpx }
+.act-ico{ width:56rpx; height:56rpx }
+.banner-ico-img{ width:48rpx; height:48rpx }
+.mc-check-img{ width:150rpx; height:150rpx }
+.toast-gr-img{ width:52rpx; height:52rpx }
+.md-ico-img{ width:150rpx; height:150rpx }
+.me-mark-img{ width:150rpx; height:150rpx }
+.mu-crown-img{ width:140rpx; height:140rpx }
+.hrec-ico-img{ width:90rpx; height:90rpx }
 .act-edit{ background:#3498db }
 .act-hist{ background:#f39c12 }
 .act-del{ background:#ba1a1a }
@@ -71,7 +72,7 @@
 
 .card-info{ flex:1; min-width:0 }
 .card-name{ display:block; font-size:42rpx; font-weight:600; color:#161d1f; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-.card-note{ display:block; font-size:30rpx; color:#5c5f60; margin-top:6rpx; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.card-note{ display:block; font-size:30rpx; color:#5c5f60; margin-top:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
 
 .card-num{ text-align:right; flex-shrink:0; margin-left:28rpx }
 .num-val{ display:block; font-size:48rpx; font-weight:600; line-height:1.09 }
@@ -80,16 +81,18 @@
 .no-result{ text-align:center; padding:120rpx 0 }
 
 /* 底部栏 */
-.bot-bar{ position:fixed; left:0; right:0; bottom:0; display:flex; align-items:center; padding:12rpx 32rpx; background:#fff; box-shadow:0 -8rpx 24rpx rgba(0,0,0,.04); z-index:60; padding-bottom:calc(12rpx + env(safe-area-inset-bottom)) }
-.search-wrap{ flex:1; position:relative; margin-right:16rpx }
-.search-icon-wrap{ position:absolute; left:18rpx; top:50%; transform:translateY(-50%); z-index:1 }
-.search-icon-wrap text{ font-size:30rpx }
-.search-inp{ width:100%; height:88rpx; padding-left:62rpx; padding-right:72rpx; background:#e8eff1; border-radius:24rpx; font-size:32rpx; color:#161d1f; box-sizing:border-box }
+.bot-bar{ position:fixed; left:0; right:0; bottom:0; display:flex; align-items:center; padding:22rpx 32rpx 12rpx 32rpx; background:#fff; box-shadow:0 -8rpx 24rpx rgba(0,0,0,.04); z-index:60; padding-bottom:calc(12rpx + env(safe-area-inset-bottom)) }
+.search-wrap{ flex:7; position:relative; margin-right:16rpx }
+.search-icon-wrap{ position:absolute; left:16rpx; top:50%; transform:translateY(-50%); z-index:1; display:flex }
+.search-ico-img{ width:62rpx; height:62rpx }
+.search-inp{ width:100%; height:98rpx; padding-left:86rpx; padding-right:72rpx; background:#e8eff1; border-radius:24rpx; font-size:32rpx; color:#161d1f; box-sizing:border-box }
 .search-clear{ position:absolute; right:6rpx; top:50%; transform:translateY(-50%); width:64rpx; height:64rpx; display:flex; align-items:center; justify-content:center; opacity:.45 }
 .search-clear text{ font-size:40rpx; color:#161d1f; line-height:1 }
-.add-btn2{ display:flex; align-items:center; justify-content:center; gap:6rpx; background:#006d37; color:#fff; padding:0 36rpx; height:88rpx; border-radius:24rpx; font-size:30rpx; font-weight:500; flex-shrink:0; white-space:nowrap }
+.add-btn2{ flex:3; display:flex; align-items:center; justify-content:center; gap:8rpx; background:#006d37; color:#fff; padding:0 16rpx; height:98rpx; border-radius:24rpx; font-size:32rpx; font-weight:500; white-space:nowrap }
 .add-btn2:active{ transform:scale(.95) }
-.add-ico{ font-size:36rpx; font-weight:300 }
+.add-plus-wrap{ position:relative; width:28rpx; height:28rpx }
+.add-plus-h{ position:absolute; top:50%; left:0; right:0; height:5rpx; background:#fff; border-radius:3rpx; transform:translateY(-50%) }
+.add-plus-v{ position:absolute; left:50%; top:0; bottom:0; width:5rpx; background:#fff; border-radius:3rpx; transform:translateX(-50%) }
 
 /* 弹窗 */
 .modal{ position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(22,29,31,.4); z-index:200; display:flex; align-items:center; justify-content:center; padding:32rpx 24rpx }
@@ -97,13 +100,12 @@
 
 /* 消课 */
 .modal-class{ max-width:600rpx }
-.mc-body{ padding:64rpx 64rpx 0; text-align:center; display:flex; flex-direction:column; align-items:center }
-.mc-circle{ width:128rpx; height:128rpx; border-radius:50%; background:rgba(46,204,113,.1); display:flex; align-items:center; justify-content:center; margin-bottom:48rpx }
-.mc-check{ font-size:64rpx; color:#006d37; font-weight:700 }
-.mc-title{ font-size:48rpx; font-weight:600; color:#161d1f; margin-bottom:16rpx }
-.mc-desc{ font-size:32rpx; color:#5c5f60; line-height:1.5 }
-.mc-btns{ display:flex; gap:24rpx; padding:48rpx }
-.mc-btn{ flex:1; height:88rpx; border-radius:88rpx; display:flex; align-items:center; justify-content:center; font-size:34rpx; font-weight:500 }
+.mc-body,.md-body,.me-body{ padding:50rpx 64rpx 0; text-align:center; display:flex; flex-direction:column; align-items:center }
+.mc-circle,.md-circle,
+.mc-title,.md-title,
+.mc-desc{ font-size:28rpx; color:#5c5f60; line-height:1.5 }
+.mc-btns,
+.mc-btn,
 .mc-btn:active{ transform:scale(.98); opacity:.8 }
 .mc-cancel{ border:2rpx solid #bbcbbb; color:#5c5f60 }
 .mc-ok{ background:#006d37; color:#fff; box-shadow:0 16rpx 48rpx rgba(0,109,55,.16) }
@@ -112,71 +114,67 @@
 .modal-form{ max-width:640rpx; width:100%; max-height:85vh; display:flex; flex-direction:column; box-sizing:border-box; overflow:hidden }
 .mf-head{ display:flex; align-items:center; justify-content:center; min-height:88rpx; border-bottom:2rpx solid rgba(221,228,230,.3); flex-shrink:0 }
 .mf-title{ font-size:40rpx; font-weight:600; color:#161d1f; line-height:88rpx }
-.mf-body{ flex:1; padding:24rpx 32rpx; overflow-x:hidden; min-height:500rpx; box-sizing:border-box }
-.mf-av{ width:140rpx; height:140rpx; border-radius:50%; margin:0 auto 24rpx; background:rgba(46,204,113,.1); display:flex; align-items:center; justify-content:center; position:relative; border:6rpx solid rgba(0,109,55,.05); flex-shrink:0 }
+.mf-body{ flex:1; padding:24rpx 32rpx 0; overflow-x:hidden; min-height:500rpx; box-sizing:border-box }
+.mf-av{ width:160rpx; height:160rpx; border-radius:50%; margin:16rpx auto 32rpx; background:rgba(46,204,113,.1); display:flex; align-items:center; justify-content:center; position:relative; border:6rpx solid rgba(0,109,55,.05); flex-shrink:0 }
 .mf-av:active{ transform:scale(.95) }
-.mf-av-emoji{ font-size:84rpx; line-height:1 }
+.mf-av-emoji{ font-size:96rpx; line-height:1 }
 .mf-av-hint{ position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.05); border-radius:50%; display:flex; align-items:center; justify-content:center; opacity:0 }
 .mf-av:active .mf-av-hint{ opacity:1 }
 .mf-f{ margin-bottom:28rpx; width:100% }
 .mf-lbl{ display:block; font-size:24rpx; font-weight:600; color:#5c5f60; padding:0 4rpx; margin-bottom:6rpx }
-.mf-inp{ width:100%; height:88rpx; background:#e8eff1; border-bottom:4rpx solid #bbcbbb; border-radius:16rpx 16rpx 0 0; padding:0 24rpx; font-size:32rpx; color:#161d1f; box-sizing:border-box; margin:0 }
+.mf-inp{ width:100%; height:90rpx; background:#e8eff1; border-bottom:4rpx solid #bbcbbb; border-radius:16rpx 16rpx 0 0; padding:0 24rpx; font-size:32rpx; color:#161d1f; box-sizing:border-box; margin:0 }
 .mf-num{ font-family:'Lexend',sans-serif }
 .mf-date{ display:flex; align-items:center }
 .mf-ph{ color:#9ca3af }
 .mf-ta{ width:100%; min-height:110rpx; background:#e8eff1; border-bottom:4rpx solid #bbcbbb; border-radius:16rpx 16rpx 0 0; padding:20rpx 24rpx; font-size:32rpx; color:#161d1f; box-sizing:border-box; margin:0; overflow-x:hidden }
 .mf-quick{ display:flex; gap:12rpx; margin-bottom:24rpx; width:100% }
-.mq-btn{ flex:1; height:64rpx; display:flex; align-items:center; justify-content:center; border-radius:24rpx; border:2rpx solid #bbcbbb; font-size:28rpx; color:#3d4a3e }
+.mq-btn{ flex:1; height:72rpx; display:flex; align-items:center; justify-content:center; border-radius:24rpx; border:2rpx solid #bbcbbb; font-size:28rpx; color:#3d4a3e }
 .mq-btn:active{ transform:scale(.95) }
 .mq-on{ border:4rpx solid #006d37; background:rgba(46,204,113,.1); color:#006d37 }
-.mf-spacer{ height:20rpx }
-.mf-foot{ display:flex; gap:28rpx; padding:24rpx 40rpx 40rpx; flex-shrink:0 }
-.mff-btn{ height:88rpx; display:flex; align-items:center; justify-content:center; font-size:34rpx; font-weight:500 }
+.mf-spacer{ height:0 }
+.mf-foot{ display:flex; gap:28rpx; padding:0 40rpx 0; flex-shrink:0 }
+.mff-btn{ height:88rpx; display:flex; align-items:center; justify-content:center; font-size:30rpx; font-weight:500; margin-top:20rpx; margin-bottom:35rpx }
 .mff-btn:active{ transform:scale(.95) }
 .mff-cancel{ flex:1; border:2rpx solid #bbcbbb; color:#5c5f60; border-radius:88rpx }
 .mff-ok{ flex:1; background:#006d37; color:#fff; border-radius:88rpx; box-shadow:0 16rpx 48rpx rgba(0,109,55,.16) }
 
 /* 删除 */
 .modal-del{ max-width:600rpx }
-.md-body{ padding:64rpx 64rpx 0; text-align:center; display:flex; flex-direction:column; align-items:center }
-.md-circle{ width:128rpx; height:128rpx; border-radius:50%; background:#ffdad6; display:flex; align-items:center; justify-content:center; margin-bottom:48rpx }
-.md-ico{ font-size:64rpx }
-.md-title{ font-size:48rpx; font-weight:600; color:#161d1f; margin-bottom:16rpx }
-.md-desc{ font-size:32rpx; color:#3d4a3e; margin-bottom:0; line-height:1.5 }
-.md-btns{ display:flex; gap:24rpx; padding:48rpx }
-.md-btn{ flex:1; height:88rpx; border-radius:88rpx; display:flex; align-items:center; justify-content:center; font-size:34rpx; font-weight:500 }
+
+
+.md-desc{ font-size:28rpx; color:#3d4a3e; margin-bottom:0; line-height:1.5 }
+
+
 .md-btn:active{ opacity:.8 }
 .md-cancel{ border:2rpx solid #bbcbbb; color:#5c5f60 }
 .md-ok{ background:#b4271d; color:#fff }
 
 /* 课时过期 */
 .modal-exp{ max-width:600rpx }
-.me-body{ padding:64rpx 64rpx 0; text-align:center; display:flex; flex-direction:column; align-items:center }
-.me-circle{ width:128rpx; height:128rpx; border-radius:50%; background:#fef9c3; display:flex; align-items:center; justify-content:center; margin-bottom:48rpx }
-.me-mark{ font-size:64rpx; color:#ca8a04; font-weight:700 }
-.me-title{ font-size:48rpx; font-weight:600; color:#161d1f; margin-bottom:16rpx }
-.me-desc{ font-size:32rpx; color:#5c5f60; margin-bottom:0 }
+
+
+.me-desc{ font-size:28rpx; color:#5c5f60; margin-bottom:0 }
 .me-btns{ display:flex; gap:24rpx; padding:48rpx; justify-content:center }
 .me-btn{ flex:1; height:88rpx; border-radius:88rpx; display:flex; align-items:center; justify-content:center; font-size:34rpx; font-weight:500; background:#006d37; color:#fff; box-shadow:0 16rpx 48rpx rgba(0,109,55,.16) }
 .me-btn:active{ transform:scale(.98); opacity:.8 }
 
 /* 升级 */
-.modal-upg{ max-width:600rpx }
+.modal-upg{ max-width:600rpx; border-radius:56rpx; overflow:hidden }
 .mu-head{ background:linear-gradient(135deg,#006d37,#2ecc71); padding:56rpx 56rpx 40rpx; display:flex; flex-direction:column; align-items:center; position:relative }
 .mu-badge{ position:absolute; top:24rpx; right:24rpx; background:rgba(255,255,255,.2); border:2rpx solid rgba(255,255,255,.3); border-radius:96rpx; padding:6rpx 20rpx }
 .mu-badge text{ font-size:22rpx; font-weight:600; color:#fff }
-.mu-crown{ width:120rpx; height:120rpx; border-radius:50%; background:rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; margin-bottom:24rpx; font-size:72rpx }
-.mu-htitle{ font-size:48rpx; font-weight:700; color:#fff }
+.mu-crown{ display:flex; align-items:center; justify-content:center; margin-bottom:24rpx }
+.mu-htitle{ font-size:40rpx; font-weight:700; color:#fff }
 .mu-body{ padding:40rpx }
-.mu-desc{ font-size:32rpx; color:#5c5f60; line-height:1.7; text-align:center; display:block; margin-bottom:40rpx }
+.mu-desc{ font-size:28rpx; color:#5c5f60; line-height:1.7; text-align:center; display:block; margin-bottom:36rpx }
 .plan{ display:flex; align-items:center; gap:28rpx; padding:28rpx; border-radius:24rpx; border:4rpx solid #bbcbbb; margin-bottom:20rpx }
 .plan-on{ border-color:#006d37; background:rgba(46,204,113,.1) }
 .plan-rd{ width:36rpx; height:36rpx; border-radius:50%; border:4rpx solid #bbcbbb; display:flex; align-items:center; justify-content:center; flex-shrink:0 }
 .rd-on{ border-color:#006d37 }
 .rd-dot{ width:20rpx; height:20rpx; border-radius:50%; background:#006d37 }
 .plan-info{ flex:1 }
-.plan-n{ display:block; font-size:34rpx; font-weight:500; color:#161d1f; margin-bottom:4rpx }
-.plan-s{ display:block; font-size:28rpx }
+.plan-n{ display:block; font-size:30rpx; font-weight:600; color:#161d1f; margin-bottom:4rpx }
+.plan-s{ display:block; font-size:26rpx }
 .mu-submit{ width:100%; height:100rpx; border-radius:100rpx; background:linear-gradient(135deg,#006d37,#2ecc71); display:flex; align-items:center; justify-content:center; color:#fff; font-size:38rpx; font-weight:600; box-shadow:0 16rpx 48rpx rgba(0,109,55,.2); margin-top:28rpx }
 .mu-submit:active{ transform:scale(.95) }
 .mu-later{ text-align:center; padding:28rpx 0 0; font-size:32rpx; color:#5c5f60 }
@@ -185,9 +183,9 @@
 .modal-hist{ max-width:640rpx; max-height:82vh; display:flex; flex-direction:column; overflow:hidden }
 .mh-head{ display:flex; align-items:center; justify-content:center; height:88rpx; flex-shrink:0 }
 .mh-title{ font-size:40rpx; font-weight:600; color:#161d1f }
-.mh-sum{ display:flex; align-items:center; gap:24rpx; margin:12rpx 32rpx 16rpx; padding:28rpx; background:#eef5f7; border-radius:28rpx; flex-shrink:0 }
-.mhs-av{ width:96rpx; height:96rpx; border-radius:50%; background:rgba(46,204,113,.2); display:flex; align-items:center; justify-content:center; border:4rpx solid #e8eff1; flex-shrink:0 }
-.mhs-emoji{ font-size:56rpx }
+.mh-sum{ display:flex; align-items:center; gap:24rpx; margin:12rpx 32rpx 16rpx; padding:36rpx; background:#eef5f7; border-radius:28rpx; flex-shrink:0 }
+.mhs-av{ width:108rpx; height:108rpx; border-radius:50%; background:rgba(46,204,113,.2); display:flex; align-items:center; justify-content:center; border:4rpx solid #e8eff1; flex-shrink:0 }
+.mhs-emoji{ font-size:64rpx }
 .mhs-info{ flex:1 }
 .mhs-name{ display:block; font-size:36rpx; font-weight:600; color:#161d1f; margin-bottom:6rpx }
 .mhs-badge{ display:inline-flex; background:rgba(46,204,113,.15); padding:5rpx 18rpx; border-radius:96rpx }
@@ -196,18 +194,18 @@
 .mhb-lbl{ display:block; font-size:32rpx; font-weight:600; color:#5c5f60; padding-bottom:16rpx }
 .hrec{ background:#fff; border-radius:20rpx; border:2rpx solid rgba(221,228,230,.3); padding:18rpx; margin-bottom:16rpx; box-sizing:border-box; overflow:hidden }
 .hrec-g{ border-left:6rpx solid #2ecc71 }
-.hrec-l{ display:flex; align-items:center; gap:16rpx }
-.hrec-ico{ width:56rpx; height:56rpx; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0 }
-.hri-red{ background:rgba(186,26,26,.1); color:#ba1a1a }
-.hri-yel{ background:#fef9c3; color:#ca8a04 }
-.hri-gr{ background:rgba(46,204,113,.2); color:#006d37 }
+.hrec-l{ display:flex; align-items:center; gap:28rpx }
+.hrec-ico{ display:flex; align-items:center; justify-content:center; flex-shrink:0 }
+.hri-red{ color:#ba1a1a }
+.hri-yel{ color:#ca8a04 }
+.hri-gr{ color:#006d37 }
 .hrec-info{ flex:1; min-width:0; overflow:hidden }
 .hrec-act{ display:block; font-size:32rpx; color:#161d1f }
 .hrec-num{ font-weight:600 }
 .hrec-time{ display:block; font-size:26rpx; color:#5c5f60; margin-top:4rpx }
 .hrec-empty{ text-align:center; padding:100rpx 0; color:#5c5f60 }
-.mh-foot{ padding:20rpx 32rpx; padding-bottom:calc(20rpx + env(safe-area-inset-bottom)); flex-shrink:0 }
-.mhf-btn{ width:100%; height:84rpx; border-radius:84rpx; background:#006d37; display:flex; align-items:center; justify-content:center; color:#fff; font-size:32rpx; font-weight:500 }
+.mh-foot{ padding:0 32rpx 0; flex-shrink:0 }
+.mhf-btn{ width:100%; height:84rpx; border-radius:84rpx; background:#006d37; display:flex; align-items:center; justify-content:center; color:#fff; font-size:28rpx; font-weight:500; margin-top:20rpx; margin-bottom:35rpx }
 
 /* Toast */
 .toast{ position:fixed; left:50%; transform:translateX(-50%); z-index:150; background:#2b3234; color:#f4fafd; border-radius:96rpx; padding:22rpx 40rpx; display:flex; align-items:center; gap:16rpx; box-shadow:0 20rpx 50rpx -10rpx rgba(0,0,0,.1); opacity:0; pointer-events:none; transition:opacity .3s }
@@ -216,10 +214,10 @@
 .toast-top{ bottom:315rpx; left:50%; transform:translateX(-50%) }
 .toast-bot{ bottom:210rpx; justify-content:center }
 .toast-left{ display:flex; align-items:center; gap:12rpx; white-space:nowrap; flex-shrink:0 }
-.toast-gr{ color:#6bfe9c; font-size:30rpx; font-weight:700 }
+.toast-gr{ display:flex; align-items:center }
 .toast-wt{ color:#f4fafd; font-size:30rpx; font-weight:500; white-space:nowrap }
 .toast-div{ width:2rpx; height:28rpx; background:#dde4e6; flex-shrink:0 }
-.toast-link{ color:#6bfe9c; font-size:34rpx; font-weight:500; white-space:nowrap }
+.toast-link{ color:#6bfe9c; font-size:30rpx; font-weight:500; white-space:nowrap }
 .toast-link:active{ opacity:.7 }
 
 /* 调试面板 */

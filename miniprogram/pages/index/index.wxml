@@ -83,11 +83,14 @@
   <!-- 底部栏 -->
   <view class="bot-bar" wx:if="{{!empty}}" style="bottom:{{kbH}}px">
     <view class="search-wrap">
-      <view class="search-icon-wrap"><text>🔍</text></view>
-      <input class="search-inp" placeholder="搜索学员..." value="{{keyword}}" bindinput="onSearch" bindfocus="onSearchFocus" bindblur="onSearchBlur" adjust-position="{{false}}" cursor-spacing="{{12}}" confirm-type="search"/>
+      <view class="search-icon-wrap"><image class="search-ico-img" src="/images/search-icon.png"></image></view>
+      <input class="search-inp" placeholder="搜索学员..." value="{{keyword}}" bindinput="onSearch" bindfocus="onSearchFocus" bindblur="onSearchBlur" adjust-position="{{false}}" cursor-spacing="{{0}}" confirm-type="search"/>
       <view class="search-clear" wx:if="{{keyword}}" catchtap="onSearchClear"><text>✕</text></view>
     </view>
-    <view class="add-btn2" bindtap="onAddTap"><text class="add-ico">+</text><text>添加学员</text></view>
+    <view class="add-btn2" bindtap="onAddTap">
+        <view class="add-plus-wrap"><view class="add-plus-h"></view><view class="add-plus-v"></view></view>
+        <text>添加学员</text>
+      </view>
   </view>
 
   <!-- ===== 消课确认弹窗 ===== -->
@@ -96,7 +99,7 @@
       <view class="mc-body">
         <view class="mc-circle"><image class="mc-check-img" src="/images/class-ok.png"></image></view>
         <text class="mc-title">消课 1 节？</text>
-        <text class="mc-desc">确认后将为学员 <text class="b">{{classTarget.name}}</text> 扣除 1 次课时</text>
+        <text class="mc-desc">确认后将扣除 <text class="b">{{classTarget.name}}</text> 1 次课时</text>
       </view>
       <view class="mc-btns">
         <view class="mc-btn mc-cancel" bindtap="closeClass"><text>取消</text></view>
@@ -152,7 +155,7 @@
       <view class="md-body">
         <view class="md-circle"><image class="md-ico-img" src="/images/delete-icon.png"></image></view>
         <text class="md-title">确定要删除学员吗？</text>
-        <text class="md-desc"><text class="b">{{delTarget.name}}</text> 的所有历史记录将无法恢复。</text>
+        <text class="md-desc"><text class="b">{{delTarget.name}}</text> 的历史记录将无法恢复。</text>
       </view>
       <view class="md-btns">
         <view class="md-btn md-cancel" bindtap="closeDel"><text>取消</text></view>

@@ -37,6 +37,8 @@ Page({
     if (this._ut) { clearTimeout(this._ut); this._ut = null }
     if (this._lt) { clearTimeout(this._lt); this._lt = null }
     if (this._ot) { clearTimeout(this._ot); this._ot = null }
+    if (this._searchTimer) { clearTimeout(this._searchTimer); this._searchTimer = null }
+    if (this._flashTimer) { clearTimeout(this._flashTimer); this._flashTimer = null }
   },
 
   onUnload: function () {
@@ -44,6 +46,7 @@ Page({
     if (this._lt) clearTimeout(this._lt)
     if (this._ot) clearTimeout(this._ot)
     if (this._searchTimer) clearTimeout(this._searchTimer)
+    if (this._flashTimer) clearTimeout(this._flashTimer)
   },
 
   reload: function () {
@@ -134,7 +137,7 @@ Page({
       var cur = list[ix]._sx || 0, nx = cur + dx
       if (nx > 0) nx = 0; if (nx < -420) nx = -420
       list[ix]._sx = nx; list[ix]._st = false
-      this.setData({ list: list, scrollY: false })
+      this.setData({ list: list })
       this.data._tsX = e.touches[0].clientX
     } else if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.5) {
       this.data._locked = true
@@ -187,8 +190,8 @@ Page({
   // ===== 添加 =====
   onAddTap: function () {
     this.closeAll()
-    var pro = this.data.isPro, mbr = app.globalData.memberExpired, cnt = this.data.activeCnt
-    if (!pro && (cnt >= 10 || mbr)) { this.setData({ showUpg: true, plan: U.PLAN.YEARLY }); return }
+    var pro = this.data.isPro && !app.globalData.memberExpired, cnt = this.data.activeCnt
+    if (!pro && cnt >= 10) { this.setData({ showUpg: true, plan: U.PLAN.YEARLY }); return }
     this.onAdd()
   },
 
@@ -395,7 +398,7 @@ Page({
     var hlClass = item.low ? 'card-hl-red' : 'card-hl-green'
     item.highlight = hlClass
     that.setData({ list: list.slice() })
-    setTimeout(function () {
+    that._flashTimer = setTimeout(function () {
       item.highlight = ''
       that.setData({ list: list.slice() })
     }, 500)
