@@ -1,5 +1,8 @@
 var app = getApp()
 var U = require('../../utils/util.js')
+var AVATARS = []
+for (var ai = 1; ai <= 46; ai++) { AVATARS.push('/images/avatars/avatar_' + ai + '.png') }
+function rem() { return AVATARS[Math.floor(Math.random() * AVATARS.length)] }
 
 Page({
   data: {
@@ -71,7 +74,7 @@ Page({
         if (dd === 7 || dd === 1) { ex = true; en = s.name; ed = dd }
       }
       var item = {
-        id: s.id, name: s.name, avatarSrc: s.avatarSrc,
+        id: s.id, name: s.name, avatarSrc: s.avatarSrc || '/images/avatars/avatar_1.png',
         note: s.note || '', remainingLessons: s.remainingLessons,
         expiryDate: s.expiryDate, lastClassDate: s.lastClassDate,
         lastModified: s.lastModified || 0, exp: U.isExp(s), low: !U.isExp(s) && s.remainingLessons <= 3 && s.remainingLessons > 0,
@@ -199,12 +202,12 @@ Page({
   onAdd: function () {
     this.setData({
       showForm: true, editing: false,
-      fd: { avatarSrc: U.rem(U.EMOJIS), name: '', totalLessons: 24, expiryDate: U.addMonths(U.today(), 6), note: '' }
+      fd: { avatarSrc: rem(), name: '', totalLessons: 24, expiryDate: U.addMonths(U.today(), 6), note: '' }
     })
   },
 
   closeForm: function () { this.setData({ showForm: false, editing: false }) },
-  randAv: function () { this.setData({ 'fd.avatarSrc': U.rem(U.EMOJIS) }) },
+  randAv: function () { this.setData({ 'fd.avatarSrc': rem() }) },
   onFdName: function (e) { this.setData({ 'fd.name': e.detail.value }) },
   onFdLessons: function (e) { this.setData({ 'fd.totalLessons': parseInt(e.detail.value) || 0 }) },
   onQuick: function (e) { this.setData({ 'fd.totalLessons': parseInt(e.currentTarget.dataset.v) }) },
@@ -229,7 +232,7 @@ Page({
       for (var i = 0; i < ss.length; i++) {
         if (ss[i].id == this.data.editId) {
           var diff = fd.totalLessons - ss[i].remainingLessons
-          ss[i].name = fd.name.trim(); ss[i].avatarEmoji = fd.avatarSrc
+          ss[i].name = fd.name.trim(); ss[i].avatarSrc = fd.avatarSrc
           ss[i].remainingLessons = fd.totalLessons; ss[i].totalLessons = fd.totalLessons
           ss[i].expiryDate = fd.expiryDate; ss[i].note = fd.note.trim(); ss[i].lastModified = Date.now()
           if (!ss[i].history) ss[i].history = []
@@ -289,7 +292,7 @@ Page({
       var s = ss[i]
       if (s.deleted) continue
       newList.push({
-        id: s.id, name: s.name, avatarSrc: s.avatarSrc,
+        id: s.id, name: s.name, avatarSrc: s.avatarSrc || '/images/avatars/avatar_1.png',
         note: s.note || "", remainingLessons: s.remainingLessons,
         expiryDate: s.expiryDate, lastClassDate: s.lastClassDate,
         lastModified: s.lastModified || 0, exp: U.isExp(s), low: !U.isExp(s) && s.remainingLessons <= 3 && s.remainingLessons > 0,
