@@ -68,7 +68,7 @@
 
 .card-av{ width:108rpx; height:108rpx; border-radius:50%; margin-right:28rpx; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:rgba(46,204,113,.2) }
 .av-gray{ background:#e1e3e4 }
-.av-img{ width:100%; height:100%; border-radius:50% }
+.av-emoji{ font-size:64rpx; line-height:1 }
 
 .card-info{ flex:1; min-width:0 }
 .card-name{ display:block; font-size:42rpx; font-weight:600; color:#161d1f; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
@@ -117,7 +117,7 @@
 .mf-body{ flex:1; padding:24rpx 32rpx 0; overflow-x:hidden; min-height:500rpx; box-sizing:border-box }
 .mf-av{ width:160rpx; height:160rpx; border-radius:50%; margin:16rpx auto 32rpx; background:rgba(46,204,113,.1); display:flex; align-items:center; justify-content:center; position:relative; border:6rpx solid rgba(0,109,55,.05); flex-shrink:0 }
 .mf-av:active{ transform:scale(.95) }
-.mf-av-img{ width:100%; height:100%; border-radius:50% }
+.mf-av-emoji{ font-size:96rpx; line-height:1 }
 .mf-av-hint{ position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.05); border-radius:50%; display:flex; align-items:center; justify-content:center; opacity:0 }
 .mf-av:active .mf-av-hint{ opacity:1 }
 .mf-f{ margin-bottom:28rpx; width:100% }
@@ -185,7 +185,7 @@
 .mh-title{ font-size:40rpx; font-weight:600; color:#161d1f }
 .mh-sum{ display:flex; align-items:center; gap:24rpx; margin:12rpx 32rpx 16rpx; padding:36rpx; background:#eef5f7; border-radius:28rpx; flex-shrink:0 }
 .mhs-av{ width:108rpx; height:108rpx; border-radius:50%; background:rgba(46,204,113,.2); display:flex; align-items:center; justify-content:center; border:4rpx solid #e8eff1; flex-shrink:0 }
-.mhs-img{ width:100%; height:100%; border-radius:50% }
+.mhs-emoji{ font-size:64rpx }
 .mhs-info{ flex:1 }
 .mhs-name{ display:block; font-size:36rpx; font-weight:600; color:#161d1f; margin-bottom:6rpx }
 .mhs-badge{ display:inline-flex; background:rgba(46,204,113,.15); padding:5rpx 18rpx; border-radius:96rpx }
