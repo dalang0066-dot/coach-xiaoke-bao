@@ -9,7 +9,7 @@ Page({
     showMember: false,
     showClass: false, classTarget: {},
     showForm: false, editing: false, editId: 0,
-    fd: { avatarImg: '🐯', name: '', totalLessons: 24, expiryDate: '', note: '' },
+    fd: { avatarImg: '/images/avatars/01_01.png', name: '', totalLessons: 24, expiryDate: '', note: '' },
     showDel: false, delTarget: {},
     showHist: false, histData: { name: '', remaining: 0, avatarImg: '/images/avatars/01_01.png', records: [] },
     showExpModal: false,
@@ -52,6 +52,8 @@ Page({
 
   reload: function () {
     var ss = app.globalData.students || []
+    // 迁移旧数据：无avatarImg的学员分配随机头像
+    for (var m = 0; m < ss.length; m++) { if (!ss[m].avatarImg) { ss[m].avatarImg = U.rem(U.AVATARS) } }
     var pro = app.globalData.isProMember || false
     var bd = app.globalData.bannerDismissedToday || {}
     var td = this.debugTD()
@@ -71,7 +73,7 @@ Page({
         if (dd === 7 || dd === 1) { ex = true; en = s.name; ed = dd }
       }
       var item = {
-        id: s.id, name: s.name, avatarImg: s.avatarImg,
+        id: s.id, name: s.name, avatarImg: s.avatarImg || U.rem(U.AVATARS),
         note: s.note || '', remainingLessons: s.remainingLessons,
         expiryDate: s.expiryDate, lastClassDate: s.lastClassDate,
         lastModified: s.lastModified || 0, exp: U.isExp(s), low: !U.isExp(s) && s.remainingLessons <= 3 && s.remainingLessons > 0,
@@ -216,7 +218,7 @@ Page({
     this.closeAll()
     this.setData({
       showForm: true, editing: true, editId: id,
-      fd: { avatarImg: s.avatarImg || '🐯', name: s.name, totalLessons: s.remainingLessons, expiryDate: s.expiryDate || '', note: s.note || '' }
+      fd: { avatarImg: s.avatarImg || U.rem(U.AVATARS), name: s.name, totalLessons: s.remainingLessons, expiryDate: s.expiryDate || '', note: s.note || '' }
     })
   },
 
@@ -289,7 +291,7 @@ Page({
       var s = ss[i]
       if (s.deleted) continue
       newList.push({
-        id: s.id, name: s.name, avatarImg: s.avatarImg,
+        id: s.id, name: s.name, avatarImg: s.avatarImg || U.rem(U.AVATARS),
         note: s.note || "", remainingLessons: s.remainingLessons,
         expiryDate: s.expiryDate, lastClassDate: s.lastClassDate,
         lastModified: s.lastModified || 0, exp: U.isExp(s), low: !U.isExp(s) && s.remainingLessons <= 3 && s.remainingLessons > 0,
