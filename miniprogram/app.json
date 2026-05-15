@@ -5,6 +5,8 @@
   ],
   "window": {
     "navigationStyle": "custom",
+    "navigationBarTextStyle": "black",
+    "navigationBarBackgroundColor": "#ffffff",
     "backgroundColor": "#f4fafd"
   },
   "style": "v2",

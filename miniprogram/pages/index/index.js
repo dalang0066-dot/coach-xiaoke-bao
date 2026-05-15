@@ -9,9 +9,9 @@ Page({
     showMember: false,
     showClass: false, classTarget: {},
     showForm: false, editing: false, editId: 0,
-    fd: { avatarEmoji: '🐯', name: '', totalLessons: 24, expiryDate: '', note: '' },
+    fd: { avatarImg: '🐯', name: '', totalLessons: 24, expiryDate: '', note: '' },
     showDel: false, delTarget: {},
-    showHist: false, histData: { name: '', remaining: 0, emoji: '🐯', records: [] },
+    showHist: false, histData: { name: '', remaining: 0, avatarImg: '/images/avatars/01_01.png', records: [] },
     showExpModal: false,
     showUpg: false, plan: U.PLAN.YEARLY,
     showUndo: false, lastUndo: null,
@@ -23,6 +23,8 @@ Page({
   },
 
   _searchTimer: null,
+
+  onShareAppMessage: function () { return { title: '教练消课宝', path: '/pages/index/index' } },
 
   onLoad: function () {
     this.setData({ sbh: app.globalData.statusBarHeight || 20 })
@@ -69,7 +71,7 @@ Page({
         if (dd === 7 || dd === 1) { ex = true; en = s.name; ed = dd }
       }
       var item = {
-        id: s.id, name: s.name, avatarEmoji: s.avatarEmoji,
+        id: s.id, name: s.name, avatarImg: s.avatarImg,
         note: s.note || '', remainingLessons: s.remainingLessons,
         expiryDate: s.expiryDate, lastClassDate: s.lastClassDate,
         lastModified: s.lastModified || 0, exp: U.isExp(s), low: !U.isExp(s) && s.remainingLessons <= 3 && s.remainingLessons > 0,
@@ -197,12 +199,12 @@ Page({
   onAdd: function () {
     this.setData({
       showForm: true, editing: false,
-      fd: { avatarEmoji: U.rem(U.EMOJIS), name: '', totalLessons: 24, expiryDate: U.addMonths(U.today(), 6), note: '' }
+      fd: { avatarImg: U.rem(U.AVATARS), name: '', totalLessons: 24, expiryDate: U.addMonths(U.today(), 6), note: '' }
     })
   },
 
   closeForm: function () { this.setData({ showForm: false, editing: false }) },
-  randAv: function () { this.setData({ 'fd.avatarEmoji': U.rem(U.EMOJIS) }) },
+  randAv: function () { this.setData({ 'fd.avatarImg': U.rem(U.AVATARS) }) },
   onFdName: function (e) { this.setData({ 'fd.name': e.detail.value }) },
   onFdLessons: function (e) { this.setData({ 'fd.totalLessons': parseInt(e.detail.value) || 0 }) },
   onQuick: function (e) { this.setData({ 'fd.totalLessons': parseInt(e.currentTarget.dataset.v) }) },
@@ -214,7 +216,7 @@ Page({
     this.closeAll()
     this.setData({
       showForm: true, editing: true, editId: id,
-      fd: { avatarEmoji: s.avatarEmoji || '🐯', name: s.name, totalLessons: s.remainingLessons, expiryDate: s.expiryDate || '', note: s.note || '' }
+      fd: { avatarImg: s.avatarImg || '🐯', name: s.name, totalLessons: s.remainingLessons, expiryDate: s.expiryDate || '', note: s.note || '' }
     })
   },
 
@@ -227,7 +229,7 @@ Page({
       for (var i = 0; i < ss.length; i++) {
         if (ss[i].id == this.data.editId) {
           var diff = fd.totalLessons - ss[i].remainingLessons
-          ss[i].name = fd.name.trim(); ss[i].avatarEmoji = fd.avatarEmoji
+          ss[i].name = fd.name.trim(); ss[i].avatarImg = fd.avatarImg
           ss[i].remainingLessons = fd.totalLessons; ss[i].totalLessons = fd.totalLessons
           ss[i].expiryDate = fd.expiryDate; ss[i].note = fd.note.trim(); ss[i].lastModified = Date.now()
           if (!ss[i].history) ss[i].history = []
@@ -242,7 +244,7 @@ Page({
       }
     } else {
       ss.push({
-        id: app.globalData.nextId++, name: fd.name.trim(), avatarEmoji: fd.avatarEmoji,
+        id: app.globalData.nextId++, name: fd.name.trim(), avatarImg: fd.avatarImg,
         remainingLessons: fd.totalLessons, totalLessons: fd.totalLessons,
         expiryDate: fd.expiryDate, note: fd.note.trim(),
         lastClassDate: '', history: [{ type: U.REC.RECHARGE, amount: fd.totalLessons, time: U.today() + ' ' + U.formatTime(), ts: Date.now() }], deleted: false, createdAt: U.today(), lastModified: Date.now()
@@ -287,7 +289,7 @@ Page({
       var s = ss[i]
       if (s.deleted) continue
       newList.push({
-        id: s.id, name: s.name, avatarEmoji: s.avatarEmoji,
+        id: s.id, name: s.name, avatarImg: s.avatarImg,
         note: s.note || "", remainingLessons: s.remainingLessons,
         expiryDate: s.expiryDate, lastClassDate: s.lastClassDate,
         lastModified: s.lastModified || 0, exp: U.isExp(s), low: !U.isExp(s) && s.remainingLessons <= 3 && s.remainingLessons > 0,
@@ -373,7 +375,7 @@ Page({
     var recs = (s.history || []).slice().sort(function (a, b) { return (b.ts || 0) - (a.ts || 0) })
     this.setData({
       showHist: true,
-      histData: { name: s.name, remaining: s.remainingLessons, emoji: s.avatarEmoji || '🐯', records: recs }
+      histData: { name: s.name, remaining: s.remainingLessons, avatarImg: s.avatarImg || '/images/avatars/01_01.png', records: recs }
     })
   },
 
