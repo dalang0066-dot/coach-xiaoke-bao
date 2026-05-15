@@ -37,8 +37,7 @@ Page({
     if (this._ut) { clearTimeout(this._ut); this._ut = null }
     if (this._lt) { clearTimeout(this._lt); this._lt = null }
     if (this._ot) { clearTimeout(this._ot); this._ot = null }
-    if (this._searchTimer) { clearTimeout(this._searchTimer); this._searchTimer = null }
-    if (this._flashTimer) { clearTimeout(this._flashTimer); this._flashTimer = null }
+    if (this._stt) { clearTimeout(this._stt); this._stt = null }
   },
 
   onUnload: function () {
@@ -46,7 +45,7 @@ Page({
     if (this._lt) clearTimeout(this._lt)
     if (this._ot) clearTimeout(this._ot)
     if (this._searchTimer) clearTimeout(this._searchTimer)
-    if (this._flashTimer) clearTimeout(this._flashTimer)
+    if (this._stt) clearTimeout(this._stt)
   },
 
   reload: function () {
@@ -137,7 +136,7 @@ Page({
       var cur = list[ix]._sx || 0, nx = cur + dx
       if (nx > 0) nx = 0; if (nx < -420) nx = -420
       list[ix]._sx = nx; list[ix]._st = false
-      this.setData({ list: list })
+      this.setData({ list: list, scrollY: false })
       this.data._tsX = e.touches[0].clientX
     } else if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.5) {
       this.data._locked = true
@@ -295,6 +294,8 @@ Page({
         open: false
       })
     }
+    var kw = (that.data.keyword || '').trim().toLowerCase()
+    if (kw) { newList = newList.filter(function (x) { return x.name.toLowerCase().indexOf(kw) !== -1 }) }
     newList.sort(function (a, b) {
       if (a.exp !== b.exp) return a.exp ? 1 : -1
       return (b.lastModified || 0) - (a.lastModified || 0)
@@ -383,7 +384,8 @@ Page({
   scrollToTop: function () {
     var that = this
     that.setData({ scrollTop: 1 })
-    setTimeout(function () { that.setData({ scrollTop: 0 }) }, 100)
+    if (that._stt) clearTimeout(that._stt)
+    that._stt = setTimeout(function () { that.setData({ scrollTop: 0 }) }, 100)
   },
 
   scrollToBot: function () {
@@ -398,7 +400,7 @@ Page({
     var hlClass = item.low ? 'card-hl-red' : 'card-hl-green'
     item.highlight = hlClass
     that.setData({ list: list.slice() })
-    that._flashTimer = setTimeout(function () {
+    setTimeout(function () {
       item.highlight = ''
       that.setData({ list: list.slice() })
     }, 500)
@@ -435,9 +437,8 @@ Page({
 
   setDebugMember: function (e) {
     var v = parseInt(e.currentTarget.dataset.v)
-    if (v === 2) { app.globalData.isProMember = true; app.globalData.memberExpired = false }
-    else if (v === 1) { app.globalData.isProMember = true; app.globalData.memberExpired = true }
-    else { app.globalData.isProMember = false; app.globalData.memberExpired = false }
+    app.globalData.isProMember = (v === 2)
+    app.globalData.memberExpired = (v === 1)
     app.save(); this.setData({ debugMember: v }); this.reload()
   },
 
@@ -460,7 +461,7 @@ Page({
       content: '将删除所有学员数据，不可恢复',
       success: function (res) {
         if (res.confirm) {
-          app.globalData.students = []; app.globalData.nextId = 0; app.globalData.memberExpired = false; app.globalData.isProMember = false
+          app.globalData.students = []; app.globalData.nextId = 0; app.globalData.memberExpired = false
           app.save(); that._debugOffset = 0
           that.setData({ showDebug: false, debugOffset: 0, debugExpDays: 0, debugMember: 0 })
           that.reload()

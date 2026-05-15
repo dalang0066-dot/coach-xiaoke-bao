@@ -31,7 +31,7 @@
 /* 横幅 */
 .banner{ display:flex; align-items:center; justify-content:space-between; padding:10rpx 32rpx; background:#FEF3C7; flex-shrink:0; border-bottom:2rpx solid rgba(146,64,14,.15) }
 .banner-l{ display:flex; align-items:center; gap:12rpx; flex:1 }
-
+.banner-ico{ flex-shrink:0 }
 .banner-txt{ font-size:28rpx; color:#92400E; line-height:1.4 }
 .banner-x{ width:72rpx; height:72rpx; display:flex; align-items:center; justify-content:center; opacity:.7 }
 .banner-x text{ font-size:42rpx; color:#92400E; line-height:1 }
@@ -59,7 +59,7 @@
 .act-hist{ background:#f39c12 }
 .act-del{ background:#ba1a1a }
 
-.card-main{ display:flex; align-items:center; padding:32rpx 28rpx; position:relative; z-index:2; background:#fff }
+.card-main{ display:flex; align-items:center; padding:32rpx 28rpx; position:relative; z-index:2; background:#fff; transition:transform .25s ease }
 .card-swiped{ transform:translateX(-354rpx) }
 .card-hl-green{ box-shadow:0 0 0 4rpx rgba(0,109,55,.35), 0 8rpx 24rpx rgba(0,0,0,.04) }
 .card-hl-red{ box-shadow:0 0 0 4rpx rgba(186,26,26,.35), 0 8rpx 24rpx rgba(0,0,0,.04) }
@@ -101,11 +101,11 @@
 /* 消课 */
 .modal-class{ max-width:600rpx }
 .mc-body,.md-body,.me-body{ padding:50rpx 64rpx 0; text-align:center; display:flex; flex-direction:column; align-items:center }
-.mc-circle,.md-circle,
-.mc-title,.md-title,
+.mc-circle{ display:flex; align-items:center; justify-content:center; margin-bottom:40rpx }
+.mc-title{ font-size:40rpx; font-weight:600; color:#161d1f; margin-bottom:12rpx }
 .mc-desc{ font-size:28rpx; color:#5c5f60; line-height:1.5 }
-.mc-btns,
-.mc-btn,
+.mc-btns{ display:flex; gap:24rpx; padding:48rpx }
+.mc-btn{ flex:1; height:88rpx; border-radius:88rpx; display:flex; align-items:center; justify-content:center; font-size:34rpx; font-weight:500 }
 .mc-btn:active{ transform:scale(.98); opacity:.8 }
 .mc-cancel{ border:2rpx solid #bbcbbb; color:#5c5f60 }
 .mc-ok{ background:#006d37; color:#fff; box-shadow:0 16rpx 48rpx rgba(0,109,55,.16) }
@@ -140,19 +140,19 @@
 
 /* 删除 */
 .modal-del{ max-width:600rpx }
-
-
+.md-circle{ display:flex; align-items:center; justify-content:center; margin-bottom:40rpx }
+.md-title{ font-size:40rpx; font-weight:600; color:#161d1f; margin-bottom:12rpx }
 .md-desc{ font-size:28rpx; color:#3d4a3e; margin-bottom:0; line-height:1.5 }
-
-
+.md-btns{ display:flex; gap:24rpx; padding:48rpx }
+.md-btn{ flex:1; height:88rpx; border-radius:88rpx; display:flex; align-items:center; justify-content:center; font-size:34rpx; font-weight:500 }
 .md-btn:active{ opacity:.8 }
 .md-cancel{ border:2rpx solid #bbcbbb; color:#5c5f60 }
 .md-ok{ background:#b4271d; color:#fff }
 
 /* 课时过期 */
 .modal-exp{ max-width:600rpx }
-
-
+.me-circle{ display:flex; align-items:center; justify-content:center; margin-bottom:40rpx }
+.me-title{ font-size:40rpx; font-weight:600; color:#161d1f; margin-bottom:12rpx }
 .me-desc{ font-size:28rpx; color:#5c5f60; margin-bottom:0 }
 .me-btns{ display:flex; gap:24rpx; padding:48rpx; justify-content:center }
 .me-btn{ flex:1; height:88rpx; border-radius:88rpx; display:flex; align-items:center; justify-content:center; font-size:34rpx; font-weight:500; background:#006d37; color:#fff; box-shadow:0 16rpx 48rpx rgba(0,109,55,.16) }

@@ -5,6 +5,7 @@ page { height: 100vh; overflow: hidden; background-color: #f4fafd; font-family: 
 .c-green { color: #006d37 }
 .c-red { color: #ba1a1a }
 .c-gray2 { color: #5c5f60 }
+.c-yel { color: #ca8a04 }
 .b { font-weight: 600 }
 
 .pg { display: flex; flex-direction: column; height: 100vh; background: #f4fafd; overflow: hidden }

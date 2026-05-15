@@ -53,7 +53,7 @@
               <view class="act-btn act-del" bindtap="onDel" data-id="{{item.id}}"><image class="act-ico" src="/images/swipe-delete.png"></image><text>删除</text></view>
             </view>
             <view 
-              style="transform:translateX({{item.open ? -420 : (item._sx || 0)}}rpx);transition:{{item._st===false?'none':'transform .25s ease'}}"
+              style="transform:translateX({{item.open ? -420 : (item._sx || 0)}}rpx);transition:{{item._st===false?'none':'transform .35s ease'}}"
               class="card-main {{item.exp ? 'card-gray' : (item.low ? 'card-red' : '')}}"
               data-id="{{item.id}}"
               data-ix="{{index}}"
@@ -84,7 +84,7 @@
   <view class="bot-bar" wx:if="{{!empty}}" style="bottom:{{kbH}}px">
     <view class="search-wrap">
       <view class="search-icon-wrap"><image class="search-ico-img" src="/images/search-icon.png"></image></view>
-      <input class="search-inp" placeholder="搜索学员..." value="{{keyword}}" bindinput="onSearch" bindfocus="onSearchFocus" bindblur="onSearchBlur" adjust-position="{{false}}" cursor-spacing="{{0}}" confirm-type="search"/>
+      <input class="search-inp" placeholder="搜索学员..." value="{{keyword}}" bindinput="onSearch" bindfocus="onSearchFocus" bindblur="onSearchBlur" adjust-position="{{false}}" cursor-spacing="{{2}}" confirm-type="search"/>
       <view class="search-clear" wx:if="{{keyword}}" catchtap="onSearchClear"><text>✕</text></view>
     </view>
     <view class="add-btn2" bindtap="onAddTap">
@@ -273,9 +273,9 @@
       <view class="debug-row">
         <text class="debug-label">会员状态</text>
         <view class="debug-btns">
-          <view class="dbg-btn {{debugMember===0?'dbg-on':''}}" bindtap="setDebugMember" data-v="0"><text>未开通</text></view>
-          <view class="dbg-btn {{debugMember===2?'dbg-on':''}}" bindtap="setDebugMember" data-v="2"><text>已开通</text></view>
+          <view class="dbg-btn {{debugMember===0?'dbg-on':''}}" bindtap="setDebugMember" data-v="0"><text>免费版</text></view>
           <view class="dbg-btn {{debugMember===1?'dbg-on':''}}" bindtap="setDebugMember" data-v="1"><text>已到期</text></view>
+          <view class="dbg-btn {{debugMember===2?'dbg-on':''}}" bindtap="setDebugMember" data-v="2"><text>已付费</text></view>
         </view>
       </view>
 
@@ -288,7 +288,7 @@
       </view>
 
       <view class="debug-row">
-        <text class="debug-label">当前: {{debugOffset===0?'今天':(debugOffset>0?'+'+debugOffset+'天':debugOffset+'天')}} | 会员:{{app.globalData.isProMember?(app.globalData.memberExpired?'已到期':'已开通'):'未开通'}} | 学员:{{activeCnt}}</text>
+        <text class="debug-label">当前模拟: {{debugOffset===0?'今天':(debugOffset>0?'+'+debugOffset+'天':debugOffset+'天')}} | 会员{{debugMember===0?'免费版':(debugMember===1?'已到期':'已付费')}}</text>
       </view>
 
       <view class="debug-close" bindtap="closeDebug"><text>关闭</text></view>
