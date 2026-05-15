@@ -22,19 +22,19 @@
   <!-- 学员列表状态 -->
   <block wx:else>
     <view class="banner" wx:if="{{showSleepy}}">
-      <view class="banner-l"><text class="banner-ico">!</text><text class="banner-txt">{{sleepyName}}学员超过30天没上课了！</text></view>
+      <view class="banner-l"><text class="banner-ico">!</text><text class="banner-txt">学员{{sleepyName}}超过30天没上课啦！！！</text></view>
       <view class="banner-x" bindtap="dismissSleepy"><text>✕</text></view>
     </view>
     <view class="banner" wx:if="{{showExpiry}}">
-      <view class="banner-l"><text class="banner-ico">!</text><text class="banner-txt">学员{{expiryName}}的课时还有{{expiryDay}}天过期</text></view>
+      <view class="banner-l"><text class="banner-ico">!</text><text class="banner-txt">学员{{expiryName}}的课时还有{{expiryDay}}天过期啦！！！</text></view>
       <view class="banner-x" bindtap="dismissExpiry"><text>✕</text></view>
     </view>
     <view class="banner" wx:if="{{showMember}}">
-      <view class="banner-l" bindtap="onUpgrade"><text class="banner-ico">!</text><text class="banner-txt">您的会员已到期，点击升级会员</text></view>
+      <view class="banner-l" bindtap="onUpgrade"><text class="banner-ico">!</text><text class="banner-txt">您的会员已到期，点击升级会员！！！</text></view>
       <view class="banner-x" bindtap="dismissMember"><text>✕</text></view>
     </view>
 
-    <scroll-view class="list-scroll" scroll-y="true" scroll-top="{{scrollTop}}" bindscroll="onScroll">
+    <scroll-view class="list-scroll" scroll-y="{{scrollY}}" scroll-top="{{scrollTop}}" bindscroll="onScroll">
       <view class="list-wrap" bindtap="onTapBlank">
         <block wx:for="{{list}}" wx:key="id">
           <view class="card-box {{item.open ? 'card-open' : ''}} {{item.highlight}}">
@@ -44,10 +44,12 @@
               <view class="act-btn act-del" bindtap="onDel" data-id="{{item.id}}"><text>删除</text></view>
             </view>
             <view 
-              class="card-main {{item.open ? 'card-swiped' : ''}} {{item.exp ? 'card-gray' : (item.low ? 'card-red' : '')}}"
+              style="transform:translateX({{item.open ? -354 : (item._sx || 0)}}rpx);transition:{{item._st===false?'none':'transform .25s ease'}}"
+              class="card-main {{item.exp ? 'card-gray' : (item.low ? 'card-red' : '')}}"
               data-id="{{item.id}}"
               data-ix="{{index}}"
               bindtouchstart="ts"
+              catchtouchmove="tm"
               bindtouchend="te"
               catchtap="onCardTap"
             >

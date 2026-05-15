@@ -17,7 +17,7 @@ Page({
     showUndo: false, lastUndo: null,
     showLowT: false, lowMsg: '',
     showOkT: false,
-    isPro: false, activeCnt: 0, scrollTop: 0, kbH: 0,
+    isPro: false, activeCnt: 0, scrollTop: 0, kbH: 0, scrollY: true,
     showDebug: false, debugOffset: 0, debugExpDays: 0, debugMember: 0,
     _tsX: 0, _tsY: 0, _openIx: -1
   },
@@ -117,19 +117,52 @@ Page({
   onSearchClear: function () { this.setData({ keyword: '' }); this.reload() },
 
   // ===== 左滑 =====
-  ts: function (e) { this.data._tsX = e.touches[0].clientX; this.data._tsY = e.touches[0].clientY },
-  te: function (e) {
-    var dx = e.changedTouches[0].clientX - this.data._tsX
-    var dy = e.changedTouches[0].clientY - this.data._tsY
-    var ix = e.currentTarget.dataset.ix
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
-      if (this.data._openIx !== -1 && this.data._openIx !== ix) { this.closeIt(this.data._openIx) }
-      if (dx < -30) { this.openIt(ix) } else { this.closeIt(ix) }
-    }
+  ts: function (e) {
+    this.data._tsX = e.touches[0].clientX
+    this.data._tsY = e.touches[0].clientY
+    this.data._locked = false
   },
-  openIt: function (ix) { var list = this.data.list; if (!list[ix]) return; list[ix].open = true; this.setData({ list: list, _openIx: ix }) },
-  closeIt: function (ix) { var list = this.data.list; if (ix < 0 || !list[ix]) return; list[ix].open = false; this.setData({ list: list, _openIx: -1 }) },
-  closeAll: function () { var l = this.data.list, i = this.data._openIx; if (i >= 0 && l[i]) { l[i].open = false; this.setData({ list: l, _openIx: -1 }) } },
+
+  tm: function (e) {
+    var dx = e.touches[0].clientX - this.data._tsX
+    var dy = e.touches[0].clientY - this.data._tsY
+    if (this.data._locked) {
+      // 已锁定水平方向：阻止滚动，处理左滑
+      var ix = this.data._openIx !== -1 ? this.data._openIx : e.currentTarget.dataset.ix
+      var list = this.data.list
+      if (!list[ix]) return
+      var cur = list[ix]._sx || 0, nx = cur + dx
+      if (nx > 0) nx = 0; if (nx < -354) nx = -354
+      list[ix]._sx = nx; list[ix]._st = false
+      this.setData({ list: list, scrollY: false })
+      this.data._tsX = e.touches[0].clientX
+    } else if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+      // 锁定水平方向
+      this.data._locked = true
+      this.setData({ scrollY: false })
+    }
+    // 垂直滑动：不拦截，scroll-view正常滚动
+  },
+
+  te: function (e) {
+    var ix = e.currentTarget.dataset.ix
+    var list = this.data.list
+    if (this.data._locked && list[ix]) {
+      // 手指抬起，判断是否打开
+      var sx = list[ix]._sx || 0
+      if (sx < -120) {
+        if (this.data._openIx !== -1 && this.data._openIx !== ix) { this.closeIt(this.data._openIx) }
+        this.openIt(ix)
+      } else {
+        this.closeIt(ix)
+      }
+    }
+    this.data._locked = false
+    this.setData({ scrollY: true })
+  },
+  openIt: function (ix) { var list = this.data.list; if (!list[ix]) return; list[ix].open = true; list[ix]._sx = 0; list[ix]._st = true; this.setData({ list: list, _openIx: ix }) },
+  closeIt: function (ix) { var list = this.data.list; if (ix < 0 || !list[ix]) return; list[ix].open = false; list[ix]._sx = 0; list[ix]._st = true; this.setData({ list: list, _openIx: -1 }) },
+  closeAll: function () { var l = this.data.list, i = this.data._openIx; if (i >= 0 && l[i]) { l[i].open = false; l[i]._sx = 0; l[i]._st = true; this.setData({ list: l, _openIx: -1 }) } },
   onScroll: function () { if (this.data._openIx >= 0) this.closeAll() },
 
   onCardTap: function (e) {
@@ -405,6 +438,7 @@ Page({
 
   resetDebug: function () {
     this._debugOffset = 0; app.globalData.memberExpired = false
+    app.globalData.bannerDismissedToday = { date: U.today(), sleepy: false, expiry: false, memberExpired: false }
     this.setData({ debugOffset: 0, debugExpDays: 0, debugMember: 0 })
     // 恢复原始有效期（默认6个月后）
     var ss = app.globalData.students, td = U.today()

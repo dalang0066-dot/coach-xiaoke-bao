@@ -25,12 +25,12 @@
 .big-btn-icon{ font-size:112rpx; color:#fff; font-weight:300; line-height:1 }
 
 /* 横幅 */
-.banner{ display:flex; align-items:center; justify-content:space-between; padding:20rpx 32rpx; background:#FEF3C7; flex-shrink:0 }
+.banner{ display:flex; align-items:center; justify-content:space-between; padding:10rpx 32rpx; background:#FEF3C7; flex-shrink:0; border-bottom:2rpx solid rgba(146,64,14,.15) }
 .banner-l{ display:flex; align-items:center; gap:12rpx; flex:1 }
 .banner-ico{ font-size:28rpx; color:#92400E; font-weight:700; width:40rpx; height:40rpx; border-radius:50%; background:rgba(146,64,14,.1); display:flex; align-items:center; justify-content:center; flex-shrink:0 }
 .banner-txt{ font-size:28rpx; color:#92400E; line-height:1.4 }
-.banner-x{ width:48rpx; height:48rpx; display:flex; align-items:center; justify-content:center; opacity:.7 }
-.banner-x text{ font-size:28rpx; color:#92400E }
+.banner-x{ width:72rpx; height:72rpx; display:flex; align-items:center; justify-content:center; opacity:.7 }
+.banner-x text{ font-size:42rpx; color:#92400E; line-height:1 }
 
 /* 列表 */
 .list-scroll{ flex:1; min-height:0 }
