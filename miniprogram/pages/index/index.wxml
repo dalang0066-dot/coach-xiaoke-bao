@@ -5,16 +5,25 @@
   <block wx:if="{{empty}}">
     <scroll-view class="empty-scroll" scroll-y="true">
       <view class="guide-box">
-        <swiper class="guide-sw" indicator-dots="true" indicator-color="rgba(255,255,255,0.4)" indicator-active-color="#fff" autoplay="true" circular="true">
+        <swiper class="guide-sw" indicator-dots="{{false}}" autoplay="true" circular="true" bindchange="onGuideChange">
           <swiper-item><view class="guide-s1"><view class="guide-txt"><text class="guide-h">简单、高效、专业</text><text class="guide-p">记录每一份成长，管理每一节课堂</text></view></view></swiper-item>
           <swiper-item><view class="guide-s2"><view class="guide-txt"><text class="guide-h">3秒消课，高效管理</text><text class="guide-p">上完课即刻记录，不浪费每一秒</text></view></view></swiper-item>
           <swiper-item><view class="guide-s3"><view class="guide-txt"><text class="guide-h">数据安全，永不丢失</text><text class="guide-p">云端+本地双备份，换设备无忧</text></view></view></swiper-item>
         </swiper>
-        <view class="guide-grad"></view>
+        <view class="guide-dots">
+          <view class="gdot {{guideIdx===0?'gdot-on':''}}"></view>
+          <view class="gdot {{guideIdx===1?'gdot-on':''}}"></view>
+          <view class="gdot {{guideIdx===2?'gdot-on':''}}"></view>
+        </view>
       </view>
       <view class="empty-act">
         <text class="empty-hint">点击添加你的第一个学员</text>
-        <view class="big-btn" bindtap="onAdd"><text class="big-btn-icon">+</text></view>
+        <view class="big-btn" bindtap="onAdd">
+        <view class="plus-wrap">
+          <view class="plus-h"></view>
+          <view class="plus-v"></view>
+        </view>
+      </view>
       </view>
     </scroll-view>
   </block>
@@ -22,15 +31,15 @@
   <!-- 学员列表状态 -->
   <block wx:else>
     <view class="banner" wx:if="{{showSleepy}}">
-      <view class="banner-l"><text class="banner-ico">!</text><text class="banner-txt">学员{{sleepyName}}超过30天没上课啦！！！</text></view>
+      <view class="banner-l"><image class="banner-ico-img" src="/images/banner-icon.png"></image><text class="banner-txt">学员{{sleepyName}}超过30天没上课啦！！！</text></view>
       <view class="banner-x" bindtap="dismissSleepy"><text>✕</text></view>
     </view>
     <view class="banner" wx:if="{{showExpiry}}">
-      <view class="banner-l"><text class="banner-ico">!</text><text class="banner-txt">学员{{expiryName}}的课时还有{{expiryDay}}天过期啦！！！</text></view>
+      <view class="banner-l"><image class="banner-ico-img" src="/images/banner-icon.png"></image><text class="banner-txt">学员{{expiryName}}的课时还有{{expiryDay}}天过期啦！！！</text></view>
       <view class="banner-x" bindtap="dismissExpiry"><text>✕</text></view>
     </view>
     <view class="banner" wx:if="{{showMember}}">
-      <view class="banner-l" bindtap="onUpgrade"><text class="banner-ico">!</text><text class="banner-txt">您的会员已到期，点击升级会员！！！</text></view>
+      <view class="banner-l" bindtap="onUpgrade"><image class="banner-ico-img" src="/images/banner-icon.png"></image><text class="banner-txt">您的会员已到期，点击升级会员！！！</text></view>
       <view class="banner-x" bindtap="dismissMember"><text>✕</text></view>
     </view>
 
@@ -39,17 +48,17 @@
         <block wx:for="{{list}}" wx:key="id">
           <view class="card-box {{item.open ? 'card-open' : ''}} {{item.highlight}}">
             <view class="card-actions">
-              <view class="act-btn act-edit" bindtap="onEdit" data-id="{{item.id}}"><text>编辑</text></view>
-              <view class="act-btn act-hist" bindtap="onHist" data-id="{{item.id}}"><text>历史</text></view>
-              <view class="act-btn act-del" bindtap="onDel" data-id="{{item.id}}"><text>删除</text></view>
+              <view class="act-btn act-edit" bindtap="onEdit" data-id="{{item.id}}"><image class="act-ico" src="/images/swipe-edit.png"></image><text>编辑</text></view>
+              <view class="act-btn act-hist" bindtap="onHist" data-id="{{item.id}}"><image class="act-ico" src="/images/swipe-history.png"></image><text>历史</text></view>
+              <view class="act-btn act-del" bindtap="onDel" data-id="{{item.id}}"><image class="act-ico" src="/images/swipe-delete.png"></image><text>删除</text></view>
             </view>
             <view 
-              style="transform:translateX({{item.open ? -354 : (item._sx || 0)}}rpx);transition:{{item._st===false?'none':'transform .25s ease'}}"
+              style="transform:translateX({{item.open ? -420 : (item._sx || 0)}}rpx);transition:{{item._st===false?'none':'transform .35s ease'}}"
               class="card-main {{item.exp ? 'card-gray' : (item.low ? 'card-red' : '')}}"
               data-id="{{item.id}}"
               data-ix="{{index}}"
               bindtouchstart="ts"
-              catchtouchmove="tm"
+              bindtouchmove="tm"
               bindtouchend="te"
               catchtap="onCardTap"
             >
@@ -85,7 +94,7 @@
   <view class="modal" wx:if="{{showClass}}" catchtap="closeClass">
     <view class="modal-box modal-class" catchtap="nop">
       <view class="mc-body">
-        <view class="mc-circle"><text class="mc-check">✓</text></view>
+        <view class="mc-circle"><image class="mc-check-img" src="/images/class-ok.png"></image></view>
         <text class="mc-title">消课 1 节？</text>
         <text class="mc-desc">确认后将为学员 <text class="b">{{classTarget.name}}</text> 扣除 1 次课时</text>
       </view>
@@ -141,7 +150,7 @@
   <view class="modal" wx:if="{{showDel}}" catchtap="closeDel">
     <view class="modal-box modal-del" catchtap="nop">
       <view class="md-body">
-        <view class="md-circle"><text class="md-ico">🗑</text></view>
+        <view class="md-circle"><image class="md-ico-img" src="/images/delete-icon.png"></image></view>
         <text class="md-title">确定要删除学员吗？</text>
         <text class="md-desc"><text class="b">{{delTarget.name}}</text> 的所有历史记录将无法恢复。</text>
       </view>
@@ -156,7 +165,7 @@
   <view class="modal" wx:if="{{showExpModal}}" catchtap="closeExpModal">
     <view class="modal-box modal-exp" catchtap="nop">
       <view class="me-body">
-        <view class="me-circle"><text class="me-mark">!</text></view>
+        <view class="me-circle"><image class="me-mark-img" src="/images/expired-icon.png"></image></view>
         <text class="me-title">该学员课时已过期</text>
         <text class="me-desc">请先前往编辑页面添加课时</text>
       </view>
@@ -171,7 +180,7 @@
     <view class="modal-box modal-upg" catchtap="nop">
       <view class="mu-head">
         <view class="mu-badge"><text>PRO VERSION</text></view>
-        <view class="mu-crown"><text>👑</text></view>
+        <view class="mu-crown"><image class="mu-crown-img" src="/images/upgrade-icon.png"></image></view>
         <text class="mu-htitle">免费版学员已满</text>
       </view>
       <view class="mu-body">
@@ -209,7 +218,7 @@
           <view class="hrec {{item.type==='recharge'?'hrec-g':''}}" wx:if="{{item.type !== 'undo'}}">
             <view class="hrec-l">
               <view class="hrec-ico {{item.type==='deduct'?'hri-red':'hri-gr'}}">
-                <text>{{item.type==='deduct'?'−':'✓'}}</text>
+                <image class="hrec-ico-img" src="{{item.type==='deduct'?'/images/hist-deduct.png':'/images/hist-add.png'}}"></image>
               </view>
               <view class="hrec-info">
                 <text class="hrec-act">{{item.type==='deduct'?'消课':'新增'}} <text class="hrec-num {{item.type==='deduct'?'c-red':'c-green'}}">{{item.amount}}</text> 节</text>
@@ -228,7 +237,7 @@
 
   <!-- Toast -->
   <view class="toast toast-undo {{showUndo?'toast-on':''}}">
-    <view class="toast-left"><text class="toast-gr">✓</text><text class="toast-wt">消课成功</text></view>
+    <view class="toast-left"><image class="toast-gr-img" src="/images/toast-ok.png"></image><text class="toast-wt">消课成功</text></view>
     <view class="toast-div"></view><text class="toast-link" catchtap="undoClass">点击撤销</text>
   </view>
   <view class="toast toast-top {{showLowT?'toast-on':''}}"><text class="toast-wt">{{lowMsg}}</text></view>
@@ -283,6 +292,6 @@
   </view>
 
   <view class="toast toast-bot {{showOkT?'toast-on':''}}">
-    <view class="toast-left"><text class="toast-gr">✓</text><text class="toast-wt">操作成功</text></view>
+    <view class="toast-left"><image class="toast-gr-img" src="/images/toast-ok.png"></image><text class="toast-wt">操作成功</text></view>
   </view>
 </view>
