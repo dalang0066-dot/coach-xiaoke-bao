@@ -66,8 +66,7 @@
 .card-gray.card-main{ background:#e5eaec }
 .card-red.card-main{ background:#fff5f5; border-left:8rpx solid #ba1a1a }
 
-.card-av{ width:108rpx; height:108rpx; border-radius:50%; margin-right:28rpx; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:rgba(46,204,113,.2); overflow:hidden }
-.av-gray{ background:#e1e3e4 }
+.card-av{ width:108rpx; height:108rpx; border-radius:50%; margin-right:28rpx; flex-shrink:0; overflow:hidden }
 .av-img{ width:100%; height:100%; border-radius:50% }
 
 .card-info{ flex:1; min-width:0 }
@@ -115,7 +114,7 @@
 .mf-head{ display:flex; align-items:center; justify-content:center; min-height:88rpx; border-bottom:2rpx solid rgba(221,228,230,.3); flex-shrink:0 }
 .mf-title{ font-size:40rpx; font-weight:600; color:#161d1f; line-height:88rpx }
 .mf-body{ flex:1; padding:24rpx 32rpx 0; overflow-x:hidden; min-height:500rpx; box-sizing:border-box }
-.mf-av{ width:160rpx; height:160rpx; border-radius:50%; margin:16rpx auto 32rpx; background:rgba(46,204,113,.1); display:flex; align-items:center; justify-content:center; position:relative; border:6rpx solid rgba(0,109,55,.05); flex-shrink:0; overflow:hidden }
+.mf-av{ width:160rpx; height:160rpx; border-radius:50%; margin:16rpx auto 32rpx; display:flex; align-items:center; justify-content:center; position:relative; flex-shrink:0; overflow:hidden }
 .mf-av:active{ transform:scale(.95) }
 .mf-av-img{ width:100%; height:100%; border-radius:50% }
 .mf-av-hint{ position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.05); border-radius:50%; display:flex; align-items:center; justify-content:center; opacity:0 }
