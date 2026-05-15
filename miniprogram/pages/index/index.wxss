@@ -59,7 +59,7 @@
 .act-hist{ background:#f39c12 }
 .act-del{ background:#ba1a1a }
 
-.card-main{ display:flex; align-items:center; padding:32rpx 28rpx; position:relative; z-index:2; background:#fff; transition:transform .25s ease }
+.card-main{ display:flex; align-items:center; padding:32rpx 28rpx; position:relative; z-index:2; background:#fff }
 .card-swiped{ transform:translateX(-354rpx) }
 .card-hl-green{ box-shadow:0 0 0 4rpx rgba(0,109,55,.35), 0 8rpx 24rpx rgba(0,0,0,.04) }
 .card-hl-red{ box-shadow:0 0 0 4rpx rgba(186,26,26,.35), 0 8rpx 24rpx rgba(0,0,0,.04) }

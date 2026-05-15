@@ -53,7 +53,7 @@
               <view class="act-btn act-del" bindtap="onDel" data-id="{{item.id}}"><image class="act-ico" src="/images/swipe-delete.png"></image><text>删除</text></view>
             </view>
             <view 
-              style="transform:translateX({{item.open ? -420 : (item._sx || 0)}}rpx);transition:{{item._st===false?'none':'transform .35s ease'}}"
+              style="transform:translateX({{item.open ? -420 : (item._sx || 0)}}rpx);transition:{{item._st===false?'none':'transform .25s ease'}}"
               class="card-main {{item.exp ? 'card-gray' : (item.low ? 'card-red' : '')}}"
               data-id="{{item.id}}"
               data-ix="{{index}}"
@@ -273,7 +273,8 @@
       <view class="debug-row">
         <text class="debug-label">会员状态</text>
         <view class="debug-btns">
-          <view class="dbg-btn {{debugMember===0?'dbg-on':''}}" bindtap="setDebugMember" data-v="0"><text>正常</text></view>
+          <view class="dbg-btn {{debugMember===0?'dbg-on':''}}" bindtap="setDebugMember" data-v="0"><text>未开通</text></view>
+          <view class="dbg-btn {{debugMember===2?'dbg-on':''}}" bindtap="setDebugMember" data-v="2"><text>已开通</text></view>
           <view class="dbg-btn {{debugMember===1?'dbg-on':''}}" bindtap="setDebugMember" data-v="1"><text>已到期</text></view>
         </view>
       </view>
@@ -287,7 +288,7 @@
       </view>
 
       <view class="debug-row">
-        <text class="debug-label">当前模拟: {{debugOffset===0?'今天':(debugOffset>0?'+'+debugOffset+'天':debugOffset+'天')}} | 会员{{app.globalData.memberExpired?'已到期':'正常'}}</text>
+        <text class="debug-label">当前: {{debugOffset===0?'今天':(debugOffset>0?'+'+debugOffset+'天':debugOffset+'天')}} | 会员:{{app.globalData.isProMember?(app.globalData.memberExpired?'已到期':'已开通'):'未开通'}} | 学员:{{activeCnt}}</text>
       </view>
 
       <view class="debug-close" bindtap="closeDebug"><text>关闭</text></view>

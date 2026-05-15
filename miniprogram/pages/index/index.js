@@ -434,12 +434,15 @@ Page({
   },
 
   setDebugMember: function (e) {
-    var v = parseInt(e.currentTarget.dataset.v); app.globalData.memberExpired = (v === 1)
+    var v = parseInt(e.currentTarget.dataset.v)
+    if (v === 2) { app.globalData.isProMember = true; app.globalData.memberExpired = false }
+    else if (v === 1) { app.globalData.isProMember = true; app.globalData.memberExpired = true }
+    else { app.globalData.isProMember = false; app.globalData.memberExpired = false }
     app.save(); this.setData({ debugMember: v }); this.reload()
   },
 
   resetDebug: function () {
-    this._debugOffset = 0; app.globalData.memberExpired = false
+    this._debugOffset = 0; app.globalData.memberExpired = false; app.globalData.isProMember = false
     app.globalData.bannerDismissedToday = { date: U.today(), sleepy: false, expiry: false, memberExpired: false }
     this.setData({ debugOffset: 0, debugExpDays: 0, debugMember: 0 })
     // 恢复原始有效期（默认6个月后）
@@ -457,7 +460,7 @@ Page({
       content: '将删除所有学员数据，不可恢复',
       success: function (res) {
         if (res.confirm) {
-          app.globalData.students = []; app.globalData.nextId = 0; app.globalData.memberExpired = false
+          app.globalData.students = []; app.globalData.nextId = 0; app.globalData.memberExpired = false; app.globalData.isProMember = false
           app.save(); that._debugOffset = 0
           that.setData({ showDebug: false, debugOffset: 0, debugExpDays: 0, debugMember: 0 })
           that.reload()
