@@ -62,7 +62,7 @@
               bindtouchend="te"
               catchtap="onCardTap"
             >
-              <view class="card-av {{item.exp ? 'av-gray' : ''}}"><image class="av-img" src="{{item.avatarSrc}}" mode="aspectFit"></image></view>
+              <view class="card-av {{item.exp ? 'av-gray' : ''}}"><image class="av-img" src="{{item.avatarSrc}}" mode="aspectFill"></image></view>
               <view class="card-info">
                 <text class="card-name {{item.exp ? 'c-gray' : ''}}">{{item.name}}</text>
                 <text class="card-note {{item.exp ? 'c-gray' : ''}}">{{item.note || ''}}</text>
@@ -114,7 +114,7 @@
       <view class="mf-head"><text class="mf-title">{{editing?'编辑学员':'添加学员'}}</text></view>
       <scroll-view class="mf-body" scroll-y="true" enhanced="true" show-scrollbar="false">
         <view class="mf-av" bindtap="randAv">
-          <image class="mf-av-img" src="{{fd.avatarSrc}}" mode="aspectFit"></image>
+          <image class="mf-av-img" src="{{fd.avatarSrc}}" mode="aspectFill"></image>
           <view class="mf-av-hint"><text>🔄</text></view>
         </view>
         <view class="mf-f">
