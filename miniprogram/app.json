@@ -3,6 +3,7 @@
     "pages/index/index",
     "pages/history/history"
   ],
+  "lazyCodeLoading": "requiredComponents",
   "window": {
     "navigationStyle": "custom",
     "navigationBarTextStyle": "black",

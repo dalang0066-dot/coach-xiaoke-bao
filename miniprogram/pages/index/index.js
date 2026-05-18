@@ -1,7 +1,9 @@
 var app = getApp()
 var U = require('../../utils/util.js')
+var C = require('../../utils/cloud.js')
+var A = require('../../utils/analytics.js')
 var AVATARS = []
-for (var ai = 1; ai <= 46; ai++) { AVATARS.push('/images/avatars/avatar_' + ai + '.png') }
+for (var ai = 1; ai <= 40; ai++) { AVATARS.push('/images/avatars/avatar_' + ai + '.png') }
 function rem() { return AVATARS[Math.floor(Math.random() * AVATARS.length)] }
 
 Page({
@@ -10,7 +12,7 @@ Page({
     showSleepy: false, sleepyName: '',
     showExpiry: false, expiryName: '', expiryDay: 0,
     showMember: false,
-    showClass: false, classTarget: {},
+    showClass: false, classTarget: {}, classAmount: 1,
     showForm: false, editing: false, editId: 0,
     fd: { avatarSrc: '/images/avatars/avatar_1.png', name: '', totalLessons: 24, expiryDate: '', note: '' },
     showDel: false, delTarget: {},
@@ -19,24 +21,35 @@ Page({
     showUpg: false, plan: U.PLAN.YEARLY,
     showUndo: false, lastUndo: null,
     showLowT: false, lowMsg: '',
-    showOkT: false,
-    isPro: false, activeCnt: 0, scrollTop: 0, kbH: 0, scrollY: true,
-    showDebug: false, debugOffset: 0, debugExpDays: 0, debugMember: 0, guideIdx: 0,
+    showOkT: false, okMsg: '操作成功', showHintT: false,
+    showEasterT: false, showEasterEgg: false, easterClaimed: false,
+    isPro: false, activeCnt: 0, scrollTop: 0, kbH: 0, scrollY: true, botPad: 20,
+    showDebug: false, debugOffset: 0, debugExpDays: 0, debugMember: 0,
     _tsX: 0, _tsY: 0, _openIx: -1, _swipeIx: -1, _locked: false
   },
 
   _searchTimer: null,
+  _guideTapCount: 0,
+  _guideTapTimer: null,
 
   onShareAppMessage: function () { return { title: '教练消课宝', path: '/pages/index/index' } },
 
   onLoad: function () {
-    this.setData({ sbh: app.globalData.statusBarHeight || 20 })
+    var sys = wx.getSystemInfoSync()
+    var safeBot = sys.safeArea ? (sys.screenHeight - sys.safeArea.bottom) : 0
+    var botPad = safeBot > 0 ? Math.round(safeBot * 750 / sys.screenWidth) : 40
+    this.setData({ sbh: app.globalData.statusBarHeight || sys.statusBarHeight || 20, botPad: botPad })
     var that = this
     wx.onKeyboardHeightChange(function (res) { that.setData({ kbH: res.height }) })
     this.reload()
   },
 
-  onShow: function () { this.reload() },
+  onShow: function () {
+    C.checkNetwork()
+    // 恢复在线后刷新离线队列
+    if (C.isOnline()) C.flushQueue()
+    this.reload()
+  },
 
   onHide: function () {
     if (this._ut) { clearTimeout(this._ut); this._ut = null }
@@ -122,7 +135,7 @@ Page({
 
   onSearchBlur: function () {},
   onSearchClear: function () { this.setData({ keyword: '' }); this.reload() },
-  onGuideChange: function (e) { this.setData({ guideIdx: e.detail.current }) },
+
 
   // ===== 左滑 =====
   ts: function (e) {
@@ -178,12 +191,12 @@ Page({
       this.closeIt(oldIx)
       if (oldIx !== ix) {
         var s = this.getById(id); if (!s) return
-        if (U.isExp(s)) { this.setData({ showExpModal: true }) } else { this.setData({ showClass: true, classTarget: s }) }
+        if (U.isExp(s)) { this.setData({ showExpModal: true }) } else { this.setData({ showClass: true, classTarget: s, classAmount: 1 }) }
       }
       return
     }
     var s = this.getById(id); if (!s) return
-    if (U.isExp(s)) { this.setData({ showExpModal: true }) } else { this.setData({ showClass: true, classTarget: s }) }
+    if (U.isExp(s)) { this.setData({ showExpModal: true }) } else { this.setData({ showClass: true, classTarget: s, classAmount: 1 }) }
   },
 
   // ===== 横幅 =====
@@ -195,7 +208,7 @@ Page({
   onAddTap: function () {
     this.closeAll()
     var pro = this.data.isPro && !app.globalData.memberExpired, cnt = this.data.activeCnt
-    if (!pro && cnt >= 10) { this.setData({ showUpg: true, plan: U.PLAN.YEARLY }); return }
+    if (!pro && cnt >= 8) { A.track('upgrade_show'); this.setData({ showUpg: true, plan: U.PLAN.YEARLY }); return }
     this.onAdd()
   },
 
@@ -254,18 +267,92 @@ Page({
       })
     }
     app.globalData.students = ss; app.save()
-    var wasEditing = this.data.editing
-    this.setData({ showForm: false, editing: false }); this.showOk(); this.reload()
-    if (wasEditing) this.scrollToTop()
+    A.track(wasEditing ? 'student_edit' : 'student_add')
+    // 云端同步新/编辑的学员
+    if (C.isReady()) {
+      var synced = wasEditing ? ss.filter(function (s) { return s.id == editId })[0] : ss[ss.length - 1]
+      if (synced) C.syncStudent(synced)
+    }
+    var wasEditing = this.data.editing, editId = this.data.editId
+    this.setData({ showForm: false, editing: false })
+    if (wasEditing || this.data.activeCnt > 0) this.showOk()
+    this.reload()
+    if (wasEditing) {
+      var list = this.data.list, targetItem = null
+      for (var k = 0; k < list.length; k++) { if (list[k].id == editId) { targetItem = list[k]; break } }
+      if (targetItem) this.flashCard(list, targetItem)
+      this.scrollToTop()
+    } else {
+      // 首次添加学员：1秒后触发左滑提示动画
+      if (this.data.activeCnt === 1) this.showSwipeHint()
+    }
   },
 
-  // ===== 删除 =====
+  showSwipeHint: function () {
+    var that = this
+    setTimeout(function () {
+      that.setData({ showHintT: true })
+      setTimeout(function () {
+        that.setData({ showHintT: false })
+      }, 2000)
+    }, 1000)
+  },
+
+  // ===== 彩蛋 =====
+  onGuideTap: function () {
+    var that = this
+    this._guideTapCount++
+    if (this._guideTapTimer) clearTimeout(this._guideTapTimer)
+    if (this._guideTapCount >= 2) {
+      if (this.data.showEasterT) {
+        // toast还在 → 触发彩蛋！
+        this.setData({ showEasterT: false })
+        this._guideTapCount = 0
+        var claimed = wx.getStorageSync('_easter_egg_claimed') || false
+        // 防滥用：只有未领取过才给会员
+        that.setData({ showEasterEgg: true, easterClaimed: !!claimed })
+        try { wx.vibrateShort({ type: 'medium' }) } catch (e) {}
+        return
+      }
+      // 首次双击 → 弹出神秘文案
+      this.setData({ showEasterT: true })
+      this._guideTapCount = 0
+      setTimeout(function () { that.setData({ showEasterT: false }) }, 1000)
+      return
+    }
+    this._guideTapTimer = setTimeout(function () { that._guideTapCount = 0 }, 800)
+  },
+
+  closeEasterEgg: function () { this.setData({ showEasterEgg: false }) },
+
+  confirmEasterEgg: function () {
+    var that = this
+    if (!this.data.easterClaimed) {
+      A.track('easter_claimed')
+      // 首次触发：领取1个月会员
+      wx.setStorageSync('_easter_egg_claimed', true)
+      var exp = U.addMonths(U.today(), 1)
+      app.globalData.isProMember = true
+      app.globalData.memberExpired = false
+      app.globalData.easterProExpiry = exp
+      app.save()
+      // 云端同步彩蛋标记（未开云开发时静默跳过）
+      C.syncEasterClaimed()
+      this.setData({ showEasterEgg: false, easterClaimed: true, isPro: true })
+    } else {
+      this.setData({ showEasterEgg: false })
+    }
+  },
   onDel: function (e) { var id = e.currentTarget.dataset.id, s = this.getById(id); if (!s) return; this.closeAll(); this.setData({ showDel: true, delTarget: s }) },
   closeDel: function () { this.setData({ showDel: false }) },
   doDel: function () {
     var tid = this.data.delTarget.id
-    app.globalData.students = app.globalData.students.map(function (s) { if (s.id == tid) { s.deleted = true; s.deletedAt = U.today() } return s })
+    app.globalData.students = app.globalData.students.map(function (s) {
+      if (s.id == tid) { s.deleted = true; s.deletedAt = U.today(); if (C.isReady()) C.syncStudent(s) }
+      return s
+    })
     app.save(); this.setData({ showDel: false })
+    A.track('student_delete')
     var hasActive = false, ss = app.globalData.students
     for (var i = 0; i < ss.length; i++) { if (!ss[i].deleted) { hasActive = true; break } }
     if (hasActive) this.showOk()
@@ -274,14 +361,21 @@ Page({
 
   // ===== 消课 =====
   closeClass: function () { this.setData({ showClass: false }) },
+	  onClassQuick: function (e) { this.setData({ classAmount: parseInt(e.currentTarget.dataset.v) || 1 }) },
   doClass: function () {
-    var that = this, t = this.data.classTarget, td = U.today(), tm = U.formatTime()
-    that.data.lastUndo = { id: t.id, rb: t.remainingLessons, lcd: t.lastClassDate }
+    var that = this, t = this.data.classTarget, td = U.today(), tm = U.formatTime(), amt = this.data.classAmount || 1
+    A.track('deduct', { amount: amt, studentId: t.id })
+    var online = C.isOnline()
+    that.data.lastUndo = { id: t.id, rb: t.remainingLessons, lcd: t.lastClassDate, amt: amt }
 
     app.globalData.students = app.globalData.students.map(function (s) {
       if (s.id == t.id) {
-        s.remainingLessons = Math.max(0, s.remainingLessons - 1); s.lastClassDate = td; s.lastModified = Date.now()
-        s.history = [{ type: U.REC.DEDUCT, amount: 1, time: td + " " + tm, ts: Date.now() }].concat(s.history || [])
+        s.remainingLessons = Math.max(0, s.remainingLessons - amt); s.lastClassDate = td; s.lastModified = Date.now()
+        s.history = [{ type: U.REC.DEDUCT, amount: amt, time: td + " " + tm, ts: Date.now() }].concat(s.history || [])
+        // 云端同步（在线时同步，离线时入队）
+        if (C.isReady()) {
+          if (online) { C.syncStudent(s) } else { C.queueOp('save', s) }
+        }
       }
       return s
     })
@@ -316,7 +410,7 @@ Page({
 
     if (that._ut) clearTimeout(that._ut)
     that._ut = setTimeout(function () { that.setData({ showUndo: false, lastUndo: null }) }, 10000)
-    var nr = that.data.lastUndo.rb - 1
+    var nr = that.data.lastUndo.rb - amt
     if (nr === 3 || nr === 1) {
       that.setData({ showLowT: true, lowMsg: "该学员剩余" + nr + "节课，记得提醒续费哦～" })
       that._lt = setTimeout(function () { that.setData({ showLowT: false }) }, 2000)
@@ -326,6 +420,7 @@ Page({
   undoClass: function () {
     var a = this.data.lastUndo; if (!a) return
 
+    A.track('undo')
     app.globalData.students = app.globalData.students.map(function (s) {
       if (s.id == a.id) {
         var nh = [], rm = false
@@ -334,6 +429,7 @@ Page({
           nh.push(s.history[i])
         }
         s.remainingLessons = a.rb; s.lastClassDate = a.lcd || s.lastClassDate; s.history = nh; s.lastModified = Date.now()
+        if (C.isReady()) C.syncStudent(s)
       }
       return s
     })
@@ -368,8 +464,28 @@ Page({
   onUpgrade: function () { this.setData({ showUpg: true, plan: U.PLAN.YEARLY }) },
   closeUpg: function () { this.setData({ showUpg: false }) },
   onPlan: function (e) { this.setData({ plan: e.currentTarget.dataset.plan }) },
-  doUpg: function () { wx.showToast({ title: '微信支付功能开发中', icon: 'none', duration: 2000 }); this.setData({ showUpg: false }) },
-  showOk: function () { var that = this; if (that.data.showUndo) { that.setData({ showUndo: false, lastUndo: null }); if (that._ut) { clearTimeout(that._ut); that._ut = null } } if (that._ot) clearTimeout(that._ot); that.setData({ showOkT: true }); that._ot = setTimeout(function () { that.setData({ showOkT: false }) }, 2000) },
+  doUpg: function () {
+    var that = this, plan = this.data.plan
+    if (!C.isReady()) {
+      wx.showToast({ title: '支付功能即将上线', icon: 'none', duration: 2000 })
+      this.setData({ showUpg: false })
+      return
+    }
+    wx.showLoading({ title: '处理中...', mask: true })
+    C.pay(plan, function (err) {
+      wx.hideLoading()
+      if (err) {
+        if (err !== 'pay_cancel') { wx.showToast({ title: '支付失败，请重试', icon: 'none', duration: 2000 }) }
+      } else {
+        app.globalData.isProMember = true
+        app.globalData.memberExpired = false
+        app.save()
+        that.setData({ showUpg: false, isPro: true, showMember: false })
+        wx.showToast({ title: '升级成功！', icon: 'success', duration: 2000 })
+      }
+    })
+  },
+  showOk: function () { var that = this; if (that.data.showUndo) { that.setData({ showUndo: false, lastUndo: null }); if (that._ut) { clearTimeout(that._ut); that._ut = null } } if (that._ot) clearTimeout(that._ot); that.setData({ showOkT: true, okMsg: '操作成功' }); that._ot = setTimeout(function () { that.setData({ showOkT: false }) }, 2000) },
 
   // ===== 历史 =====
   onHist: function (e) {

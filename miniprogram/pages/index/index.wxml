@@ -5,16 +5,7 @@
   <block wx:if="{{empty}}">
     <scroll-view class="empty-scroll" scroll-y="true">
       <view class="guide-box">
-        <swiper class="guide-sw" indicator-dots="{{false}}" autoplay="true" circular="true" bindchange="onGuideChange">
-          <swiper-item><view class="guide-s1"><view class="guide-txt"><text class="guide-h">简单、高效、专业</text><text class="guide-p">记录每一份成长，管理每一节课堂</text></view></view></swiper-item>
-          <swiper-item><view class="guide-s2"><view class="guide-txt"><text class="guide-h">3秒消课，高效管理</text><text class="guide-p">上完课即刻记录，不浪费每一秒</text></view></view></swiper-item>
-          <swiper-item><view class="guide-s3"><view class="guide-txt"><text class="guide-h">数据安全，永不丢失</text><text class="guide-p">云端+本地双备份，换设备无忧</text></view></view></swiper-item>
-        </swiper>
-        <view class="guide-dots">
-          <view class="gdot {{guideIdx===0?'gdot-on':''}}"></view>
-          <view class="gdot {{guideIdx===1?'gdot-on':''}}"></view>
-          <view class="gdot {{guideIdx===2?'gdot-on':''}}"></view>
-        </view>
+        <image class="guide-img" src="/images/guide.jpg" mode="aspectFill" bindtap="onGuideTap"></image>
       </view>
       <view class="empty-act">
         <text class="empty-hint">点击添加你的第一个学员</text>
@@ -52,9 +43,9 @@
               <view class="act-btn act-hist" bindtap="onHist" data-id="{{item.id}}"><image class="act-ico" src="/images/swipe-history.png"></image><text>历史</text></view>
               <view class="act-btn act-del" bindtap="onDel" data-id="{{item.id}}"><image class="act-ico" src="/images/swipe-delete.png"></image><text>删除</text></view>
             </view>
-            <view 
+            <view
               style="transform:translateX({{item.open ? -420 : (item._sx || 0)}}rpx);transition:{{item._st===false?'none':'transform .35s ease'}}"
-              class="card-main {{item.exp ? 'card-gray' : (item.low ? 'card-red' : '')}}"
+              class="card-main {{item.exp ? 'card-gray' : (item.low ? 'card-red' : '')}} {{showHintT && index===0 ? 'card-hint' : ''}}"
               data-id="{{item.id}}"
               data-ix="{{index}}"
               bindtouchstart="ts"
@@ -73,6 +64,7 @@
               </view>
             </view>
           </view>
+          <view class="card-hint-tip" wx:if="{{showHintT && index===0}}"><text>左滑卡片试试～</text></view>
         </block>
         <view class="no-result" wx:if="{{list.length===0 && keyword}}"><text class="c-gray2">未找到匹配的学员</text></view>
         <view class="pad-bot"></view>
@@ -81,7 +73,7 @@
   </block>
 
   <!-- 底部栏 -->
-  <view class="bot-bar" wx:if="{{!empty}}" style="bottom:{{kbH}}px">
+  <view class="bot-bar" wx:if="{{!empty}}" style="padding-bottom:{{botPad}}rpx;bottom:{{kbH}}px">
     <view class="search-wrap">
       <view class="search-icon-wrap"><image class="search-ico-img" src="/images/search-icon.png"></image></view>
       <input class="search-inp" placeholder="搜索学员..." value="{{keyword}}" bindinput="onSearch" bindfocus="onSearchFocus" bindblur="onSearchBlur" adjust-position="{{false}}" cursor-spacing="{{2}}" confirm-type="search"/>
@@ -98,8 +90,16 @@
     <view class="modal-box modal-class" catchtap="nop">
       <view class="mc-body">
         <view class="mc-circle"><image class="mc-check-img" src="/images/class-ok.png"></image></view>
-        <text class="mc-title">消课 1 节？</text>
-        <text class="mc-desc">确认后将扣除 <text class="b">{{classTarget.name}}</text> 次课时</text>
+        <text class="mc-title">选择消课节数</text>
+        <view class="mc-quick">
+          <view class="mc-qbtn {{classAmount===1?'mc-qon':''}}" data-v="1" bindtap="onClassQuick">
+            <text class="mc-qn">1节</text><text class="mc-qs">标准课时</text>
+          </view>
+          <view class="mc-qbtn {{classAmount===2?'mc-qon':''}}" data-v="2" bindtap="onClassQuick">
+            <text class="mc-qn">2节</text><text class="mc-qs">连上/双课</text>
+          </view>
+        </view>
+        <text class="mc-desc"><text class="b">{{classTarget.name}}</text> 将扣除对应课时</text>
       </view>
       <view class="mc-btns">
         <view class="mc-btn mc-cancel" bindtap="closeClass"><text>取消</text></view>
@@ -112,10 +112,9 @@
   <view class="modal" wx:if="{{showForm}}" catchtap="closeForm">
     <view class="modal-box modal-form" catchtap="nop">
       <view class="mf-head"><text class="mf-title">{{editing?'编辑学员':'添加学员'}}</text></view>
-      <scroll-view class="mf-body" scroll-y="true" enhanced="true" show-scrollbar="false">
+      <scroll-view class="mf-body" scroll-y="true" show-scrollbar="false">
         <view class="mf-av" bindtap="randAv">
           <image class="mf-av-img" src="{{fd.avatarSrc}}" mode="aspectFill"></image>
-          <view class="mf-av-hint"><text>🔄</text></view>
         </view>
         <view class="mf-f">
           <text class="mf-lbl">姓名</text>
@@ -202,6 +201,20 @@
     </view>
   </view>
 
+  <!-- ===== 彩蛋弹窗 ===== -->
+  <view class="modal" wx:if="{{showEasterEgg}}" catchtap="closeEasterEgg">
+    <view class="modal-box modal-class" catchtap="nop">
+      <view class="mc-body">
+        <view class="mc-circle"><image class="mc-check-img" src="/images/class-ok.png"></image></view>
+        <text class="mc-title">恭喜你发现了彩蛋~</text>
+        <text class="mc-desc" wx:if="{{!easterClaimed}}">获得专业版会员一个月</text>
+      </view>
+      <view class="mc-btns">
+        <view class="mc-btn mc-ok" bindtap="confirmEasterEgg"><text>确认</text></view>
+      </view>
+    </view>
+  </view>
+
   <!-- ===== 历史记录弹窗 ===== -->
   <view class="modal" wx:if="{{showHist}}" catchtap="closeHist">
     <view class="modal-box modal-hist" catchtap="nop">
@@ -209,7 +222,7 @@
         <text class="mh-title">历史记录</text>
       </view>
       <view class="mh-sum">
-        <view class="mhs-av"><text class="mhs-emoji">{{histData.emoji}}</text></view>
+        <view class="mhs-av"><image class="av-img" src="{{histData.emoji}}" mode="aspectFill"></image></view>
         <view class="mhs-info">
           <text class="mhs-name">{{histData.name}}</text>
           <view class="mhs-badge"><text>剩余 {{histData.remaining}} 节</text></view>
@@ -244,6 +257,8 @@
     <view class="toast-div"></view><text class="toast-link" catchtap="undoClass">点击撤销</text>
   </view>
   <view class="toast toast-top {{showLowT?'toast-on':''}}"><text class="toast-wt">{{lowMsg}}</text></view>
+  <!-- 彩蛋toast -->
+  <view class="toast easter-toast {{showEasterT?'toast-on':''}}"><text class="toast-wt">难道~被你发现了？</text></view>
   <!-- 调试面板 -->
   <view class="modal" wx:if="{{showDebug}}" catchtap="closeDebug">
     <view class="modal-box debug-panel" catchtap="nop">
@@ -296,6 +311,6 @@
   </view>
 
   <view class="toast toast-bot {{showOkT?'toast-on':''}}">
-    <view class="toast-left"><image class="toast-gr-img" src="/images/toast-ok.png"></image><text class="toast-wt">操作成功</text></view>
+    <view class="toast-left"><image class="toast-gr-img" src="/images/toast-ok.png"></image><text class="toast-wt">{{okMsg}}</text></view>
   </view>
 </view>
