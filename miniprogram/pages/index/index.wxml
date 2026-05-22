@@ -1,22 +1,18 @@
-<view class="pg" bindtap="onTapBlank">
-  <view class="topbar" style="padding-top:{{sbh}}px"><text class="topbar-tt" bindlongpress="onDebug">教练消课宝</text></view>
+<view class="pg">
+  <text class="topbar-tt {{empty ? '' : 'topbar-white'}}" style="padding-top:{{sbh}}px" bindlongpress="onDebug">教练消课宝</text>
+  <view class="top-ico" wx:if="{{!empty}}" style="top:{{icoTop}}rpx;left:{{icoLeft}}rpx;width:{{icoSize}}rpx;height:{{icoSize}}rpx;border-radius:{{icoRadius}}rpx" bindtap="onTopIco">
+    <image class="top-ico-img" src="/images/feedback-icon.png" mode="aspectFit"></image>
+  </view>
 
   <!-- 空状态 -->
   <block wx:if="{{empty}}">
-    <scroll-view class="empty-scroll" scroll-y="true">
-      <view class="guide-box">
-        <image class="guide-img" src="/images/guide.jpg" mode="aspectFill" bindtap="onGuideTap"></image>
-      </view>
-      <view class="empty-act">
-        <text class="empty-hint">点击添加你的第一个学员</text>
-        <view class="big-btn" bindtap="onAdd">
-        <view class="plus-wrap">
-          <view class="plus-h"></view>
-          <view class="plus-v"></view>
-        </view>
-      </view>
-      </view>
+    <scroll-view class="empty-scroll" scroll-y="true" bindtap="onGuideTap">
+      <image class="empty-bg" src="/images/bg.jpg" mode="widthFix"></image>
     </scroll-view>
+    <view class="big-btn" catchtap="onAdd">
+      <text class="big-btn-text" style="font-size:45rpx">添加学员</text>
+      <image class="big-btn-icon" src="/images/add-icon.png" mode="aspectFit"></image>
+    </view>
   </block>
 
   <!-- 学员列表状态 -->
@@ -201,8 +197,85 @@
     </view>
   </view>
 
+  <!-- ===== 分享奖励弹窗 ===== -->
+  <view class="modal" wx:if="{{showRewardModal}}" catchtap="closeRewardModal">
+    <view class="modal-box modal-class" catchtap="nop">
+      <view class="mc-body">
+        <view class="mc-circle"><image class="mc-check-img" src="/images/class-ok.png"></image></view>
+        <text class="mc-title">{{rewardTitle}}</text>
+        <text class="mc-desc" wx:if="{{rewardType==='welcome'}}">通过分享获得<text class="c-green b">{{rewardDays}}天</text>专业版会员！</text>
+        <text class="mc-desc" wx:elif="{{rewardType==='share'}}">分享成功，你获得了<text class="c-green b">{{rewardDays}}天</text>专业版会员，继续分享可获得更多会员时长！</text>
+      </view>
+      <view class="mc-btns">
+        <view class="mc-btn mc-ok" bindtap="closeRewardModal"><text>好的</text></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== 分享推荐弹窗 ===== -->
+  <view class="modal" wx:if="{{showShareModal}}" catchtap="closeShareModal">
+    <view class="modal-box modal-class" catchtap="nop">
+      <view class="mc-body">
+        <view class="mc-circle"><image class="mc-check-img" src="/images/upgrade-icon.png"></image></view>
+        <text class="mc-title">分享得15天专业版会员</text>
+        <text class="mc-desc">分享给新用户，双方各得<text class="c-green b">15天</text>专业版会员。对方首次打开即生效。</text>
+      </view>
+      <view class="mc-btns">
+        <view class="mc-btn mc-cancel" bindtap="closeShareModal"><text>关闭</text></view>
+        <button class="mc-btn mc-ok share-btn" open-type="share"><text>立即分享</text></button>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== 意见反馈弹窗 ===== -->
+  <view class="modal" wx:if="{{showFeedback}}" catchtap="closeFeedback">
+    <view class="modal-box modal-form" catchtap="nop">
+      <view class="mf-head"><text class="mf-title">意见反馈</text></view>
+      <view class="fb-status {{isPro ? '' : 'fb-status-gray'}}">
+        <image class="fb-status-icon" src="/images/upgrade-icon.png" mode="aspectFit"></image>
+        <view class="fb-status-info">
+          <text class="fb-status-txt">{{isPro ? '专业版会员' : '免费版用户'}}</text>
+          <text class="fb-status-sub" wx:if="{{isPro}}">到期日：{{proExpiry || '--'}}</text>
+          <text class="fb-status-sub" wx:else>升级解锁更多功能</text>
+        </view>
+        <view class="fb-status-btn" wx:if="{{!isPro}}" catchtap="onFbUpgrade"><text>升级</text></view>
+        <view class="fb-status-btn" wx:if="{{isPro && proExpSoon}}" catchtap="onFbUpgrade"><text>续费</text></view>
+      </view>
+      <view class="fb-body">
+        <view class="mf-f">
+          <text class="mf-lbl">问题与意见</text>
+          <view class="fb-ta-wrap">
+            <textarea class="fb-ta" placeholder="请输入您的反馈..." value="{{fbContent}}" bindinput="onFbContent" maxlength="500"/>
+            <view class="fb-img-row">
+              <view class="fb-img-btn" wx:for="{{fbImgs}}" wx:key="index" catchtap="onFbImg" data-ix="{{index}}">
+                <image class="fb-img-thumb" src="{{item}}" mode="aspectFill"></image>
+                <view class="fb-img-del" catchtap="onFbImgDel" data-ix="{{index}}"><text>✕</text></view>
+              </view>
+              <view class="fb-img-add" wx:if="{{fbImgs.length < 3}}" catchtap="onFbAddImg">
+                <view class="fb-add-h"></view>
+                <view class="fb-add-v"></view>
+              </view>
+            </view>
+          </view>
+        </view>
+        <view class="mf-f">
+          <text class="mf-lbl">联系方式（选填）</text>
+          <input class="mf-inp" placeholder="手机号/微信号/邮箱" value="{{fbContact}}" bindinput="onFbContact" maxlength="50"/>
+        </view>
+      </view>
+      <view class="mf-foot">
+        <view class="mff-btn mff-cancel" bindtap="closeFeedback"><text>关闭</text></view>
+        <view class="mff-btn mff-ok" bindtap="submitFeedback"><text>提交反馈</text></view>
+      </view>
+    </view>
+  </view>
+
   <!-- ===== 彩蛋弹窗 ===== -->
-  <view class="modal" wx:if="{{showEasterEgg}}" catchtap="closeEasterEgg">
+  <view class="modal" wx:if="{{showEasterEgg}}">
+    <!-- 礼花特效 -->
+    <view class="confetti-wrap">
+      <view class="cf {{item.dir}}" wx:for="{{confetti}}" wx:key="index" style="left:{{item.sx}}rpx;top:{{item.sy}}rpx;width:{{item.size}}rpx;height:{{item.size}}rpx;background:{{item.color}};border-radius:{{item.isCircle?'50%':'4rpx'}};animation-delay:{{item.delay}}s"></view>
+    </view>
     <view class="modal-box modal-class" catchtap="nop">
       <view class="mc-body">
         <view class="mc-circle"><image class="mc-check-img" src="/images/class-ok.png"></image></view>
@@ -291,12 +364,18 @@
           <view class="dbg-btn {{debugMember===0?'dbg-on':''}}" bindtap="setDebugMember" data-v="0"><text>免费版</text></view>
           <view class="dbg-btn {{debugMember===1?'dbg-on':''}}" bindtap="setDebugMember" data-v="1"><text>已到期</text></view>
           <view class="dbg-btn {{debugMember===2?'dbg-on':''}}" bindtap="setDebugMember" data-v="2"><text>已付费</text></view>
+          <view class="dbg-btn {{debugMember===3?'dbg-on':''}}" bindtap="setDebugMember" data-v="3"><text>差5天过期</text></view>
         </view>
       </view>
 
       <view class="debug-row">
         <text class="debug-label">快捷操作</text>
         <view class="debug-btns">
+        <text class="debug-label">分享奖励测试</text>
+        <view class="debug-row" style="display:flex;gap:12rpx">
+          <view class="dbg-btn" bindtap="testWelcome"><text>被分享者弹窗</text></view>
+          <view class="dbg-btn" bindtap="testReward"><text>分享者弹窗</text></view>
+        </view>
           <view class="dbg-btn dbg-warn" bindtap="resetDebug"><text>恢复默认</text></view>
           <view class="dbg-btn dbg-warn" bindtap="clearAllData"><text>清空数据</text></view>
         </view>

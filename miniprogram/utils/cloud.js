@@ -1,7 +1,7 @@
 var U = require('./util.js')
 
 // 云开发环境ID（开通云开发后替换为实际值）
-var ENV_ID = ''
+var ENV_ID = 'cloud1-d3g6bbdp839f36607'
 
 // 离线操作队列（存储待同步到云端的操作）
 var OFFLINE_QUEUE_KEY = '_offline_queue'
@@ -132,11 +132,11 @@ function pullFromCloud(cb) {
 }
 
 // ===== 会员状态同步 =====
-function syncMember(isPro, memberExpired) {
+function syncMember(isPro, memberExpired, proExpiry) {
   if (!_db) return
   _db.collection('users').where({ _openid: '{openid}' }).get()
     .then(function (res) {
-      var data = { isProMember: isPro, memberExpired: memberExpired }
+      var data = { openid: '{openid}', isProMember: isPro, memberExpired: memberExpired, proExpiry: proExpiry || '' }
       if (res.data.length) {
         _db.collection('users').doc(res.data[0]._id).update({ data: data })
       } else {
@@ -147,17 +147,30 @@ function syncMember(isPro, memberExpired) {
 }
 
 function pullMember(cb) {
-  if (!_db) { if (cb) cb(null, null); return }
+  if (!_db) { if (cb) cb(null, null, null, null, null); return }
   _db.collection('users').where({ _openid: '{openid}' }).get()
     .then(function (res) {
       if (res.data.length) {
         var d = res.data[0]
-        if (cb) cb(d.isProMember, d.memberExpired)
+        if (cb) cb(d.isProMember, d.memberExpired, d.proExpiry || '', d.welcomeReward || 0, d.pendingReward || 0)
       } else {
-        if (cb) cb(false, false)
+        if (cb) cb(false, false, '', 0, 0)
       }
     })
-    .catch(function () { if (cb) cb(null, null) })
+    .catch(function () { if (cb) cb(null, null, null, null, null) })
+}
+
+function clearRewardFlags(cb) {
+  if (!_db) { if (cb) cb(); return }
+  _db.collection('users').where({ _openid: '{openid}' }).get()
+    .then(function (res) {
+      if (res.data.length) {
+        _db.collection('users').doc(res.data[0]._id).update({
+          data: { welcomeReward: 0, pendingReward: 0 }
+        }).then(function () { if (cb) cb() }).catch(function () { if (cb) cb() })
+      } else { if (cb) cb() }
+    })
+    .catch(function () { if (cb) cb() })
 }
 
 // ===== 彩蛋标记 =====
@@ -189,11 +202,33 @@ function pullEasterClaimed(cb) {
     .catch(function () { if (cb) cb(false) })
 }
 
+// ===== 意见反馈 =====
+function submitFeedback(content, contact, cb) {
+  if (!_db) { if (cb) cb('cloud_unavailable'); return }
+  _db.collection('feedback').add({
+    data: { content: content, contact: contact || '', time: new Date().toISOString() }
+  }).then(function () { if (cb) cb(null) })
+    .catch(function (e) { if (cb) cb(e) })
+}
+
 // ===== 埋点 =====
 function trackEvent(entry) {
   if (!_db) return
   _db.collection('analytics').add({ data: entry })
     .catch(function () {})
+}
+
+// ===== 分享推荐 =====
+function processReferral(referrerId, cb) {
+  if (!_db) { if (cb) cb('cloud_unavailable'); return }
+  wx.cloud.callFunction({
+    name: 'processReferral',
+    data: { referrerId: referrerId }
+  }).then(function (res) {
+    if (cb) cb(res.result && res.result.code === 0 ? null : (res.result && res.result.msg || 'referral_error'))
+  }).catch(function (e) {
+    if (cb) cb(e.errMsg || 'referral_error')
+  })
 }
 
 // ===== 支付 =====
@@ -203,17 +238,29 @@ function pay(plan, cb) {
     name: 'payOrder',
     data: { plan: plan }
   }).then(function (res) {
-    if (!res.result || !res.result.payment) { if (cb) cb('pay_error'); return }
+    var payResult = res.result
+    console.log('云函数返回:', JSON.stringify(payResult))
+    if (!payResult || payResult.code !== 0 || !payResult.payment) {
+      console.log('支付参数异常，缺少payment对象')
+      if (cb) cb('pay_error')
+      return
+    }
+    var p = payResult.payment
+    console.log('支付参数:', JSON.stringify({ ts: p.timeStamp, ns: p.nonceStr, pk: p.package, st: p.signType, ps: p.paySign }))
     wx.requestPayment({
-      timeStamp: res.result.payment.timeStamp,
-      nonceStr: res.result.payment.nonceStr,
-      package: res.result.payment.package,
-      signType: res.result.payment.signType || 'RSA',
-      paySign: res.result.payment.paySign,
+      timeStamp: p.timeStamp,
+      nonceStr: p.nonceStr,
+      package: p.package,
+      signType: p.signType || 'RSA',
+      paySign: p.paySign,
       success: function () { if (cb) cb(null) },
-      fail: function (e) { if (cb) cb(e.errMsg || 'pay_cancel') }
+      fail: function (e) {
+        console.log('支付拉起失败:', e.errMsg)
+        if (cb) cb(e.errMsg || 'pay_cancel')
+      }
     })
   }).catch(function (e) {
+    console.log('云函数调用失败:', e.errMsg)
     if (cb) cb(e.errMsg || 'pay_error')
   })
 }
@@ -228,11 +275,14 @@ module.exports = {
   pullFromCloud: pullFromCloud,
   syncMember: syncMember,
   pullMember: pullMember,
+  clearRewardFlags: clearRewardFlags,
   queueOp: queueOp,
   flushQueue: flushQueue,
   getQueueLength: getQueueLength,
   pay: pay,
   syncEasterClaimed: syncEasterClaimed,
   pullEasterClaimed: pullEasterClaimed,
-  trackEvent: trackEvent
+  trackEvent: trackEvent,
+  processReferral: processReferral,
+  submitFeedback: submitFeedback
 }

@@ -9,7 +9,9 @@ App({
     nextId: 0,
     memberExpired: false,
     isProMember: false,
-    easterProExpiry: '',
+    proExpiry: '',
+    welcomeReward: 0,
+    pendingReward: 0,
     bannerDismissedToday: {},
     statusBarHeight: 20
   },
@@ -18,6 +20,14 @@ App({
     var that = this
     var sys = wx.getSystemInfoSync()
     this.globalData.statusBarHeight = sys.statusBarHeight
+
+    // 隐私授权（用户首次打开时弹窗同意隐私政策）
+    if (wx.requirePrivacyAuthorize) {
+      wx.requirePrivacyAuthorize({
+        success: function () {},
+        fail: function () {}
+      })
+    }
 
     // 本地持久化身份
     this.globalData.openid = this.getLocalId()
@@ -34,9 +44,33 @@ App({
     // 初始化云开发（未开通时静默跳过）
     cloud.init()
 
-    // 云端拉取数据合并
-    if (cloud.isReady()) {
+    // 处理分享推荐
+    var opts = wx.getLaunchOptionsSync()
+    var refId = (opts.query && opts.query.ref) ? opts.query.ref : ''
+
+    if (cloud.isReady() && refId) {
+      // 有网络且有推荐链接 → 立即处理
+      cloud.processReferral(refId, function (e) {
+        if (!e) {
+          that.globalData.isProMember = true
+          that.globalData.memberExpired = false
+          that.save()
+        }
+        that.pullCloudData()
+        // 数据拉回来后，让页面刷新一次（否则奖励弹窗来不及显示）
+        setTimeout(function () {
+          var pages = getCurrentPages()
+          if (pages.length > 0 && pages[pages.length - 1].reload) {
+            pages[pages.length - 1].reload()
+          }
+        }, 1500)
+      })
+    } else if (cloud.isReady()) {
+      // 普通启动，拉云端数据
       that.pullCloudData()
+    }
+
+    if (cloud.isReady()) {
       // 同步彩蛋标记（覆盖本地，防止清缓存重领）
       cloud.pullEasterClaimed(function (claimed) {
         if (claimed) wx.setStorageSync('_easter_egg_claimed', true)
@@ -72,12 +106,12 @@ App({
     this.globalData.nextId = data.nextId || 0
     this.globalData.memberExpired = data.memberExpired || false
     this.globalData.isProMember = data.isProMember || false
-    this.globalData.easterProExpiry = data.easterProExpiry || ''
-    // 彩蛋会员过期检测
-    if (this.globalData.easterProExpiry && today >= this.globalData.easterProExpiry) {
+    this.globalData.proExpiry = data.proExpiry || data.easterProExpiry || ''
+    // Pro过期检测
+    if (this.globalData.proExpiry && today >= this.globalData.proExpiry) {
       this.globalData.isProMember = false
       this.globalData.memberExpired = true
-      this.globalData.easterProExpiry = ''
+      this.globalData.proExpiry = ''
     }
     this.globalData.bannerDismissedToday = data.bannerDismissedToday || {}
     if (this.globalData.bannerDismissedToday.date !== today) {
@@ -89,10 +123,13 @@ App({
   pullCloudData: function () {
     var that = this
     // 拉取会员状态
-    cloud.pullMember(function (isPro, expired) {
+    cloud.pullMember(function (isPro, expired, proExp, welcomeDays, pendingDays) {
       if (isPro !== null) {
         that.globalData.isProMember = !!isPro
         that.globalData.memberExpired = !!expired
+        that.globalData.proExpiry = proExp || ''
+        that.globalData.welcomeReward = welcomeDays || 0
+        that.globalData.pendingReward = pendingDays || 0
       }
     })
     // 拉取学员数据
@@ -119,6 +156,14 @@ App({
           }
         }
         if (!found) {
+          // _cloudId 匹配失败，用姓名+创建时间兜底匹配（防止首次同步后 _cloudId 未及时存入本地导致重复）
+          for (var m = 0; m < local.length; m++) {
+            if (local[m].name === cs.name && local[m].createdAt === cs.createdAt) {
+              local[m] = mergeCloudToLocal(local[m], cs); found = true; break
+            }
+          }
+        }
+        if (!found) {
           var newId = that.globalData.nextId++
           cs.id = newId
           merged[newId] = cs
@@ -138,12 +183,12 @@ App({
       nextId: this.globalData.nextId,
       memberExpired: this.globalData.memberExpired,
       isProMember: this.globalData.isProMember,
-      easterProExpiry: this.globalData.easterProExpiry,
+      proExpiry: this.globalData.proExpiry,
       bannerDismissedToday: this.globalData.bannerDismissedToday
     })
     // 云端同步（静默，失败不阻塞）
     if (cloud.isReady()) {
-      cloud.syncMember(this.globalData.isProMember, this.globalData.memberExpired)
+      cloud.syncMember(this.globalData.isProMember, this.globalData.memberExpired, this.globalData.proExpiry)
     }
   }
 })

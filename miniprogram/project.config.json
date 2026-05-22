@@ -13,10 +13,15 @@
     "checkInvalidKey": true,
     "ignoreDevUnusedFiles": true
   },
+  "cloudfunctionRoot": "cloudfunctions/",
   "compileType": "miniprogram",
   "libVersion": "3.3.4",
-  "appid": "wxa828e8f8da671c8c",
+  "appid": "wx06b7e696f84e2aa0",
   "projectname": "miniprogram1",
   "condition": {},
-  "packOptions": { "ignore": [], "include": [] }
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "cloudfunctionTemplateRoot": "cloudfunctionTemplate/"
 }

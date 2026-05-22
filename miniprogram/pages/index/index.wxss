@@ -3,16 +3,20 @@
 
 .c-gray{ color:#5c5f60 }
 
-.topbar{ display:flex; align-items:center; justify-content:center; height:88rpx; background:#fff; flex-shrink:0; z-index:50; padding-left:32rpx; padding-right:32rpx; border-bottom:2rpx solid #e8eff1 }
-.topbar-tt{ font-size:40rpx; font-weight:600; color:#161d1f; line-height:88rpx }
+.topbar-tt{ display:block; font-size:40rpx; font-weight:600; color:#161d1f; text-align:left; padding-left:35rpx; line-height:88rpx; flex-shrink:0; position:relative; z-index:1 }
+.topbar-white{ background:#fff }
+.top-ico{ position:fixed; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.9); border:1rpx solid rgba(0,0,0,.08); z-index:51 }
+.top-ico:active{ background:rgba(0,0,0,.1) }
+.top-ico-img{ width:90%; height:90% }
 
 /* 空状态 */
-.empty-scroll{ flex:1; min-height:0 }
-.guide-box{ width:100%; height:950rpx; position:relative; overflow:hidden; background:#f4fafd; padding:50rpx 50rpx 0 50rpx; box-sizing:border-box; border-radius:32rpx }
-.guide-img{ display:block; width:100%; height:100%; border-radius:32rpx }
-.empty-act{ display:flex; flex-direction:column; align-items:center; padding-top:56rpx; padding-bottom:80rpx }
-.empty-hint{ font-size:36rpx; font-weight:500; color:#5c5f60; margin-bottom:48rpx }
-.big-btn{ width:240rpx; height:240rpx; border-radius:50%; background:#006d37; display:flex; align-items:center; justify-content:center; box-shadow:0 16rpx 48rpx rgba(0,109,55,.3); margin-top:0 }
+.empty-scroll{ position:absolute; top:0; left:0; right:0; bottom:0; z-index:0 }
+.empty-bg{ display:block; width:100% }
+.big-btn{ position:fixed; left:50rpx; right:50rpx; bottom:60rpx; height:140rpx; border-radius:35rpx; background:#006d37; display:flex; align-items:center; justify-content:space-between; padding:0 50rpx; box-shadow:0 16rpx 48rpx rgba(0,109,55,.3); z-index:2 }
+.big-btn-text{ font-size:25rpx; font-weight:500; color:#fff; margin-top:-2rpx }
+.big-btn-icon{ width:55rpx; height:55rpx; flex-shrink:0 }
+.big-btn:active{ transform:scale(.98) }
+.big-btn-text{ font-size:48rpx; font-weight:600; color:#fff }
 .big-btn:active{ transform:scale(.95) }
 .plus-wrap{ position:relative; width:76rpx; height:76rpx }
 .plus-h{ position:absolute; top:50%; left:0; right:0; height:12rpx; background:#fff; border-radius:6rpx; transform:translateY(-50%) }
@@ -101,8 +105,8 @@
 .modal-class{ max-width:600rpx }
 .mc-body,.md-body,.me-body{ padding:36rpx 64rpx 0; text-align:center; display:flex; flex-direction:column; align-items:center }
 .mc-circle{ display:flex; align-items:center; justify-content:center; margin-top:14rpx; margin-bottom:28rpx }
-.mc-title{ font-size:40rpx; font-weight:600; color:#161d1f; margin-bottom:8rpx }
-.mc-desc{ font-size:28rpx; color:#5c5f60; line-height:1.5; margin-top:20rpx }
+.mc-title{ font-size:40rpx; font-weight:600; color:#161d1f; margin-bottom:8rpx; text-align:center; width:100%; padding-left:15rpx }
+.mc-desc{ font-size:28rpx; color:#5c5f60; line-height:1.5; margin-top:20rpx; text-align:center; width:100%; padding-left:15rpx }
 .mc-quick{ display:flex; gap:16rpx; margin-top:28rpx; width:100% }
 .mc-qbtn{ flex:1; height:120rpx; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:24rpx; border:2rpx solid #bbcbbb; color:#3d4a3e }
 .mc-qbtn:active{ transform:scale(.95) }
@@ -115,12 +119,35 @@
 .mc-btn:active{ transform:scale(.98); opacity:.8 }
 .mc-cancel{ border:2rpx solid #bbcbbb; color:#5c5f60 }
 .mc-ok{ background:#006d37; color:#fff; box-shadow:0 16rpx 48rpx rgba(0,109,55,.16) }
+.share-btn{ padding:0; margin:0; border:none; line-height:inherit; font-size:inherit }
 
 /* 表单 */
 .modal-form{ max-width:640rpx; width:100%; max-height:85vh; display:flex; flex-direction:column; box-sizing:border-box; overflow:hidden }
 .mf-head{ display:flex; align-items:center; justify-content:center; min-height:88rpx; border-bottom:2rpx solid rgba(221,228,230,.3); flex-shrink:0 }
 .mf-title{ font-size:40rpx; font-weight:600; color:#161d1f; line-height:88rpx }
 .mf-body{ flex:1; padding:24rpx 32rpx 0; overflow-x:hidden; min-height:500rpx; box-sizing:border-box }
+.fb-body{ padding:16rpx 32rpx 0 }
+.fb-status{ display:flex; align-items:center; gap:24rpx; margin:12rpx 32rpx 8rpx; padding:28rpx 36rpx; background:#eef5f7; border-radius:28rpx; flex-shrink:0 }
+.fb-status-gray{ background:#f5f5f5 }
+.fb-status-gray .fb-status-icon{ opacity:.35 }
+.fb-status-gray .fb-status-txt{ color:#9ca3af }
+.fb-status-icon{ width:100rpx; height:100rpx; flex-shrink:0 }
+.fb-status-info{ flex:1 }
+.fb-status-txt{ display:block; font-size:32rpx; font-weight:600; color:#161d1f }
+.fb-status-sub{ display:block; font-size:24rpx; color:#161d1f; margin-top:4rpx }
+.fb-status-btn{ flex-shrink:0; padding:16rpx 36rpx; border-radius:48rpx; background:#006d37; color:#fff; font-size:28rpx; font-weight:500 }
+.fb-status-btn:active{ opacity:.8 }
+.fb-ta-wrap{ background:#e8eff1; border-bottom:4rpx solid #bbcbbb; border-radius:16rpx 16rpx 0 0; padding:20rpx 24rpx; overflow:hidden }
+.fb-ta{ width:100%; height:160rpx; font-size:32rpx; color:#161d1f; box-sizing:border-box; margin:0; overflow-x:hidden }
+.fb-img-row{ display:flex; gap:16rpx; padding-top:20rpx; flex-wrap:wrap }
+.fb-img-btn{ width:120rpx; height:120rpx; border-radius:12rpx; overflow:hidden; position:relative }
+.fb-img-thumb{ width:100%; height:100% }
+.fb-img-del{ position:absolute; top:-4rpx; right:-4rpx; width:36rpx; height:36rpx; border-radius:50%; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center }
+.fb-img-del text{ font-size:20rpx; color:#fff; line-height:1 }
+.fb-img-add{ width:120rpx; height:120rpx; border-radius:12rpx; border:3rpx dashed #bbcbbb; display:flex; align-items:center; justify-content:center; position:relative; flex-shrink:0 }
+.fb-img-add:active{ background:rgba(0,0,0,.04) }
+.fb-add-h{ position:absolute; width:40rpx; height:4rpx; background:#9ca3af; border-radius:2rpx }
+.fb-add-v{ position:absolute; width:4rpx; height:40rpx; background:#9ca3af; border-radius:2rpx }
 .mf-av{ width:160rpx; height:160rpx; border-radius:50%; margin:16rpx auto 32rpx; display:flex; align-items:center; justify-content:center; position:relative; flex-shrink:0; overflow:hidden }
 .mf-av:active{ transform:scale(.95) }
 .mf-av-img{ width:100%; height:100%; border-radius:50% }
@@ -215,7 +242,7 @@
 .toast-on{ opacity:1; pointer-events:auto }
 .toast-undo{ bottom:210rpx; justify-content:center; gap:24rpx; flex-wrap:nowrap }
 .toast-top{ bottom:315rpx; left:50%; transform:translateX(-50%) }
-.easter-toast{ bottom:80rpx; top:auto; left:50%; transform:translateX(-50%) }
+.easter-toast{ bottom:220rpx; top:auto; left:50%; transform:translateX(-50%) }
 .toast-bot{ bottom:210rpx; justify-content:center }
 .toast-left{ display:flex; align-items:center; gap:12rpx; white-space:nowrap; flex-shrink:0 }
 .toast-gr{ display:flex; align-items:center }
@@ -223,6 +250,30 @@
 .toast-div{ width:2rpx; height:28rpx; background:#dde4e6; flex-shrink:0 }
 .toast-link{ color:#6bfe9c; font-size:30rpx; font-weight:500; white-space:nowrap }
 .toast-link:active{ opacity:.7 }
+
+/* 礼花特效 */
+.confetti-wrap{ position:fixed; top:0; left:0; right:0; bottom:0; z-index:210; pointer-events:none; overflow:hidden }
+.cf{ position:absolute; opacity:0; animation-fill-mode:forwards; animation-timing-function:ease-out }
+.cf.cf-down{ animation-name:cfDown; animation-duration:1.2s }
+.cf.cf-up{ animation-name:cfUp; animation-duration:1.2s }
+.cf.cf-right{ animation-name:cfRight; animation-duration:1.2s }
+.cf.cf-left{ animation-name:cfLeft; animation-duration:1.2s }
+@keyframes cfDown {
+  0%{ transform:translate(0,0) rotate(0deg) scale(1); opacity:1 }
+  100%{ transform:translate(0,1200rpx) rotate(720deg) scale(0); opacity:0 }
+}
+@keyframes cfUp {
+  0%{ transform:translate(0,0) rotate(0deg) scale(1); opacity:1 }
+  100%{ transform:translate(0,-1200rpx) rotate(720deg) scale(0); opacity:0 }
+}
+@keyframes cfRight {
+  0%{ transform:translate(0,0) rotate(0deg) scale(1); opacity:1 }
+  100%{ transform:translate(600rpx,0) rotate(720deg) scale(0); opacity:0 }
+}
+@keyframes cfLeft {
+  0%{ transform:translate(0,0) rotate(0deg) scale(1); opacity:1 }
+  100%{ transform:translate(-600rpx,0) rotate(720deg) scale(0); opacity:0 }
+}
 
 /* 调试面板 */
 .debug-panel{ max-width:600rpx; padding:40rpx; background:#fff; border-radius:56rpx }
