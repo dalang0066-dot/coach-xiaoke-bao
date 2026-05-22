@@ -12,6 +12,7 @@ App({
     proExpiry: '',
     welcomeReward: 0,
     pendingReward: 0,
+    upgradeShown: false,
     bannerDismissedToday: {},
     statusBarHeight: 20
   },
@@ -123,13 +124,14 @@ App({
   pullCloudData: function () {
     var that = this
     // 拉取会员状态
-    cloud.pullMember(function (isPro, expired, proExp, welcomeDays, pendingDays) {
+    cloud.pullMember(function (isPro, expired, proExp, welcomeDays, pendingDays, upgradeShown) {
       if (isPro !== null) {
         that.globalData.isProMember = !!isPro
         that.globalData.memberExpired = !!expired
         that.globalData.proExpiry = proExp || ''
         that.globalData.welcomeReward = welcomeDays || 0
         that.globalData.pendingReward = pendingDays || 0
+        that.globalData.upgradeShown = !!upgradeShown
       }
     })
     // 拉取学员数据
@@ -188,7 +190,7 @@ App({
     })
     // 云端同步（静默，失败不阻塞）
     if (cloud.isReady()) {
-      cloud.syncMember(this.globalData.isProMember, this.globalData.memberExpired, this.globalData.proExpiry)
+      cloud.syncMember(this.globalData.isProMember, this.globalData.memberExpired, this.globalData.proExpiry, this.globalData.upgradeShown)
     }
   }
 })

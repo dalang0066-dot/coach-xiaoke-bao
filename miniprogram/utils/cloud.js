@@ -132,11 +132,11 @@ function pullFromCloud(cb) {
 }
 
 // ===== 会员状态同步 =====
-function syncMember(isPro, memberExpired, proExpiry) {
+function syncMember(isPro, memberExpired, proExpiry, upgradeShown) {
   if (!_db) return
   _db.collection('users').where({ _openid: '{openid}' }).get()
     .then(function (res) {
-      var data = { openid: '{openid}', isProMember: isPro, memberExpired: memberExpired, proExpiry: proExpiry || '' }
+      var data = { openid: '{openid}', isProMember: isPro, memberExpired: memberExpired, proExpiry: proExpiry || '', upgradeShown: !!upgradeShown }
       if (res.data.length) {
         _db.collection('users').doc(res.data[0]._id).update({ data: data })
       } else {
@@ -147,17 +147,17 @@ function syncMember(isPro, memberExpired, proExpiry) {
 }
 
 function pullMember(cb) {
-  if (!_db) { if (cb) cb(null, null, null, null, null); return }
+  if (!_db) { if (cb) cb(null, null, null, null, null, null); return }
   _db.collection('users').where({ _openid: '{openid}' }).get()
     .then(function (res) {
       if (res.data.length) {
         var d = res.data[0]
-        if (cb) cb(d.isProMember, d.memberExpired, d.proExpiry || '', d.welcomeReward || 0, d.pendingReward || 0)
+        if (cb) cb(d.isProMember, d.memberExpired, d.proExpiry || '', d.welcomeReward || 0, d.pendingReward || 0, d.upgradeShown || false)
       } else {
-        if (cb) cb(false, false, '', 0, 0)
+        if (cb) cb(false, false, '', 0, 0, false)
       }
     })
-    .catch(function () { if (cb) cb(null, null, null, null, null) })
+    .catch(function () { if (cb) cb(null, null, null, null, null, null) })
 }
 
 function clearRewardFlags(cb) {

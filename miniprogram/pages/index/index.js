@@ -83,14 +83,14 @@ Page({
           app.globalData.memberExpired = !!expired
           app.globalData.proExpiry = proExp || ''
           C.clearRewardFlags()
-          wx.setStorageSync('_upgrade_shown', true)
+          app.globalData.upgradeShown = true; app.save()
           that.setData({ showRewardModal: true, rewardTitle: '恭喜你！', rewardSub: '通过分享获得专业版会员！', rewardDays: welcomeDays })
         } else if (pendingDays > 0) {
           app.globalData.isProMember = !!isPro
           app.globalData.memberExpired = !!expired
           app.globalData.proExpiry = proExp || ''
           C.clearRewardFlags()
-          wx.setStorageSync('_upgrade_shown', true)
+          app.globalData.upgradeShown = true; app.save()
           that.setData({ showRewardModal: true, rewardTitle: '恭喜你！', rewardSub: '分享成功，你获得了' + pendingDays + '天会员，继续分享可获得更多会员时长！' })
         }
       })
@@ -173,13 +173,13 @@ Page({
     if (app.globalData.welcomeReward > 0) {
       var d = app.globalData.welcomeReward
       app.globalData.welcomeReward = 0
-      wx.setStorageSync('_upgrade_shown', true)
+      app.globalData.upgradeShown = true; app.save()
       this.setData({ showRewardModal: true, rewardTitle: '恭喜你！', rewardDays: d, rewardType: 'welcome' })
       if (C.isReady()) C.clearRewardFlags()
     } else if (app.globalData.pendingReward > 0) {
       var days = app.globalData.pendingReward
       app.globalData.pendingReward = 0
-      wx.setStorageSync('_upgrade_shown', true)
+      app.globalData.upgradeShown = true; app.save()
       this.setData({ showRewardModal: true, rewardTitle: '恭喜你！', rewardDays: days, rewardType: 'share' })
       if (C.isReady()) C.clearRewardFlags()
     }
@@ -276,7 +276,7 @@ Page({
   onAddTap: function () {
     this.closeAll()
     var pro = this.data.isPro && !app.globalData.memberExpired, cnt = this.data.activeCnt
-    if (!pro && cnt >= 8) { A.track('upgrade_show'); wx.setStorageSync('_upgrade_shown', true); this.setData({ showUpg: true, plan: U.PLAN.YEARLY }); return }
+    if (!pro && cnt >= 8) { A.track('upgrade_show'); app.globalData.upgradeShown = true; app.save(); this.setData({ showUpg: true, plan: U.PLAN.YEARLY }); return }
     this.onAdd()
   },
 
@@ -438,7 +438,7 @@ Page({
       A.track('easter_claimed')
       // 首次触发：领取1个月会员
       wx.setStorageSync('_easter_egg_claimed', true)
-      wx.setStorageSync('_upgrade_shown', true)
+      app.globalData.upgradeShown = true; app.save()
       var base = app.globalData.proExpiry && app.globalData.proExpiry > U.today() ? app.globalData.proExpiry : U.today()
       var exp = U.addMonths(base, 1)
       app.globalData.isProMember = true
@@ -574,7 +574,7 @@ Page({
 
   // ===== 弹窗 =====
   closeExpModal: function () { this.setData({ showExpModal: false }) },
-  onTopIco: function () { this.setData({ showFeedback: true, fbContent: '', fbContact: '', fbImgs: [], fbShowMember: !!wx.getStorageSync('_upgrade_shown') }) },
+  onTopIco: function () { this.setData({ showFeedback: true, fbContent: '', fbContact: '', fbImgs: [], fbShowMember: !!app.globalData.upgradeShown }) },
   onUpgrade: function () { this.setData({ showUpg: true, plan: U.PLAN.YEARLY }) },
   closeUpg: function () { this.setData({ showUpg: false, showShareModal: true }) },
   closeShareModal: function () { this.setData({ showShareModal: false }) },
@@ -763,9 +763,8 @@ Page({
           app.globalData.bannerDismissedToday = {}
           app.globalData.welcomeReward = 0; app.globalData.pendingReward = 0
           wx.removeStorageSync('_easter_egg_claimed')
-          wx.removeStorageSync('_upgrade_shown')
+          app.globalData.upgradeShown = false
           wx.removeStorageSync('_pending_easter_sync')
-          wx.removeStorageSync('_pending_ref')
           wx.removeStorageSync('_analytics')
           wx.removeStorageSync('_offline_queue')
           app.save(); that._debugOffset = 0
