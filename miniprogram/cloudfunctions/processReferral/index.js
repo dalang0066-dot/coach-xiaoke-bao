@@ -27,7 +27,7 @@ exports.main = async (event) => {
     var d = new Date(); d.setDate(d.getDate() + 15)
     var expiry = d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate())
 
-    // 4. 给分享者叠加15天
+    // 4. 给分享者叠加15天（没有记录则创建）
     const referrer = await usersColl.where({ openid: referrerId }).get()
     if (referrer.data.length > 0) {
       var rd = referrer.data[0]
@@ -35,6 +35,14 @@ exports.main = async (event) => {
       var newExp = addDays(base, 15)
       await usersColl.doc(rd._id).update({
         data: { isProMember: true, memberExpired: false, proExpiry: newExp, pendingReward: 15 }
+      })
+    } else {
+      await usersColl.add({
+        data: {
+          openid: referrerId,
+          isProMember: true, memberExpired: false, proExpiry: expiry,
+          pendingReward: 15, easterClaimed: false
+        }
       })
     }
 

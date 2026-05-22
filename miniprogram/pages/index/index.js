@@ -13,7 +13,7 @@ Page({
     showExpiry: false, expiryName: '', expiryDay: 0,
     showMember: false,
     showClass: false, classTarget: {}, classAmount: 1,
-    showForm: false, editing: false, editId: 0,
+    showForm: false, editing: false, editId: 0, nameFocus: false,
     fd: { avatarSrc: '/images/avatars/avatar_1.png', name: '', totalLessons: 24, expiryDate: '', note: '' },
     showDel: false, delTarget: {},
     showHist: false, histData: { name: '', remaining: 0, emoji: '🐯', records: [] },
@@ -282,12 +282,12 @@ Page({
 
   onAdd: function () {
     this.setData({
-      showForm: true, editing: false,
+      showForm: true, editing: false, nameFocus: true,
       fd: { avatarSrc: rem(), name: '', totalLessons: 24, expiryDate: U.addMonths(U.today(), 6), note: '' }
     })
   },
 
-  closeForm: function () { this.setData({ showForm: false, editing: false }) },
+  closeForm: function () { this.setData({ showForm: false, editing: false, nameFocus: false }) },
   randAv: function () { this.setData({ 'fd.avatarSrc': rem() }) },
   onFdName: function (e) { this.setData({ 'fd.name': e.detail.value }) },
   onFdLessons: function (e) { this.setData({ 'fd.totalLessons': parseInt(e.detail.value) || 0 }) },
@@ -299,7 +299,7 @@ Page({
     var id = e.currentTarget.dataset.id, s = this.getById(id); if (!s) return
     this.closeAll()
     this.setData({
-      showForm: true, editing: true, editId: id,
+      showForm: true, editing: true, editId: id, nameFocus: false,
       fd: { avatarSrc: s.avatarSrc || '/images/avatars/avatar_1.png', name: s.name, totalLessons: s.remainingLessons, expiryDate: s.expiryDate || '', note: s.note || '' }
     })
   },

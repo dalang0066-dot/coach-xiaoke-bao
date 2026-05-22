@@ -131,12 +131,19 @@ function pullFromCloud(cb) {
     })
 }
 
+// ===== 获取真实openid（优先用已缓存的，没有则从getOpenid云函数取） =====
+function getRealOpenid() {
+  var app = getApp()
+  return (app && app.globalData && app.globalData._realOpenid) ? app.globalData._realOpenid : ''
+}
+
 // ===== 会员状态同步 =====
 function syncMember(isPro, memberExpired, proExpiry, upgradeShown) {
   if (!_db) return
-  _db.collection('users').where({ _openid: '{openid}' }).get()
+  var oid = getRealOpenid(); if (!oid) return
+  _db.collection('users').where({ openid: oid }).get()
     .then(function (res) {
-      var data = { openid: '{openid}', isProMember: isPro, memberExpired: memberExpired, proExpiry: proExpiry || '', upgradeShown: !!upgradeShown }
+      var data = { openid: oid, isProMember: isPro, memberExpired: memberExpired, proExpiry: proExpiry || '', upgradeShown: !!upgradeShown }
       if (res.data.length) {
         _db.collection('users').doc(res.data[0]._id).update({ data: data })
       } else {
@@ -148,7 +155,8 @@ function syncMember(isPro, memberExpired, proExpiry, upgradeShown) {
 
 function pullMember(cb) {
   if (!_db) { if (cb) cb(null, null, null, null, null, null); return }
-  _db.collection('users').where({ _openid: '{openid}' }).get()
+  var oid = getRealOpenid(); if (!oid) { if (cb) cb(false, false, '', 0, 0, false); return }
+  _db.collection('users').where({ openid: oid }).get()
     .then(function (res) {
       if (res.data.length) {
         var d = res.data[0]
@@ -162,7 +170,8 @@ function pullMember(cb) {
 
 function clearRewardFlags(cb) {
   if (!_db) { if (cb) cb(); return }
-  _db.collection('users').where({ _openid: '{openid}' }).get()
+  var oid = getRealOpenid(); if (!oid) { if (cb) cb(); return }
+  _db.collection('users').where({ openid: oid }).get()
     .then(function (res) {
       if (res.data.length) {
         _db.collection('users').doc(res.data[0]._id).update({
@@ -176,10 +185,10 @@ function clearRewardFlags(cb) {
 // ===== 彩蛋标记 =====
 function syncEasterClaimed() {
   if (!_db) return
-  _db.collection('users').where({ _openid: '{openid}' }).get()
+  var oid = getRealOpenid(); if (!oid) return
+  _db.collection('users').where({ openid: oid }).get()
     .then(function (res) {
-      var data = { easterClaimed: true, easterProExpiry: '' }
-      // 这里 easterProExpiry 由调用方填入实际日期
+      var data = { easterClaimed: true }
       if (res.data.length) {
         _db.collection('users').doc(res.data[0]._id).update({ data: data })
       } else {
@@ -191,7 +200,8 @@ function syncEasterClaimed() {
 
 function pullEasterClaimed(cb) {
   if (!_db) { if (cb) cb(false); return }
-  _db.collection('users').where({ _openid: '{openid}' }).get()
+  var oid = getRealOpenid(); if (!oid) { if (cb) cb(false); return }
+  _db.collection('users').where({ openid: oid }).get()
     .then(function (res) {
       if (res.data.length && res.data[0].easterClaimed) {
         if (cb) cb(true)

@@ -114,7 +114,7 @@
         </view>
         <view class="mf-f">
           <text class="mf-lbl">姓名</text>
-          <input class="mf-inp" placeholder="输入学员姓名" value="{{fd.name}}" bindinput="onFdName" maxlength="20"/>
+          <input class="mf-inp" placeholder="输入学员姓名" value="{{fd.name}}" bindinput="onFdName" maxlength="20" focus="{{nameFocus}}"/>
         </view>
         <view class="mf-f">
           <text class="mf-lbl">课时数</text>
@@ -231,7 +231,7 @@
   <view class="modal" wx:if="{{showFeedback}}" catchtap="closeFeedback">
     <view class="modal-box modal-form" catchtap="nop">
       <view class="mf-head"><text class="mf-title">意见反馈</text></view>
-      <view class="fb-status {{isPro ? '' : 'fb-status-gray'}}">
+      <view class="fb-status {{isPro ? '' : 'fb-status-gray'}}" wx:if="{{fbShowMember}}">
         <image class="fb-status-icon" src="/images/upgrade-icon.png" mode="aspectFit"></image>
         <view class="fb-status-info">
           <text class="fb-status-txt">{{isPro ? '专业版会员' : '免费版用户'}}</text>

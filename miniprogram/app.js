@@ -173,8 +173,18 @@ App({
       }
       var list = []
       for (var key in merged) { if (merged.hasOwnProperty(key)) list.push(merged[key]) }
+      var wasEmpty = local.length === 0
       that.globalData.students = list
       that.save()
+      // 本地没数据但云端有 → 刷新页面显示云端数据
+      if (wasEmpty && list.length > 0) {
+        setTimeout(function () {
+          var pages = getCurrentPages()
+          if (pages.length > 0 && pages[pages.length - 1].reload) {
+            pages[pages.length - 1].reload()
+          }
+        }, 300)
+      }
     })
   },
 
