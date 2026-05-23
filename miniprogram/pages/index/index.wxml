@@ -30,7 +30,7 @@
       <view class="banner-x" bindtap="dismissMember"><text>✕</text></view>
     </view>
 
-    <scroll-view class="list-scroll" scroll-y="{{scrollY}}" scroll-top="{{scrollTop}}" bindscroll="onScroll">
+    <scroll-view class="list-scroll" scroll-y="{{scrollY}}" scroll-top="{{scrollTop}}" bindscroll="onScroll" bindtap="onTapBlank">
       <view class="list-wrap" bindtap="onTapBlank">
         <block wx:for="{{list}}" wx:key="id">
           <view class="card-box {{item.open ? 'card-open' : ''}} {{item.highlight}}">
@@ -222,7 +222,7 @@
       </view>
       <view class="mc-btns">
         <view class="mc-btn mc-cancel" bindtap="closeShareModal"><text>关闭</text></view>
-        <button class="mc-btn mc-ok share-btn" open-type="share"><text>立即分享</text></button>
+        <button class="mc-btn mc-ok share-btn" open-type="share" bindtap="closeShareModal"><text>立即分享</text></button>
       </view>
     </view>
   </view>

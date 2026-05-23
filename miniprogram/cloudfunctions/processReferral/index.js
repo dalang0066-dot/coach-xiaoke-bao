@@ -27,7 +27,7 @@ exports.main = async (event) => {
     var d = new Date(); d.setDate(d.getDate() + 15)
     var expiry = d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate())
 
-    // 4. 给分享者叠加15天（没有记录则创建）
+    // 4. 给分享者叠加15天（没记录则创建）
     const referrer = await usersColl.where({ openid: referrerId }).get()
     if (referrer.data.length > 0) {
       var rd = referrer.data[0]
@@ -60,7 +60,7 @@ exports.main = async (event) => {
       data: { referrerId: referrerId, newUserId: newUserId, time: new Date().toISOString() }
     })
 
-    return { code: 0 }
+    return { code: 0, expiry: expiry }
   } catch (e) {
     console.log('推荐处理异常:', e)
     return { code: -1, msg: '系统错误' }

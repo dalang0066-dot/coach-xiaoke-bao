@@ -4,7 +4,10 @@ var C = require('../../utils/cloud.js')
 var A = require('../../utils/analytics.js')
 var AVATARS = []
 for (var ai = 1; ai <= 40; ai++) { AVATARS.push('/images/avatars/avatar_' + ai + '.png') }
-function rem() { return AVATARS[Math.floor(Math.random() * AVATARS.length)] }
+function rem(exclude) {
+  var pool = exclude ? AVATARS.filter(function (a) { return a !== exclude }) : AVATARS
+  return pool[Math.floor(Math.random() * pool.length)]
+}
 
 Page({
   data: {
@@ -24,7 +27,7 @@ Page({
     showOkT: false, okMsg: '操作成功', showHintT: false,
     showEasterT: false, showEasterEgg: false, easterClaimed: false, confetti: [],
     showFeedback: false, fbContent: '', fbContact: '', fbImgs: [],
-    fbShowMember: false, showShareModal: false,
+    fbShowMember: false, showShareModal: false, _polling: false,
     showRewardModal: false, rewardTitle: '', rewardSub: '', rewardDays: 0, rewardType: '',
     isPro: false, proExpiry: '', proExpSoon: false, activeCnt: 0, scrollTop: 0, kbH: 0, scrollY: true, botPad: 20,
     showDebug: false, debugOffset: 0, debugExpDays: 0, debugMember: 0,
@@ -37,9 +40,12 @@ Page({
   _guideTapTimer: null,
 
   onShareAppMessage: function () {
+    var ref = app.globalData._realOpenid || ''
+    if (ref) this.startSharePoll() // 有真实openid就启动轮询
     return {
       title: '教练消课宝——独立教练的消课管理工具',
-      path: '/pages/index/index?ref=' + (app.globalData.openid || '')
+      path: '/pages/index/index' + (ref ? '?ref=' + ref : ''),
+      imageUrl: '/images/bg.jpg'
     }
   },
 
@@ -66,6 +72,37 @@ Page({
   onShow: function () {
     var that = this
     C.checkNetwork()
+    // 分享后切回来：自动关闭分享弹窗 + 启动轮询
+    if (this.data.showShareModal) this.closeShareModal()
+    if (this.data._justShared) { this.data._justShared = false; this.startSharePoll() }
+    // 统一处理分享推荐（冷启动+热启动）
+    var refId = ''
+    if (app.globalData._pendingRef) {
+      refId = app.globalData._pendingRef
+      app.globalData._pendingRef = ''
+    } else {
+      var enterOpts = wx.getEnterOptionsSync()
+      if (enterOpts.query && enterOpts.query.ref) refId = enterOpts.query.ref
+    }
+    if (C.isReady() && refId && !app.globalData._refProcessing) {
+      app.globalData._refProcessing = true
+      C.processReferral(refId, function (e, res) {
+        if (!e) {
+          app.globalData.isProMember = true
+          app.globalData.memberExpired = false
+          app.globalData.upgradeShown = true
+          var exp = (res && res.expiry) ? res.expiry : ''
+          if (!exp) { var fd = new Date(); fd.setDate(fd.getDate() + 15); exp = fd.getFullYear() + '-' + U.p2(fd.getMonth()+1) + '-' + U.p2(fd.getDate()) }
+          app.globalData.proExpiry = exp
+          app.save()
+          C.clearRewardFlags()
+          that.setData({
+            showRewardModal: true, rewardTitle: '恭喜你！', rewardDays: 15, rewardType: 'welcome',
+            isPro: true, proExpiry: exp
+          })
+        }
+      })
+    }
     if (C.isOnline()) {
       C.flushQueue()
       // 补上离线时未同步的彩蛋标记
@@ -84,14 +121,14 @@ Page({
           app.globalData.proExpiry = proExp || ''
           C.clearRewardFlags()
           app.globalData.upgradeShown = true; app.save()
-          that.setData({ showRewardModal: true, rewardTitle: '恭喜你！', rewardSub: '通过分享获得专业版会员！', rewardDays: welcomeDays })
+          that.setData({ showRewardModal: true, rewardTitle: '恭喜你！', rewardDays: welcomeDays, rewardType: 'welcome', isPro: true, proExpiry: proExp || '' })
         } else if (pendingDays > 0) {
           app.globalData.isProMember = !!isPro
           app.globalData.memberExpired = !!expired
           app.globalData.proExpiry = proExp || ''
           C.clearRewardFlags()
           app.globalData.upgradeShown = true; app.save()
-          that.setData({ showRewardModal: true, rewardTitle: '恭喜你！', rewardSub: '分享成功，你获得了' + pendingDays + '天会员，继续分享可获得更多会员时长！' })
+          that.setData({ showRewardModal: true, rewardTitle: '恭喜你！', rewardDays: pendingDays, rewardType: 'share', isPro: true, proExpiry: proExp || '' })
         }
       })
     }
@@ -174,13 +211,13 @@ Page({
       var d = app.globalData.welcomeReward
       app.globalData.welcomeReward = 0
       app.globalData.upgradeShown = true; app.save()
-      this.setData({ showRewardModal: true, rewardTitle: '恭喜你！', rewardDays: d, rewardType: 'welcome' })
+      this.setData({ showRewardModal: true, rewardTitle: '恭喜你！', rewardDays: d, rewardType: 'welcome', isPro: true, proExpiry: app.globalData.proExpiry || '' })
       if (C.isReady()) C.clearRewardFlags()
     } else if (app.globalData.pendingReward > 0) {
       var days = app.globalData.pendingReward
       app.globalData.pendingReward = 0
       app.globalData.upgradeShown = true; app.save()
-      this.setData({ showRewardModal: true, rewardTitle: '恭喜你！', rewardDays: days, rewardType: 'share' })
+      this.setData({ showRewardModal: true, rewardTitle: '恭喜你！', rewardDays: days, rewardType: 'share', isPro: true, proExpiry: app.globalData.proExpiry || '' })
       if (C.isReady()) C.clearRewardFlags()
     }
   },
@@ -288,7 +325,7 @@ Page({
   },
 
   closeForm: function () { this.setData({ showForm: false, editing: false, nameFocus: false }) },
-  randAv: function () { this.setData({ 'fd.avatarSrc': rem() }) },
+  randAv: function () { this.setData({ 'fd.avatarSrc': rem(this.data.fd.avatarSrc) }) },
   onFdName: function (e) { this.setData({ 'fd.name': e.detail.value }) },
   onFdLessons: function (e) { this.setData({ 'fd.totalLessons': parseInt(e.detail.value) || 0 }) },
   onQuick: function (e) { this.setData({ 'fd.totalLessons': parseInt(e.currentTarget.dataset.v) }) },
@@ -336,6 +373,7 @@ Page({
     }
     app.globalData.students = ss; app.save()
     var wasEditing = this.data.editing, editId = this.data.editId
+    var newId = wasEditing ? 0 : app.globalData.nextId - 1
     A.track(wasEditing ? 'student_edit' : 'student_add')
     // 云端同步新/编辑的学员
     if (C.isReady()) {
@@ -351,6 +389,10 @@ Page({
       if (targetItem) this.flashCard(list, targetItem)
       this.scrollToTop()
     } else {
+      // 新学员卡片高亮
+      var list = this.data.list, addedItem = null
+      for (var k = 0; k < list.length; k++) { if (list[k].id == newId) { addedItem = list[k]; break } }
+      if (addedItem) this.flashCard(list, addedItem)
       // 首次添加学员：1秒后触发左滑提示动画
       if (this.data.activeCnt === 1) this.showSwipeHint()
     }
@@ -377,8 +419,13 @@ Page({
         this.setData({ showEasterT: false })
         this._guideTapCount = 0
         var claimed = wx.getStorageSync('_easter_egg_claimed') || false
-        // 防滥用：只有未领取过才给会员
         that.setData({ showEasterEgg: true, easterClaimed: !!claimed, confetti: that.makeConfetti() })
+        // 如果本地标记没恢复，再查一次云端
+        if (!claimed && C.isReady()) {
+          C.pullEasterClaimed(function (c) {
+            if (c) { wx.setStorageSync('_easter_egg_claimed', true); that.setData({ easterClaimed: true }) }
+          })
+        }
         try { wx.vibrateShort({ type: 'medium' }) } catch (e) {}
         return
       }
@@ -577,7 +624,46 @@ Page({
   onTopIco: function () { this.setData({ showFeedback: true, fbContent: '', fbContact: '', fbImgs: [], fbShowMember: !!app.globalData.upgradeShown }) },
   onUpgrade: function () { this.setData({ showUpg: true, plan: U.PLAN.YEARLY }) },
   closeUpg: function () { this.setData({ showUpg: false, showShareModal: true }) },
-  closeShareModal: function () { this.setData({ showShareModal: false }) },
+  closeShareModal: function () {
+    this.setData({ showShareModal: false })
+    this.startSharePoll()
+  },
+
+  startSharePoll: function () {
+    var that = this
+    if (!C.isReady() || this.data._polling) return
+    this.data._polling = true
+    // 等openid就位后开始轮询
+    var startPoll = function () {
+      if (!app.globalData._realOpenid) {
+        setTimeout(startPoll, 500)
+        return
+      }
+      var count = 0
+      var check = function () {
+        if (count >= 150) { that.data._polling = false; return }
+        count++
+        C.pullMember(function (isPro, expired, proExp, welcomeDays, pendingDays) {
+          if (pendingDays > 0) {
+            that.data._polling = false
+            app.globalData.isProMember = !!isPro
+            app.globalData.memberExpired = !!expired
+            app.globalData.proExpiry = proExp || ''
+            app.globalData.upgradeShown = true; app.save()
+            C.clearRewardFlags()
+            that.setData({
+              showRewardModal: true, rewardTitle: '恭喜你！', rewardDays: pendingDays, rewardType: 'share',
+              isPro: true, proExpiry: proExp || ''
+            })
+          } else {
+            setTimeout(check, 2000)
+          }
+        })
+      }
+      setTimeout(check, 2000)
+    }
+    startPoll()
+  },
   closeRewardModal: function () { this.setData({ showRewardModal: false }) },
   closeFeedback: function () { this.setData({ showFeedback: false }) },
   onFbUpgrade: function () { this.setData({ showFeedback: false, showUpg: true, plan: U.PLAN.YEARLY }) },
@@ -590,7 +676,9 @@ Page({
       success: function (res) {
         var imgs = that.data.fbImgs || []
         if (imgs.length >= 3) return
-        imgs.push(res.tempFiles[0].tempFilePath)
+        var f = res.tempFiles[0]
+if (f.size > 2 * 1024 * 1024) { wx.showToast({ title: '图片不能超过2MB', icon: 'none', duration: 2000 }); return }
+imgs.push(f.tempFilePath)
         that.setData({ fbImgs: imgs })
       }
     })
@@ -608,16 +696,28 @@ Page({
     var contact = (this.data.fbContact || '').trim()
     if (!content) { wx.showToast({ title: '请输入反馈内容', icon: 'none', duration: 2000 }); return }
     if (C.isReady()) {
-      C.submitFeedback(content, contact, function (err) {
-        if (err) {
-          wx.showToast({ title: '提交失败，请重试', icon: 'none', duration: 2000 })
-        } else {
-          that.setData({ showFeedback: false })
-          wx.showToast({ title: '感谢反馈！', icon: 'success', duration: 2000 })
-        }
+      // 先上传图片到云存储
+      var imgs = this.data.fbImgs || []
+      var uploadImg = function (idx, urls, cb) {
+        if (idx >= imgs.length) { cb(urls); return }
+        wx.cloud.uploadFile({
+          cloudPath: 'feedback/' + Date.now() + '_' + idx + '.jpg',
+          filePath: imgs[idx],
+          success: function (res) { urls.push(res.fileID); uploadImg(idx + 1, urls, cb) },
+          fail: function () { uploadImg(idx + 1, urls, cb) }
+        })
+      }
+      uploadImg(0, [], function (urls) {
+        C.submitFeedback(content, contact, urls, function (err) {
+          if (err) {
+            wx.showToast({ title: '提交失败，请重试', icon: 'none', duration: 2000 })
+          } else {
+            that.setData({ showFeedback: false, fbImgs: [] })
+            wx.showToast({ title: '感谢反馈！', icon: 'success', duration: 2000 })
+          }
+        })
       })
     } else {
-      // 未开云开发时，复制内容到剪贴板
       wx.setClipboardData({
         data: '反馈：' + content + (contact ? '\n联系方式：' + contact : ''),
         success: function () {

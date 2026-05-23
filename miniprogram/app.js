@@ -13,6 +13,7 @@ App({
     welcomeReward: 0,
     pendingReward: 0,
     upgradeShown: false,
+    _pendingWelcome: null,
     bannerDismissedToday: {},
     statusBarHeight: 20
   },
@@ -45,36 +46,26 @@ App({
     // 初始化云开发（未开通时静默跳过）
     cloud.init()
 
-    // 处理分享推荐
+    // 处理分享推荐（需在getOpenid之前拿到ref）
     var opts = wx.getLaunchOptionsSync()
     var refId = (opts.query && opts.query.ref) ? opts.query.ref : ''
 
-    if (cloud.isReady() && refId) {
-      // 有网络且有推荐链接 → 立即处理
-      cloud.processReferral(refId, function (e) {
-        if (!e) {
-          that.globalData.isProMember = true
-          that.globalData.memberExpired = false
-          that.save()
-        }
-        that.pullCloudData()
-        // 数据拉回来后，让页面刷新一次（否则奖励弹窗来不及显示）
-        setTimeout(function () {
-          var pages = getCurrentPages()
-          if (pages.length > 0 && pages[pages.length - 1].reload) {
-            pages[pages.length - 1].reload()
-          }
-        }, 1500)
-      })
-    } else if (cloud.isReady()) {
-      // 普通启动，拉云端数据
-      that.pullCloudData()
-    }
-
     if (cloud.isReady()) {
-      // 同步彩蛋标记（覆盖本地，防止清缓存重领）
-      cloud.pullEasterClaimed(function (claimed) {
-        if (claimed) wx.setStorageSync('_easter_egg_claimed', true)
+      // 获取微信真实openid，拿到后再拉云端数据
+      wx.cloud.callFunction({ name: 'getOpenid' }).then(function (res) {
+        if (res.result && res.result.openid) {
+          that.globalData._realOpenid = res.result.openid
+        }
+        // openid就位了，现在拉云端数据
+        if (refId) that.globalData._pendingRef = refId
+        that.pullCloudData()
+        // 同步彩蛋标记
+        cloud.pullEasterClaimed(function (claimed) {
+          if (claimed) wx.setStorageSync('_easter_egg_claimed', true)
+        })
+      }).catch(function () {
+        // 即使失败也拉数据（会员信息会缺失，但学员数据能拉）
+        if (!refId) that.pullCloudData()
       })
     }
   },

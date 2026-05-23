@@ -131,19 +131,15 @@ function pullFromCloud(cb) {
     })
 }
 
-// ===== 获取真实openid（优先用已缓存的，没有则从getOpenid云函数取） =====
-function getRealOpenid() {
-  var app = getApp()
-  return (app && app.globalData && app.globalData._realOpenid) ? app.globalData._realOpenid : ''
-}
-
 // ===== 会员状态同步 =====
 function syncMember(isPro, memberExpired, proExpiry, upgradeShown) {
   if (!_db) return
-  var oid = getRealOpenid(); if (!oid) return
-  _db.collection('users').where({ openid: oid }).get()
+  var app = getApp()
+  var realOpenid = (app && app.globalData && app.globalData._realOpenid) ? app.globalData._realOpenid : ''
+  if (!realOpenid) return // openid还没拿到，暂时跳过
+  _db.collection('users').where({ openid: realOpenid }).get()
     .then(function (res) {
-      var data = { openid: oid, isProMember: isPro, memberExpired: memberExpired, proExpiry: proExpiry || '', upgradeShown: !!upgradeShown }
+      var data = { openid: realOpenid, isProMember: isPro, memberExpired: memberExpired, proExpiry: proExpiry || '', upgradeShown: !!upgradeShown }
       if (res.data.length) {
         _db.collection('users').doc(res.data[0]._id).update({ data: data })
       } else {
@@ -155,8 +151,9 @@ function syncMember(isPro, memberExpired, proExpiry, upgradeShown) {
 
 function pullMember(cb) {
   if (!_db) { if (cb) cb(null, null, null, null, null, null); return }
-  var oid = getRealOpenid(); if (!oid) { if (cb) cb(false, false, '', 0, 0, false); return }
-  _db.collection('users').where({ openid: oid }).get()
+  var app = getApp()
+  var realOpenid = (app && app.globalData && app.globalData._realOpenid) ? app.globalData._realOpenid : ''
+  _db.collection('users').where({ openid: realOpenid }).get()
     .then(function (res) {
       if (res.data.length) {
         var d = res.data[0]
@@ -170,8 +167,10 @@ function pullMember(cb) {
 
 function clearRewardFlags(cb) {
   if (!_db) { if (cb) cb(); return }
-  var oid = getRealOpenid(); if (!oid) { if (cb) cb(); return }
-  _db.collection('users').where({ openid: oid }).get()
+  var app = getApp()
+  var realOpenid = (app && app.globalData && app.globalData._realOpenid) ? app.globalData._realOpenid : ''
+  if (!realOpenid) { if (cb) cb(); return }
+  _db.collection('users').where({ openid: realOpenid }).get()
     .then(function (res) {
       if (res.data.length) {
         _db.collection('users').doc(res.data[0]._id).update({
@@ -185,10 +184,10 @@ function clearRewardFlags(cb) {
 // ===== 彩蛋标记 =====
 function syncEasterClaimed() {
   if (!_db) return
-  var oid = getRealOpenid(); if (!oid) return
-  _db.collection('users').where({ openid: oid }).get()
+  _db.collection('users').where({ _openid: '{openid}' }).get()
     .then(function (res) {
-      var data = { easterClaimed: true }
+      var data = { easterClaimed: true, easterProExpiry: '' }
+      // 这里 easterProExpiry 由调用方填入实际日期
       if (res.data.length) {
         _db.collection('users').doc(res.data[0]._id).update({ data: data })
       } else {
@@ -200,8 +199,7 @@ function syncEasterClaimed() {
 
 function pullEasterClaimed(cb) {
   if (!_db) { if (cb) cb(false); return }
-  var oid = getRealOpenid(); if (!oid) { if (cb) cb(false); return }
-  _db.collection('users').where({ openid: oid }).get()
+  _db.collection('users').where({ _openid: '{openid}' }).get()
     .then(function (res) {
       if (res.data.length && res.data[0].easterClaimed) {
         if (cb) cb(true)
@@ -213,10 +211,10 @@ function pullEasterClaimed(cb) {
 }
 
 // ===== 意见反馈 =====
-function submitFeedback(content, contact, cb) {
+function submitFeedback(content, contact, images, cb) {
   if (!_db) { if (cb) cb('cloud_unavailable'); return }
   _db.collection('feedback').add({
-    data: { content: content, contact: contact || '', time: new Date().toISOString() }
+    data: { content: content, contact: contact || '', images: images || [], time: new Date().toISOString() }
   }).then(function () { if (cb) cb(null) })
     .catch(function (e) { if (cb) cb(e) })
 }
@@ -235,7 +233,7 @@ function processReferral(referrerId, cb) {
     name: 'processReferral',
     data: { referrerId: referrerId }
   }).then(function (res) {
-    if (cb) cb(res.result && res.result.code === 0 ? null : (res.result && res.result.msg || 'referral_error'))
+    if (cb) cb(res.result && res.result.code === 0 ? null : (res.result && res.result.msg || 'referral_error'), res.result)
   }).catch(function (e) {
     if (cb) cb(e.errMsg || 'referral_error')
   })
