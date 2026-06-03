@@ -84,7 +84,7 @@
 .no-result{ text-align:center; padding:120rpx 0 }
 
 /* 底部栏 */
-.bot-bar{ position:fixed; left:0; right:0; bottom:0; display:flex; align-items:center; padding:22rpx 32rpx 12rpx 32rpx; background:#fff; box-shadow:0 -8rpx 24rpx rgba(0,0,0,.04); z-index:60 }
+.bot-bar{ position:fixed; left:0; right:0; bottom:0; display:flex; align-items:center; padding:22rpx 32rpx 12rpx 32rpx; background:#fff; box-shadow:0 -8rpx 24rpx rgba(0,0,0,.04); z-index:60; transition:bottom .25s ease }
 .search-wrap{ flex:7; position:relative; margin-right:16rpx }
 .search-icon-wrap{ position:absolute; left:16rpx; top:50%; transform:translateY(-50%); z-index:1; display:flex }
 .search-ico-img{ width:62rpx; height:62rpx }

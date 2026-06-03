@@ -72,6 +72,8 @@ Page({
   onShow: function () {
     var that = this
     C.checkNetwork()
+    // 修复底部栏悬空：切前台时重置键盘高度
+    if (this.data.kbH > 0) this.setData({ kbH: 0 })
     // 分享后切回来：自动关闭分享弹窗 + 启动轮询
     if (this.data.showShareModal) this.closeShareModal()
     if (this.data._justShared) { this.data._justShared = false; this.startSharePoll() }
@@ -301,6 +303,8 @@ Page({
       return
     }
     var s = this.getById(id); if (!s) return
+    // 点击动效
+    var list = this.data.list; if (list[ix]) { list[ix].highlight = 'card-hl-green'; this.setData({ list: list.slice() }); var that = this; setTimeout(function () { list[ix].highlight = ''; that.setData({ list: list.slice() }) }, 150) }
     if (U.isExp(s)) { this.setData({ showExpModal: true }) } else { this.setData({ showClass: true, classTarget: s, classAmount: 1 }) }
   },
 
@@ -641,7 +645,7 @@ Page({
       }
       var count = 0
       var check = function () {
-        if (count >= 150) { that.data._polling = false; return }
+        if (count >= 36) { that.data._polling = false; return }
         count++
         C.pullMember(function (isPro, expired, proExp, welcomeDays, pendingDays) {
           if (pendingDays > 0) {
@@ -656,11 +660,11 @@ Page({
               isPro: true, proExpiry: proExp || ''
             })
           } else {
-            setTimeout(check, 2000)
+            setTimeout(check, 5000)
           }
         })
       }
-      setTimeout(check, 2000)
+      setTimeout(check, 5000)
     }
     startPoll()
   },

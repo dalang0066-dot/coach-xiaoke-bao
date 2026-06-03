@@ -6,8 +6,8 @@ exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
 
   const prices = {
-    monthly: { total: 1880, name: '教练消课宝·月卡会员' },
-    yearly: { total: 12880, name: '教练消课宝·年卡会员' }
+    monthly: { total: 990, name: '教练消课宝·月卡会员' },
+    yearly: { total: 6800, name: '教练消课宝·年卡会员' }
   }
   const p = prices[plan] || prices.monthly
 

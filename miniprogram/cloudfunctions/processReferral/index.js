@@ -39,6 +39,7 @@ exports.main = async (event) => {
     } else {
       await usersColl.add({
         data: {
+          _openid: referrerId,
           openid: referrerId,
           isProMember: true, memberExpired: false, proExpiry: expiry,
           pendingReward: 15, easterClaimed: false
@@ -51,7 +52,7 @@ exports.main = async (event) => {
       data: {
         openid: newUserId,
         isProMember: true, memberExpired: false, proExpiry: expiry,
-        easterClaimed: false, welcomeReward: 15
+        easterClaimed: false, welcomeReward: 15, _openid: newUserId
       }
     })
 

@@ -1,5 +1,5 @@
 <view class="pg">
-  <text class="topbar-tt {{empty ? '' : 'topbar-white'}}" style="padding-top:{{sbh}}px" bindlongpress="onDebug">教练消课宝</text>
+  <text class="topbar-tt {{empty ? '' : 'topbar-white'}}" style="padding-top:{{sbh}}px">教练消课宝</text>
   <view class="top-ico" wx:if="{{!empty}}" style="top:{{icoTop}}rpx;left:{{icoLeft}}rpx;width:{{icoSize}}rpx;height:{{icoSize}}rpx;border-radius:{{icoRadius}}rpx" bindtap="onTopIco">
     <image class="top-ico-img" src="/images/feedback-icon.png" mode="aspectFit"></image>
   </view>
@@ -185,11 +185,11 @@
         <text class="mu-desc">升级专业版，享受<text class="c-green b">无限学员</text>管理，开启<text class="c-green b">续费预警</text>与<text class="c-green b">数据永久同步</text>。</text>
         <view class="plan {{plan==='monthly'?'plan-on':''}}" data-plan="monthly" bindtap="onPlan">
           <view class="plan-rd {{plan==='monthly'?'rd-on':''}}"><view wx:if="{{plan==='monthly'}}" class="rd-dot"></view></view>
-          <view class="plan-info"><text class="plan-n">月卡 18.8 元 / 月</text><text class="plan-s c-gray2">按月订阅，随时取消</text></view>
+          <view class="plan-info"><text class="plan-n">月卡 9.9 元 / 月</text><text class="plan-s c-gray2">按月订阅，随时取消</text></view>
         </view>
         <view class="plan {{plan==='yearly'?'plan-on':''}}" data-plan="yearly" bindtap="onPlan">
           <view class="plan-rd {{plan==='yearly'?'rd-on':''}}"><view wx:if="{{plan==='yearly'}}" class="rd-dot"></view></view>
-          <view class="plan-info"><text class="plan-n">年卡 128.8 元 / 年</text><text class="plan-s c-green">约 10.7 元 / 月，超值推荐</text></view>
+          <view class="plan-info"><text class="plan-n">年卡 68 元 / 年</text><text class="plan-s c-green">约 5.7 元 / 月，超值推荐</text></view>
         </view>
         <view class="mu-submit" bindtap="doUpg"><text>立即升级</text></view>
         <view class="mu-later" bindtap="closeUpg"><text>稍后再说</text></view>
