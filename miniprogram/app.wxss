@@ -2,7 +2,7 @@ button { padding: 0; margin: 0; line-height: inherit; background: none }
 button::after { border: none }
 page { height: 100vh; overflow: hidden; background-color: #f4fafd; font-family: 'PingFang SC', -apple-system, sans-serif; font-size: 32rpx; color: #161d1f; line-height: 1.5 }
 
-.c-green { color: #006d37 }
+.c-green { color: #008946 }
 .c-red { color: #ba1a1a }
 .c-gray2 { color: #5c5f60 }
 .c-yel { color: #ca8a04 }

@@ -17,55 +17,81 @@
 
   <!-- 学员列表状态 -->
   <block wx:else>
+    <view class="banner banner-swipe" wx:if="{{showSwipeBanner}}">
+      <view class="banner-l"><text class="banner-txt">左滑学员卡片可以查看历史记录哦~</text></view>
+      <view class="banner-x" bindtap="dismissSwipeHint"><text>×</text></view>
+    </view>
     <view class="banner" wx:if="{{showSleepy}}">
       <view class="banner-l"><image class="banner-ico-img" src="/images/banner-icon.png"></image><text class="banner-txt">学员{{sleepyName}}超过30天没上课啦！！！</text></view>
-      <view class="banner-x" bindtap="dismissSleepy"><text>✕</text></view>
+      <view class="banner-x" bindtap="dismissSleepy"><text>×</text></view>
     </view>
     <view class="banner" wx:if="{{showExpiry}}">
       <view class="banner-l"><image class="banner-ico-img" src="/images/banner-icon.png"></image><text class="banner-txt">学员{{expiryName}}的课时还有{{expiryDay}}天过期啦！！！</text></view>
-      <view class="banner-x" bindtap="dismissExpiry"><text>✕</text></view>
+      <view class="banner-x" bindtap="dismissExpiry"><text>×</text></view>
     </view>
     <view class="banner" wx:if="{{showMember}}">
       <view class="banner-l" bindtap="onUpgrade"><image class="banner-ico-img" src="/images/banner-icon.png"></image><text class="banner-txt">您的会员已到期，点击升级会员！！！</text></view>
-      <view class="banner-x" bindtap="dismissMember"><text>✕</text></view>
+      <view class="banner-x" bindtap="dismissMember"><text>×</text></view>
     </view>
 
     <scroll-view class="list-scroll" scroll-y="{{scrollY}}" scroll-top="{{scrollTop}}" bindscroll="onScroll" bindtap="onTapBlank">
       <view class="list-wrap" bindtap="onTapBlank">
         <block wx:for="{{list}}" wx:key="id">
           <view class="card-box {{item.open ? 'card-open' : ''}} {{item.highlight}}">
-            <view class="card-actions">
-              <view class="act-btn act-edit" bindtap="onEdit" data-id="{{item.id}}"><image class="act-ico" src="/images/swipe-edit.png"></image><text>编辑</text></view>
-              <view class="act-btn act-hist" bindtap="onHist" data-id="{{item.id}}"><image class="act-ico" src="/images/swipe-history.png"></image><text>历史</text></view>
-              <view class="act-btn act-del" bindtap="onDel" data-id="{{item.id}}"><image class="act-ico" src="/images/swipe-delete.png"></image><text>删除</text></view>
-            </view>
-            <view
-              style="transform:translateX({{item.open ? -420 : (item._sx || 0)}}rpx);transition:{{item._st===false?'none':'transform .35s ease'}}"
-              class="card-main {{item.exp ? 'card-gray' : (item.low ? 'card-red' : '')}} {{showHintT && index===0 ? 'card-hint' : ''}}"
-              data-id="{{item.id}}"
-              data-ix="{{index}}"
-              bindtouchstart="ts"
-              bindtouchmove="tm"
-              bindtouchend="te"
-              catchtap="onCardTap"
-            >
-              <view class="card-av {{item.exp ? 'av-gray' : ''}}"><image class="av-img" src="{{item.avatarSrc}}" mode="aspectFill"></image></view>
-              <view class="card-info">
-                <text class="card-name {{item.exp ? 'c-gray' : ''}}">{{item.name}}</text>
-                <text class="card-note {{item.exp ? 'c-gray' : ''}}">{{item.note || ''}}</text>
+            <view class="swipe-frame">
+              <view class="swipe-actions">
+                <view class="act-btn act-edit" catchtap="onEdit" data-id="{{item.id}}"><image class="act-ico" src="/images/swipe-edit.png"></image><text>编辑</text></view>
+                <view class="act-btn act-hist" catchtap="onHist" data-id="{{item.id}}"><image class="act-ico" src="/images/swipe-history.png"></image><text>历史</text></view>
+                <view class="act-btn act-del" catchtap="onDel" data-id="{{item.id}}"><image class="act-ico" src="/images/swipe-delete.png"></image><text>删除</text></view>
               </view>
-              <view class="card-num">
-                <text class="num-val {{item.exp ? 'c-gray' : (item.low ? 'c-red' : 'c-green')}}">{{item.exp ? '已过期' : item.remainingLessons}}</text>
-                <text class="num-lbl {{item.exp ? 'c-gray' : ''}}">剩余课时</text>
+              <view
+                style="transform:translateX({{item.open ? -420 : (item._sx || 0)}}rpx);transition:{{item._st===false?'none':'transform .35s ease'}}"
+                class="card-face {{item.exp ? 'card-gray' : (item.low ? 'card-low-line' : '')}} card-schedule-{{item.scheduleTone}} {{showHintT && index===0 ? 'card-hint' : ''}}"
+                data-id="{{item.id}}"
+                data-ix="{{index}}"
+                bindtouchstart="ts"
+                bindtouchmove="tm"
+                bindtouchend="te"
+                catchtap="onCardTap"
+              >
+                <view class="card-main">
+                  <view class="card-av {{item.exp ? 'av-gray' : ''}}"><image class="av-img" src="{{item.avatarSrc}}" mode="aspectFill"></image></view>
+                  <view class="card-info">
+                    <view class="card-name-row">
+                      <text class="card-name {{item.exp ? 'c-gray' : ''}}">{{item.name}}</text>
+                      <text wx:if="{{item.scheduleStatusText}}" class="overdue-tag {{item.scheduleStatusTone==='red' ? 'tag-red' : 'tag-green'}}">{{item.scheduleStatusText}}</text>
+                    </view>
+                    <text class="card-note {{item.exp ? 'c-gray' : ''}}">{{item.note || ''}}</text>
+                  </view>
+                  <view class="card-num">
+                    <text class="num-val {{item.exp ? 'c-gray' : (item.low ? 'c-red' : 'c-green')}}">{{item.exp ? '已过期' : item.remainingLessons}}</text>
+                    <text class="num-lbl {{item.exp ? 'c-gray' : (item.low ? 'c-red' : '')}}">剩余课时</text>
+                  </view>
+                </view>
+                <view class="schedule-strip">
+                  <view wx:for="{{item.scheduleDisplayChips}}" wx:for-item="chip" wx:key="id" class="schedule-chip schedule-chip-{{chip.tone}}">
+                    <view class="chip-ico chip-{{chip.icon}}"></view>
+                    <text>{{chip.label}}</text>
+                  </view>
+                </view>
               </view>
             </view>
           </view>
-          <view class="card-hint-tip" wx:if="{{showHintT && index===0}}"><text>左滑卡片试试～</text></view>
+          <view class="card-hint-tip" wx:if="{{showHintT && index===0}}"><text>左滑卡片试试~</text></view>
         </block>
         <view class="no-result" wx:if="{{list.length===0 && keyword}}"><text class="c-gray2">未找到匹配的学员</text></view>
-        <view class="pad-bot"></view>
+        <view class="pad-bot"><text wx:if="{{listHasOverflow}}">没有更多学员啦~</text></view>
       </view>
     </scroll-view>
+
+    <view class="schedule-fab-hit" style="{{scheduleFabStyle}}" bindtap="goSchedule">
+      <view class="schedule-fab">
+        <text>排课</text>
+        <view wx:if="{{scheduleBadge.count}}" class="schedule-fab-badge {{scheduleBadge.tone==='red' ? 'schedule-fab-red' : 'schedule-fab-green'}}">
+          <text>{{scheduleBadge.count}}</text>
+        </view>
+      </view>
+    </view>
   </block>
 
   <!-- 底部栏 -->
@@ -73,7 +99,7 @@
     <view class="search-wrap">
       <view class="search-icon-wrap"><image class="search-ico-img" src="/images/search-icon.png"></image></view>
       <input class="search-inp" placeholder="搜索学员..." value="{{keyword}}" bindinput="onSearch" bindfocus="onSearchFocus" bindblur="onSearchBlur" adjust-position="{{false}}" cursor-spacing="{{2}}" confirm-type="search"/>
-      <view class="search-clear" wx:if="{{keyword}}" catchtap="onSearchClear"><text>✕</text></view>
+      <view class="search-clear" wx:if="{{keyword}}" catchtap="onSearchClear"><text>×</text></view>
     </view>
     <view class="add-btn2" bindtap="onAddTap">
         <view class="add-plus-wrap"><view class="add-plus-h"></view><view class="add-plus-v"></view></view>
@@ -81,19 +107,91 @@
       </view>
   </view>
 
+  <!-- ===== 多节未消课弹窗 ===== -->
+  <view class="modal modal-overdue" wx:if="{{showMultiOverdue}}" catchtap="closeMultiOverdue">
+    <view class="modal-box overdue-box" catchtap="nop">
+      <view class="overdue-head">
+        <text class="overdue-title">有多节课未消</text>
+      </view>
+      <scroll-view class="overdue-scroll" scroll-y="{{true}}" show-scrollbar="{{false}}">
+        <view class="overdue-inner">
+          <view wx:for="{{multiOverdueList}}" wx:key="id" class="overdue-item">
+            <view class="overdue-card course-red">
+              <image class="overdue-av" src="{{item.avatarSrc}}" mode="aspectFill"></image>
+              <view class="overdue-main">
+                <view class="overdue-top">
+                  <text class="overdue-name">{{item.studentName}}</text>
+                  <view class="overdue-mini mini-red"><text>{{item.displayAmountText}}节课</text></view>
+                </view>
+                <text class="overdue-note" wx:if="{{item.note}}">{{item.note}}</text>
+                <view class="overdue-meta-line">
+                  <view class="overdue-meta"><view class="overdue-meta-ico overdue-meta-date"><text></text></view><text>{{item.dateShort}} {{item.weekday}}</text></view>
+                  <view class="overdue-meta"><view class="overdue-meta-ico overdue-meta-time"><text></text></view><text>{{item.startTime}}</text></view>
+                </view>
+              </view>
+              <view class="overdue-side">
+                <view class="overdue-pill pill-red"><text>{{item.stateText}}</text></view>
+              </view>
+            </view>
+            <view class="overdue-actions">
+              <view class="overdue-act overdue-act-ok" data-id="{{item.id}}" catchtap="onMultiDeduct"><text>消课</text></view>
+              <view class="overdue-act overdue-act-del" data-id="{{item.id}}" catchtap="onMultiDelete"><text>删除</text></view>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+      <view class="overdue-foot">
+        <view class="overdue-cancel" bindtap="closeMultiOverdue"><text>取消</text></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== 删除排课确认弹窗 ===== -->
+  <view class="modal modal-schedule-del" wx:if="{{showScheduleDel}}" catchtap="closeScheduleDel">
+    <view class="modal-box schedule-del-box" catchtap="nop">
+      <view class="sd-body">
+        <text class="sd-title">确认删除这节排课吗？</text>
+      </view>
+      <view class="sd-btns">
+        <view class="sd-btn sd-cancel" bindtap="closeScheduleDel"><text>取消</text></view>
+        <view class="sd-btn sd-ok" bindtap="doScheduleDel"><text>删除</text></view>
+      </view>
+    </view>
+  </view>
+
   <!-- ===== 消课确认弹窗 ===== -->
   <view class="modal" wx:if="{{showClass}}" catchtap="closeClass">
     <view class="modal-box modal-class" catchtap="nop">
       <view class="mc-body">
         <view class="mc-circle"><image class="mc-check-img" src="/images/class-ok.png"></image></view>
-        <text class="mc-title">选择消课节数</text>
+        <text class="mc-title">{{classTitle}}</text>
+        <view class="mc-sub mc-schedule-sub mc-early-sub" wx:if="{{classSchedule && classScheduleState==='upcoming'}}">
+          <text>原排课时间</text><text class="mc-sub-time">{{classScheduleTimeText}}</text>
+        </view>
+        <view class="mc-sub mc-schedule-sub mc-early-confirm" wx:if="{{classSchedule && classScheduleState==='upcoming'}}">
+          <text>确认按</text><text class="mc-sub-time">{{classConfirmTimeText}}</text><text> 进行消课吗？</text>
+        </view>
+        <view class="mc-sub mc-schedule-sub" wx:elif="{{classSchedule && classScheduleState!=='inProgress'}}">
+          <text>按</text><text class="mc-sub-time">{{classScheduleTimeText}}</text><text> 的排课处理</text>
+        </view>
+        <view class="mc-sub mc-move-tip" wx:if="{{classSchedule && classScheduleState==='overdue'}}">
+          <text>如要 </text><text class="mc-move-red">改期</text><text> 请移至排课页面</text>
+        </view>
+        <view class="mc-divider" wx:if="{{classSchedule && classScheduleState!=='inProgress'}}"></view>
+        <view class="mc-plan" wx:if="{{classSchedule}}">
+          <text>原排课节数</text><text class="mc-plan-num">{{classScheduleAmountText}}</text><text> 节</text>
+        </view>
         <view class="mc-quick">
-          <view class="mc-qbtn {{classAmount===1?'mc-qon':''}}" data-v="1" bindtap="onClassQuick">
-            <text class="mc-qn">1节</text><text class="mc-qs">标准课时</text>
+          <view class="mc-qbtn {{!classCustomSelected && classAmount===1?'mc-qon':''}}" data-v="1" bindtap="onClassQuick">
+            <text class="mc-qn">1节</text>
           </view>
-          <view class="mc-qbtn {{classAmount===2?'mc-qon':''}}" data-v="2" bindtap="onClassQuick">
-            <text class="mc-qn">2节</text><text class="mc-qs">连上/双课</text>
+          <view wx:if="{{classTarget.remainingLessons >= 2}}" class="mc-qbtn {{!classCustomSelected && classAmount===2?'mc-qon':''}}" data-v="2" bindtap="onClassQuick">
+            <text class="mc-qn">2节</text>
           </view>
+          <input class="mc-custom {{classCustomSelected?'mc-custom-on':''}}" type="digit" placeholder="{{classCustomSelected ? '' : '自定义'}}" value="{{classCustom}}" bindfocus="onClassCustomFocus" bindtap="onClassCustomFocus" bindinput="onClassCustom" />
+        </view>
+        <view class="mc-warn" wx:if="{{classSchedule && classExtraAmount > 0}}">
+          <text>实际消课节数大于原排课节数，确认消课吗？</text>
         </view>
         <text class="mc-desc"><text class="b">{{classTarget.name}}</text> 将扣除对应课时</text>
       </view>
@@ -118,15 +216,15 @@
         </view>
         <view class="mf-f">
           <text class="mf-lbl">课时数</text>
-          <input class="mf-inp mf-num" type="number" placeholder="0" value="{{fd.totalLessons}}" bindinput="onFdLessons"/>
+          <input class="mf-inp mf-num" type="digit" placeholder="0" value="{{fd.totalLessons}}" bindinput="onFdLessons"/>
         </view>
         <view class="mf-quick">
-          <view class="mq-btn {{fd.totalLessons===12?'mq-on':''}}" data-v="12" bindtap="onQuick"><text>12节</text></view>
-          <view class="mq-btn {{fd.totalLessons===24?'mq-on':''}}" data-v="24" bindtap="onQuick"><text>24节</text></view>
-          <view class="mq-btn {{fd.totalLessons===36?'mq-on':''}}" data-v="36" bindtap="onQuick"><text>36节</text></view>
+          <view class="mq-btn {{fd.totalLessons==12?'mq-on':''}}" data-v="12" bindtap="onQuick"><text>12节</text></view>
+          <view class="mq-btn {{fd.totalLessons==24?'mq-on':''}}" data-v="24" bindtap="onQuick"><text>24节</text></view>
+          <view class="mq-btn {{fd.totalLessons==36?'mq-on':''}}" data-v="36" bindtap="onQuick"><text>36节</text></view>
         </view>
         <view class="mf-f">
-          <text class="mf-lbl">有效期至（默认6个月）</text>
+          <text class="mf-lbl">有效期至（默认1个月）</text>
           <picker mode="date" value="{{fd.expiryDate}}" bindchange="onFdDate">
             <view class="mf-inp mf-date"><text class="{{fd.expiryDate?'':'mf-ph'}}">{{fd.expiryDate||'请选择日期'}}</text></view>
           </picker>
@@ -145,12 +243,16 @@
   </view>
 
   <!-- ===== 删除确认弹窗 ===== -->
-  <view class="modal" wx:if="{{showDel}}" catchtap="closeDel">
+  <view class="modal modal-del-mask" wx:if="{{showDel}}" catchtap="closeDel">
     <view class="modal-box modal-del" catchtap="nop">
       <view class="md-body">
         <view class="md-circle"><image class="md-ico-img" src="/images/delete-icon.png"></image></view>
         <text class="md-title">确定要删除学员吗？</text>
-        <text class="md-desc"><text class="b">{{delTarget.name}}</text> 的历史记录将无法恢复。</text>
+        <text class="md-desc"><text class="b">{{delTarget.name}}</text> 的资料、历史记录、关联排课都会删除，且<text class="b">无法恢复</text></text>
+        <view class="md-warn">
+          <view class="md-warn-ico"><text>!</text></view>
+          <text>此操作不可撤销，请谨慎确认。</text>
+        </view>
       </view>
       <view class="md-btns">
         <view class="md-btn md-cancel" bindtap="closeDel"><text>取消</text></view>
@@ -182,16 +284,11 @@
         <text class="mu-htitle">免费版学员已满</text>
       </view>
       <view class="mu-body">
-        <text class="mu-desc">升级专业版，享受<text class="c-green b">无限学员</text>管理，开启<text class="c-green b">续费预警</text>与<text class="c-green b">数据永久同步</text>。</text>
-        <view class="plan {{plan==='monthly'?'plan-on':''}}" data-plan="monthly" bindtap="onPlan">
-          <view class="plan-rd {{plan==='monthly'?'rd-on':''}}"><view wx:if="{{plan==='monthly'}}" class="rd-dot"></view></view>
-          <view class="plan-info"><text class="plan-n">月卡 9.9 元 / 月</text><text class="plan-s c-gray2">按月订阅，随时取消</text></view>
+        <text class="mu-desc">升级终身版，享受<text class="c-green b">无限学员</text>管理，开启<text class="c-green b">续费预警</text>、<text class="c-green b">数据永久同步</text></text>
+        <view class="plan plan-on" style="text-align:center">
+          <view class="plan-info"><text class="plan-n" style="font-size:44rpx;color:#006d37">终身版 29.9 元</text><text class="plan-s">一次付费 · 终身使用</text></view>
         </view>
-        <view class="plan {{plan==='yearly'?'plan-on':''}}" data-plan="yearly" bindtap="onPlan">
-          <view class="plan-rd {{plan==='yearly'?'rd-on':''}}"><view wx:if="{{plan==='yearly'}}" class="rd-dot"></view></view>
-          <view class="plan-info"><text class="plan-n">年卡 68 元 / 年</text><text class="plan-s c-green">约 5.7 元 / 月，超值推荐</text></view>
-        </view>
-        <view class="mu-submit" bindtap="doUpg"><text>立即升级</text></view>
+        <view class="mu-submit" bindtap="doUpg"><text>{{paying ? '处理中...' : '立即升级'}}</text></view>
         <view class="mu-later" bindtap="closeUpg"><text>稍后再说</text></view>
       </view>
     </view>
@@ -203,8 +300,8 @@
       <view class="mc-body">
         <view class="mc-circle"><image class="mc-check-img" src="/images/class-ok.png"></image></view>
         <text class="mc-title">{{rewardTitle}}</text>
-        <text class="mc-desc" wx:if="{{rewardType==='welcome'}}">通过分享获得<text class="c-green b">{{rewardDays}}天</text>专业版会员！</text>
-        <text class="mc-desc" wx:elif="{{rewardType==='share'}}">分享成功，你获得了<text class="c-green b">{{rewardDays}}天</text>专业版会员，继续分享可获得更多会员时长！</text>
+        <text class="mc-desc" wx:if="{{rewardType==='welcome'}}">通过分享获得<text class="c-green b">{{rewardDays}}</text>专业版会员！</text>
+        <text class="mc-desc" wx:elif="{{rewardType==='share'}}">分享成功，你获得<text class="c-green b">{{rewardDays}}</text>专业版会员，继续分享可获得更多会员时长！</text>
       </view>
       <view class="mc-btns">
         <view class="mc-btn mc-ok" bindtap="closeRewardModal"><text>好的</text></view>
@@ -234,12 +331,13 @@
       <view class="fb-status {{isPro ? '' : 'fb-status-gray'}}" wx:if="{{fbShowMember}}">
         <image class="fb-status-icon" src="/images/upgrade-icon.png" mode="aspectFit"></image>
         <view class="fb-status-info">
-          <text class="fb-status-txt">{{isPro ? '专业版会员' : '免费版用户'}}</text>
-          <text class="fb-status-sub" wx:if="{{isPro}}">到期日：{{proExpiry || '--'}}</text>
+          <text class="fb-status-txt">{{isPro ? (proExpiry ? '专业版会员' : '终身版会员') : '免费版用户'}}</text>
+          <text class="fb-status-sub" wx:if="{{isPro && proExpiry}}">到期日：{{proExpiry}}</text>
+          <text class="fb-status-sub" wx:elif="{{isPro}}"></text>
           <text class="fb-status-sub" wx:else>升级解锁更多功能</text>
         </view>
         <view class="fb-status-btn" wx:if="{{!isPro}}" catchtap="onFbUpgrade"><text>升级</text></view>
-        <view class="fb-status-btn" wx:if="{{isPro && proExpSoon}}" catchtap="onFbUpgrade"><text>续费</text></view>
+        <view class="fb-status-btn" wx:if="{{isPro && proExpiry}}" catchtap="onFbUpgrade"><text>续费</text></view>
       </view>
       <view class="fb-body">
         <view class="mf-f">
@@ -249,7 +347,7 @@
             <view class="fb-img-row">
               <view class="fb-img-btn" wx:for="{{fbImgs}}" wx:key="index" catchtap="onFbImg" data-ix="{{index}}">
                 <image class="fb-img-thumb" src="{{item}}" mode="aspectFill"></image>
-                <view class="fb-img-del" catchtap="onFbImgDel" data-ix="{{index}}"><text>✕</text></view>
+                <view class="fb-img-del" catchtap="onFbImgDel" data-ix="{{index}}"><text>×</text></view>
               </view>
               <view class="fb-img-add" wx:if="{{fbImgs.length < 3}}" catchtap="onFbAddImg">
                 <view class="fb-add-h"></view>
@@ -260,12 +358,12 @@
         </view>
         <view class="mf-f">
           <text class="mf-lbl">联系方式（选填）</text>
-          <input class="mf-inp" placeholder="手机号/微信号/邮箱" value="{{fbContact}}" bindinput="onFbContact" maxlength="50"/>
+          <input class="mf-inp" placeholder="手机 / 微信 / 邮箱" value="{{fbContact}}" bindinput="onFbContact" maxlength="50"/>
         </view>
       </view>
       <view class="mf-foot">
         <view class="mff-btn mff-cancel" bindtap="closeFeedback"><text>关闭</text></view>
-        <view class="mff-btn mff-ok" bindtap="submitFeedback"><text>提交反馈</text></view>
+        <view class="mff-btn mff-ok" bindtap="submitFeedback"><text>{{feedbackSubmitting ? '提交中...' : '提交反馈'}}</text></view>
       </view>
     </view>
   </view>
@@ -310,8 +408,17 @@
                 <image class="hrec-ico-img" src="{{item.type==='deduct'?'/images/hist-deduct.png':'/images/hist-add.png'}}"></image>
               </view>
               <view class="hrec-info">
-                <text class="hrec-act">{{item.type==='deduct'?'消课':'新增'}} <text class="hrec-num {{item.type==='deduct'?'c-red':'c-green'}}">{{item.amount}}</text> 节</text>
-                <text class="hrec-time">{{item.time}}</text>
+                <text class="hrec-act">{{item.type==='deduct'?'消课':'新增'}} <text class="hrec-num {{item.type==='deduct'?'c-red':'c-green'}}">{{item.amount}}</text> </text>
+                <view class="hrec-meta-line">
+                  <view class="hrec-meta">
+                    <view class="hrec-meta-ico hrec-meta-date"><text></text></view>
+                    <text>{{item.dateText || item.time}}</text>
+                  </view>
+                  <view class="hrec-meta" wx:if="{{item.timeText}}">
+                    <view class="hrec-meta-ico hrec-meta-time"><text></text></view>
+                    <text>{{item.timeText}}</text>
+                  </view>
+                </view>
               </view>
             </view>
           </view>
@@ -361,10 +468,10 @@
       <view class="debug-row">
         <text class="debug-label">会员状态</text>
         <view class="debug-btns">
-          <view class="dbg-btn {{debugMember===0?'dbg-on':''}}" bindtap="setDebugMember" data-v="0"><text>免费版</text></view>
+          <view class="dbg-btn {{debugMember===0?'dbg-on':''}}" bindtap="setDebugMember" data-v="0"><text>免费</text></view>
           <view class="dbg-btn {{debugMember===1?'dbg-on':''}}" bindtap="setDebugMember" data-v="1"><text>已到期</text></view>
           <view class="dbg-btn {{debugMember===2?'dbg-on':''}}" bindtap="setDebugMember" data-v="2"><text>已付费</text></view>
-          <view class="dbg-btn {{debugMember===3?'dbg-on':''}}" bindtap="setDebugMember" data-v="3"><text>差5天过期</text></view>
+          <view class="dbg-btn {{debugMember===3?'dbg-on':''}}" bindtap="setDebugMember" data-v="3"><text>7天过期</text></view>
         </view>
       </view>
 
@@ -382,7 +489,7 @@
       </view>
 
       <view class="debug-row">
-        <text class="debug-label">当前模拟: {{debugOffset===0?'今天':(debugOffset>0?'+'+debugOffset+'天':debugOffset+'天')}} | 会员{{debugMember===0?'免费版':(debugMember===1?'已到期':'已付费')}}</text>
+        <text class="debug-label">当前模拟: {{debugOffset===0?'今天':(debugOffset>0?'+'+debugOffset+'天':debugOffset+'天')}} | 会员{{debugMember===0?'免费':(debugMember===1?'已到期':'已付费')}}</text>
       </view>
 
       <view class="debug-close" bindtap="closeDebug"><text>关闭</text></view>

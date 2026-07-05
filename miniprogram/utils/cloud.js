@@ -43,6 +43,7 @@ function isOnline() { return _online }
 // ===== 离线队列 =====
 function queueOp(type, data) {
   try {
+    if (type === 'saveSchedule') ensureScheduleLocalKey(data)
     var q = wx.getStorageSync(OFFLINE_QUEUE_KEY) || []
     q.push({ type: type, data: data, ts: Date.now() })
     wx.setStorageSync(OFFLINE_QUEUE_KEY, q)
@@ -51,17 +52,117 @@ function queueOp(type, data) {
 
 function flushQueue() {
   try {
+    if (!_db) return
     var q = wx.getStorageSync(OFFLINE_QUEUE_KEY) || []
     if (!q.length) return
     var remaining = []
-    for (var i = 0; i < q.length; i++) {
-      var op = q[i]
-      if (op.type === 'save') {
-        syncStudent(op.data, function (err) { if (err) remaining.push(op) })
+    var pending = q.length
+    wx.setStorageSync(OFFLINE_QUEUE_KEY, [])
+    var finish = function (op, err) {
+      if (err) remaining.push(op)
+      pending--
+      if (pending <= 0) {
+        var latest = wx.getStorageSync(OFFLINE_QUEUE_KEY) || []
+        wx.setStorageSync(OFFLINE_QUEUE_KEY, remaining.concat(latest))
       }
     }
-    wx.setStorageSync(OFFLINE_QUEUE_KEY, remaining)
+    for (var i = 0; i < q.length; i++) {
+      (function (op) {
+        if (op.type === 'save') {
+          syncStudent(op.data, function (err) { finish(op, err) })
+        } else if (op.type === 'saveSchedule') {
+          syncSchedule(op.data, function (err) { finish(op, err) })
+        } else {
+          finish(op, true)
+        }
+      })(q[i])
+    }
   } catch (e) {}
+}
+
+function syncSchedule(schedule, cb) {
+  if (!_db) { if (cb) cb(null); return }
+  ensureScheduleLocalKey(schedule)
+  var coll = _db.collection('schedules')
+  var docId = schedule._cloudId
+  var studentCloudId = ''
+  try {
+    var app = getApp()
+    var students = (app && app.globalData && app.globalData.students) ? app.globalData.students : []
+    for (var si = 0; si < students.length; si++) {
+      if (students[si] && students[si].id == schedule.studentId) {
+        studentCloudId = students[si]._cloudId || ''
+        break
+      }
+    }
+  } catch (e) {}
+  var data = {
+    id: schedule.id,
+    localKey: schedule.localKey,
+    studentId: schedule.studentId,
+    studentCloudId: schedule.studentCloudId || studentCloudId,
+    studentName: schedule.studentName || '',
+    avatarSrc: schedule.avatarSrc || '',
+    date: schedule.date,
+    startTime: schedule.startTime,
+    plannedAmount: schedule.plannedAmount,
+    actualAmount: schedule.actualAmount || 0,
+    note: schedule.note || '',
+    completeNote: schedule.completeNote || '',
+    type: schedule.type || '',
+    status: schedule.status || '',
+    deleted: schedule.deleted || false,
+    deletedAt: schedule.deletedAt || '',
+    earlyCompleted: !!schedule.earlyCompleted,
+    originalDate: schedule.originalDate || '',
+    originalStartTime: schedule.originalStartTime || '',
+    completedAt: schedule.completedAt || 0,
+    linkedHistoryTs: schedule.linkedHistoryTs || 0,
+    createdAt: schedule.createdAt || '',
+    updatedAt: schedule.updatedAt || Date.now()
+  }
+  if (docId) {
+    coll.doc(docId).update({ data: data })
+      .then(function () { if (cb) cb(null) })
+      .catch(function (e) { if (cb) cb(e) })
+  } else {
+    coll.where({ localKey: data.localKey }).get()
+      .then(function (res) {
+        if (res.data && res.data.length) {
+          schedule._cloudId = res.data[0]._id
+          coll.doc(schedule._cloudId).update({ data: data })
+            .then(function () {
+              try { getApp().save() } catch (e) {}
+              if (cb) cb(null)
+            })
+            .catch(function (e) { if (cb) cb(e) })
+        } else {
+          coll.add({ data: data })
+            .then(function (addRes) {
+              schedule._cloudId = addRes._id
+              try { getApp().save() } catch (e) {}
+              if (cb) cb(null)
+            })
+            .catch(function (e) { if (cb) cb(e) })
+        }
+      })
+      .catch(function (e) { if (cb) cb(e) })
+  }
+}
+
+function pullSchedules(cb) {
+  if (!_db) { if (cb) cb(null); return }
+  _db.collection('schedules').where({ _openid: '{openid}' }).get()
+    .then(function (res) {
+      var list = []
+      for (var i = 0; i < res.data.length; i++) {
+        var d = res.data[i]
+        d._cloudId = d._id
+        list.push(d)
+      }
+      if (cb) cb(list)
+    })
+    .catch(function () { if (cb) cb(null) })
 }
 
 function getQueueLength() {
@@ -74,6 +175,7 @@ function syncStudent(student, cb) {
   var coll = _db.collection('students')
   var docId = student._cloudId
   var data = {
+    studentLocalId: student.id,
     name: student.name,
     avatarSrc: student.avatarSrc,
     totalLessons: student.totalLessons,
@@ -95,6 +197,7 @@ function syncStudent(student, cb) {
     coll.add({ data: data })
       .then(function (res) {
         student._cloudId = res._id
+        try { getApp().save() } catch (e) {}
         if (cb) cb(null)
       })
       .catch(function (e) { if (cb) cb(e) })
@@ -132,27 +235,45 @@ function pullFromCloud(cb) {
 }
 
 // ===== 会员状态同步 =====
-function syncMember(isPro, memberExpired, proExpiry, upgradeShown) {
-  if (!_db) return
+function syncMember(isPro, memberExpired, proExpiry, upgradeShown, cb) {
+  if (!_db) { if (cb) cb(null); return }
   var app = getApp()
   var realOpenid = (app && app.globalData && app.globalData._realOpenid) ? app.globalData._realOpenid : ''
-  if (!realOpenid) return // openid还没拿到，暂时跳过
+  if (!realOpenid) { if (cb) cb('no_openid'); return } // openid还没拿到，暂时跳过
   _db.collection('users').where({ openid: realOpenid }).get()
     .then(function (res) {
       var data = { openid: realOpenid, isProMember: isPro, memberExpired: memberExpired, proExpiry: proExpiry || '', upgradeShown: !!upgradeShown }
       if (res.data.length) {
         _db.collection('users').doc(res.data[0]._id).update({ data: data })
+          .then(function () { if (cb) cb(null) })
+          .catch(function (e) { if (cb) cb(e) })
       } else {
         _db.collection('users').add({ data: data })
+          .then(function () { if (cb) cb(null) })
+          .catch(function (e) { if (cb) cb(e) })
       }
     })
-    .catch(function () {})
+    .catch(function (e) { if (cb) cb(e) })
+}
+
+function ensureScheduleLocalKey(schedule) {
+  if (!schedule) return ''
+  if (!schedule.localKey) {
+    var seed = [
+      schedule.id !== undefined && schedule.id !== null ? schedule.id : 'x',
+      schedule.createdAt || schedule.updatedAt || Date.now(),
+      schedule.studentId !== undefined && schedule.studentId !== null ? schedule.studentId : 's'
+    ].join('_')
+    schedule.localKey = 'schedule_' + seed
+  }
+  return schedule.localKey
 }
 
 function pullMember(cb) {
   if (!_db) { if (cb) cb(null, null, null, null, null, null); return }
   var app = getApp()
   var realOpenid = (app && app.globalData && app.globalData._realOpenid) ? app.globalData._realOpenid : ''
+  if (!realOpenid) { if (cb) cb(null, null, null, null, null, null); return }
   _db.collection('users').where({ openid: realOpenid }).get()
     .then(function (res) {
       if (res.data.length) {
@@ -184,14 +305,29 @@ function clearRewardFlags(cb) {
 // ===== 彩蛋标记 =====
 function syncEasterClaimed() {
   if (!_db) return
-  _db.collection('users').where({ _openid: '{openid}' }).get()
+  var app = getApp()
+  var realOpenid = (app && app.globalData && app.globalData._realOpenid) ? app.globalData._realOpenid : ''
+  var coll = _db.collection('users')
+  var data = { easterClaimed: true, easterProExpiry: '' }
+  if (realOpenid) data.openid = realOpenid
+  var saveClaimed = function (res) {
+    if (res.data.length) {
+      coll.doc(res.data[0]._id).update({ data: data })
+    } else {
+      coll.add({ data: data })
+    }
+  }
+  var query = realOpenid ? coll.where({ openid: realOpenid }) : coll.where({ _openid: '{openid}' })
+  query.get()
     .then(function (res) {
-      var data = { easterClaimed: true, easterProExpiry: '' }
-      // 这里 easterProExpiry 由调用方填入实际日期
       if (res.data.length) {
-        _db.collection('users').doc(res.data[0]._id).update({ data: data })
+        saveClaimed(res)
+      } else if (realOpenid) {
+        coll.where({ _openid: '{openid}' }).get()
+          .then(saveClaimed)
+          .catch(function () { coll.add({ data: data }) })
       } else {
-        _db.collection('users').add({ data: data })
+        saveClaimed(res)
       }
     })
     .catch(function () {})
@@ -199,12 +335,27 @@ function syncEasterClaimed() {
 
 function pullEasterClaimed(cb) {
   if (!_db) { if (cb) cb(false); return }
-  _db.collection('users').where({ _openid: '{openid}' }).get()
+  var app = getApp()
+  var realOpenid = (app && app.globalData && app.globalData._realOpenid) ? app.globalData._realOpenid : ''
+  var coll = _db.collection('users')
+  var checkClaimed = function (res) {
+    if (res.data.length && res.data[0].easterClaimed) {
+      if (cb) cb(true)
+    } else {
+      if (cb) cb(false)
+    }
+  }
+  var query = realOpenid ? coll.where({ openid: realOpenid }) : coll.where({ _openid: '{openid}' })
+  query.get()
     .then(function (res) {
       if (res.data.length && res.data[0].easterClaimed) {
         if (cb) cb(true)
+      } else if (!realOpenid) {
+        checkClaimed(res)
       } else {
-        if (cb) cb(false)
+        coll.where({ _openid: '{openid}' }).get()
+          .then(checkClaimed)
+          .catch(function () { if (cb) cb(false) })
       }
     })
     .catch(function () { if (cb) cb(false) })
@@ -247,14 +398,11 @@ function pay(plan, cb) {
     data: { plan: plan }
   }).then(function (res) {
     var payResult = res.result
-    console.log('云函数返回:', JSON.stringify(payResult))
     if (!payResult || payResult.code !== 0 || !payResult.payment) {
-      console.log('支付参数异常，缺少payment对象')
       if (cb) cb('pay_error')
       return
     }
     var p = payResult.payment
-    console.log('支付参数:', JSON.stringify({ ts: p.timeStamp, ns: p.nonceStr, pk: p.package, st: p.signType, ps: p.paySign }))
     wx.requestPayment({
       timeStamp: p.timeStamp,
       nonceStr: p.nonceStr,
@@ -263,12 +411,10 @@ function pay(plan, cb) {
       paySign: p.paySign,
       success: function () { if (cb) cb(null) },
       fail: function (e) {
-        console.log('支付拉起失败:', e.errMsg)
         if (cb) cb(e.errMsg || 'pay_cancel')
       }
     })
   }).catch(function (e) {
-    console.log('云函数调用失败:', e.errMsg)
     if (cb) cb(e.errMsg || 'pay_error')
   })
 }
@@ -279,6 +425,9 @@ module.exports = {
   isOnline: isOnline,
   checkNetwork: checkNetwork,
   syncStudent: syncStudent,
+  syncSchedule: syncSchedule,
+  ensureScheduleLocalKey: ensureScheduleLocalKey,
+  pullSchedules: pullSchedules,
   syncAll: syncAll,
   pullFromCloud: pullFromCloud,
   syncMember: syncMember,

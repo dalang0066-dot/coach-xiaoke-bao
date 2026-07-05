@@ -31,11 +31,15 @@ exports.main = async (event) => {
     const referrer = await usersColl.where({ openid: referrerId }).get()
     if (referrer.data.length > 0) {
       var rd = referrer.data[0]
-      var base = rd.proExpiry && rd.proExpiry > today() ? rd.proExpiry : today()
-      var newExp = addDays(base, 15)
-      await usersColl.doc(rd._id).update({
-        data: { isProMember: true, memberExpired: false, proExpiry: newExp, pendingReward: 15 }
-      })
+      var isLifetime = rd.isProMember && !rd.memberExpired && !rd.proExpiry
+      var upd = { isProMember: true, memberExpired: false }
+      // 终身会员不叠加时长；免费/过期/限时会员都从今天或现有到期日开始加15天
+      if (!isLifetime) {
+        var base = rd.proExpiry > today() ? rd.proExpiry : today()
+        upd.proExpiry = addDays(base, 15)
+        upd.pendingReward = 15
+      }
+      await usersColl.doc(rd._id).update({ data: upd })
     } else {
       await usersColl.add({
         data: {

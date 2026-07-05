@@ -1,0 +1,374 @@
+<view class="spg {{calendarCollapsed ? 'spg-collapsed' : ''}}">
+  <view class="nav" style="padding-top:{{navTop}}px">
+    <view class="nav-row">
+      <view class="nav-back" bindtap="goBack"><text>‹</text></view>
+      <view class="nav-title-wrap"><text class="nav-title">排课</text></view>
+      <view class="nav-safe"></view>
+    </view>
+  </view>
+
+  <view class="calendar-panel {{calendarCollapsed ? 'calendar-collapsed' : ''}}" data-gesture-area="calendar" bindtouchstart="onRecentTouchStart" bindtouchmove="onRecentTouchMove" bindtouchend="onRecentTouchEnd" bindtouchcancel="onRecentTouchCancel">
+    <view class="month-head">
+      <view class="mh-btn" bindtap="onPrevMonth"><text>‹</text></view>
+      <picker mode="date" fields="month" value="{{monthValue}}" bindchange="onMonthPick">
+        <view class="month-title"><text>{{monthTitle}}</text><view class="month-arrow"></view></view>
+      </picker>
+      <view class="mh-btn" bindtap="onNextMonth"><text>›</text></view>
+    </view>
+
+    <view class="week-row">
+      <text wx:for="{{weekLabels}}" wx:key="index">{{item}}</text>
+    </view>
+
+    <view class="date-stage">
+      <view class="month-grid">
+        <swiper class="calendar-swiper month-swiper" data-mode="month" current="{{calendarSwipeCurrent}}" duration="{{calendarSwipeDuration}}" easing-function="easeOutCubic" bindchange="onCalendarSwipeChange" bindanimationfinish="onCalendarSwipeFinish">
+          <swiper-item wx:for="{{monthPages}}" wx:for-item="page" wx:key="key">
+            <view class="day-grid">
+              <view
+                wx:for="{{page.days}}"
+                wx:for-item="day"
+                wx:key="date"
+                class="day-cell {{day.inMonth ? '' : 'day-out'}} {{day.today ? 'day-today' : ''}} {{day.selectedOnly ? 'day-selected' : ''}}"
+                bindtap="onDayTap"
+                data-date="{{day.date}}"
+              >
+                <text class="day-num">{{day.day}}</text>
+                <view class="day-marks">
+                  <view wx:if="{{day.green}}" class="day-mark mark-green"><text>{{day.green}}</text></view>
+                  <view wx:if="{{day.gray}}" class="day-mark mark-gray"><text>{{day.gray}}</text></view>
+                  <view wx:if="{{day.red}}" class="day-mark mark-red"><text>{{day.red}}</text></view>
+                </view>
+              </view>
+            </view>
+          </swiper-item>
+        </swiper>
+      </view>
+      <view class="week-grid">
+        <swiper class="calendar-swiper week-swiper" data-mode="week" current="{{calendarSwipeCurrent}}" duration="{{calendarSwipeDuration}}" easing-function="easeOutCubic" bindchange="onCalendarSwipeChange" bindanimationfinish="onCalendarSwipeFinish">
+          <swiper-item wx:for="{{weekPages}}" wx:for-item="page" wx:key="key">
+            <view class="day-grid">
+              <view
+                wx:for="{{page.days}}"
+                wx:for-item="day"
+                wx:key="date"
+                class="day-cell {{day.inMonth ? '' : 'day-out'}} {{day.today ? 'day-today' : ''}} {{day.selectedOnly ? 'day-selected' : ''}}"
+                bindtap="onDayTap"
+                data-date="{{day.date}}"
+              >
+                <text class="day-num">{{day.day}}</text>
+                <view class="day-marks">
+                  <view wx:if="{{day.green}}" class="day-mark mark-green"><text>{{day.green}}</text></view>
+                  <view wx:if="{{day.gray}}" class="day-mark mark-gray"><text>{{day.gray}}</text></view>
+                  <view wx:if="{{day.red}}" class="day-mark mark-red"><text>{{day.red}}</text></view>
+                </view>
+              </view>
+            </view>
+          </swiper-item>
+        </swiper>
+    </view>
+  </view>
+  </view>
+
+  <view class="recent-panel" data-gesture-area="recent" bindtouchstart="onRecentTouchStart" bindtouchmove="onRecentTouchMove" bindtouchend="onRecentTouchEnd" bindtouchcancel="onRecentTouchCancel">
+    <view class="section-head">
+      <text class="section-title">最近两周课程</text>
+      <view class="section-sub" bindtap="expandCalendar">
+        <text>{{calendarCollapsed ? '展开月历' : (recentList.length ? '待处理和未来两周' : '暂无待上课程')}}</text>
+        <view wx:if="{{calendarCollapsed || recentList.length}}" class="section-arrow {{calendarCollapsed ? 'arrow-up' : 'arrow-down'}}"></view>
+      </view>
+    </view>
+    <scroll-view class="recent-scroll" data-gesture-area="list" scroll-y="{{recentScrollEnabled}}" show-scrollbar="{{false}}" scroll-top="{{recentScrollTop}}" upper-threshold="24" bindscroll="onRecentScroll" bindscrolltoupper="onRecentScrollToUpper" bindtouchstart="onRecentTouchStart" bindtouchmove="onRecentTouchMove" bindtouchend="onRecentTouchEnd" bindtouchcancel="onRecentTouchCancel">
+      <view class="recent-scroll-inner">
+      <view wx:if="{{recentList.length===0}}" class="empty-recent">
+        <text>点击上方日期添加排课</text>
+      </view>
+      <view
+        wx:for="{{recentList}}"
+        wx:key="id"
+        class="recent-card course-{{item.stateTone}}"
+        bindtap="onRecentTap"
+        data-id="{{item.id}}"
+      >
+        <image class="course-av" src="{{item.avatarSrc}}" mode="aspectFill"></image>
+        <view class="course-main">
+          <view class="course-top">
+            <text class="course-name">{{item.studentName}}</text>
+            <view class="mini-badge mini-{{item.stateTone}}"><text>{{item.displayAmountText}}节课</text></view>
+            <view class="mini-badge mini-early" wx:if="{{item.earlyCompleted}}"><text>提前消课</text></view>
+            <view class="mini-badge mini-extra" wx:if="{{item.overAmount > 0}}"><text>多消{{item.overAmountText}}节</text></view>
+          </view>
+          <text class="course-note" wx:if="{{item.note}}">{{item.note}}</text>
+          <view class="course-meta-line">
+            <view class="course-meta"><view class="meta-ico meta-date"><text></text></view><text>{{item.dateShort}} {{item.weekday}}</text></view>
+            <view class="course-meta"><view class="meta-ico meta-time"><text></text></view><text>{{item.startTime}}</text></view>
+          </view>
+        </view>
+        <view class="recent-side">
+          <view class="state-pill pill-{{item.stateTone}}"><text>{{item.stateText}}</text></view>
+        </view>
+      </view>
+      <view class="recent-scroll-bottom"><text wx:if="{{recentHasOverflow}}">近两周的课都在这啦~</text></view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="sheet-mask" wx:if="{{showSheet}}" style="opacity:{{sheetMaskOpacity}}" catchtap="onSheetMask">
+    <view class="sheet sheet-{{sheetMode}}" style="transform:translateY({{sheetY}}px);transition:{{sheetTransition}}" catchtap="nop" bindtouchstart="onSheetTouchStart" bindtouchmove="onSheetTouchMove" bindtouchend="onSheetTouchEnd" bindtouchcancel="onSheetTouchCancel">
+      <view class="sheet-handle"></view>
+      <view class="sheet-head">
+        <view class="sheet-back {{sheetMode==='day' || (sheetMode==='detail' && detailFromRecent) ? 'sheet-back-hidden' : ''}}" bindtap="sheetBack">
+          <text wx:if="{{sheetMode!=='day' && !(sheetMode==='detail' && detailFromRecent)}}">‹</text>
+        </view>
+        <view class="sheet-title-wrap">
+          <text class="sheet-title">{{sheetMode==='day'?selectedTitle:sheetTitle}}</text>
+          <text class="sheet-subtitle" wx:if="{{sheetMode==='day'}}">小计 {{daySchedules.length}} 条排课</text>
+        </view>
+        <view class="sheet-action" wx:if="{{sheetMode==='day'}}" bindtap="openSelectStudent"><text>添加</text></view>
+        <view class="sheet-action" wx:elif="{{sheetMode==='edit'}}" bindtap="saveForm"><text>保存</text></view>
+        <view class="sheet-action ghost" wx:else></view>
+      </view>
+
+      <block wx:if="{{sheetMode==='day'}}">
+        <scroll-view class="sheet-body" scroll-y="{{sheetBodyScrollEnabled}}" show-scrollbar="{{false}}" scroll-into-view="{{sheetDayScrollIntoView}}" scroll-with-animation="{{true}}" bindscroll="onSheetBodyScroll">
+          <view class="sheet-day-inner">
+          <view wx:if="{{pendingSchedules.length}}" class="sheet-section">
+            <view class="sheet-sec-head">
+              <text class="sheet-sec-title red-text">待处理</text>
+              <view class="sec-count sec-red day-total-count"><text>{{pendingSchedules.length}}</text></view>
+            </view>
+            <view
+              wx:for="{{pendingSchedules}}"
+              wx:key="id"
+              id="schedule-card-{{item.id}}"
+              class="course-card recent-card sheet-course-card course-red {{highlightScheduleId===item.id ? 'course-highlight' : ''}}"
+              bindtap="openDetailTap"
+              data-id="{{item.id}}"
+            >
+              <image class="course-av" src="{{item.avatarSrc}}" mode="aspectFill"></image>
+              <view class="course-main">
+                <view class="course-top">
+                  <text class="course-name">{{item.studentName}}</text>
+                  <view class="mini-badge mini-red"><text>{{item.displayAmountText}}节课</text></view>
+                  <view class="mini-badge mini-early" wx:if="{{item.earlyCompleted}}"><text>提前消课</text></view>
+                  <view class="mini-badge mini-extra" wx:if="{{item.overAmount > 0}}"><text>多消{{item.overAmountText}}节</text></view>
+                </view>
+                <text class="course-note" wx:if="{{item.note}}">{{item.note}}</text>
+                <view class="course-meta-line">
+                  <view class="course-meta"><view class="meta-ico meta-date"><text></text></view><text>{{item.dateShort}} {{item.weekday}}</text></view>
+                  <view class="course-meta"><view class="meta-ico meta-time"><text></text></view><text>{{item.startTime}}</text></view>
+                </view>
+              </view>
+              <view class="recent-side">
+                <view class="state-pill pill-red"><text>{{item.stateText}}</text></view>
+              </view>
+            </view>
+          </view>
+
+
+          <view class="sheet-section">
+            <view class="sheet-sec-head">
+              <text class="sheet-sec-title">当天课程</text>
+              <view class="sec-count sec-green day-total-count"><text>{{normalSchedules.length}}</text></view>
+            </view>
+            <view wx:if="{{normalSchedules.length===0 && pendingSchedules.length===0}}" class="empty-day">
+              <text>这天还没有排课</text>
+            </view>
+            <view
+              wx:for="{{normalSchedules}}"
+              wx:key="id"
+              id="schedule-card-{{item.id}}"
+              class="course-card recent-card sheet-course-card course-{{item.stateTone}} {{highlightScheduleId===item.id ? 'course-highlight' : ''}}"
+              bindtap="openDetailTap"
+              data-id="{{item.id}}"
+            >
+              <image class="course-av" src="{{item.avatarSrc}}" mode="aspectFill"></image>
+              <view class="course-main">
+                <view class="course-top">
+                  <text class="course-name">{{item.studentName}}</text>
+                  <view class="mini-badge mini-{{item.stateTone}}"><text>{{item.displayAmountText}}节课</text></view>
+                  <view class="mini-badge mini-early" wx:if="{{item.earlyCompleted}}"><text>提前消课</text></view>
+                  <view class="mini-badge mini-extra" wx:if="{{item.overAmount > 0}}"><text>多消{{item.overAmountText}}节</text></view>
+                </view>
+                <text class="course-note" wx:if="{{item.note}}">{{item.note}}</text>
+                <view class="course-meta-line">
+                  <view class="course-meta"><view class="meta-ico meta-date"><text></text></view><text>{{item.dateShort}} {{item.weekday}}</text></view>
+                  <view class="course-meta"><view class="meta-ico meta-time"><text></text></view><text>{{item.startTime}}</text></view>
+                </view>
+              </view>
+              <view class="recent-side">
+                <view class="state-pill pill-{{item.stateTone}}"><text>{{item.stateText}}</text></view>
+              </view>
+            </view>
+          </view>
+          <view class="sheet-scroll-bottom"><text wx:if="{{sheetDayHasOverflow}}">这天的课都在这啦~</text></view>
+          </view>
+        </scroll-view>
+      </block>
+
+      <block wx:elif="{{sheetMode==='students'}}">
+        <view class="student-search">
+          <view class="search-mark"></view>
+          <input placeholder="搜索学员" value="{{studentKeyword}}" bindinput="onStudentSearch" />
+        </view>
+        <scroll-view class="sheet-body student-body" scroll-y="{{sheetBodyScrollEnabled}}" show-scrollbar="{{false}}" upper-threshold="24" bindscroll="onSheetBodyScroll" bindscrolltoupper="onSheetBodyScrollToUpper">
+          <view class="student-inner">
+            <view
+              wx:for="{{studentList}}"
+              wx:key="id"
+              class="student-row {{item.exp ? 'student-disabled' : ''}}"
+              bindtap="onChooseStudent"
+              data-id="{{item.id}}"
+            >
+              <image class="student-av" src="{{item.avatarSrc}}" mode="aspectFill"></image>
+              <view class="student-info">
+                <text class="student-name">{{item.name}}</text>
+                <text class="student-sub">{{item.note || '暂无备注'}}</text>
+              </view>
+              <view class="student-right">
+                <text class="student-remain {{item.statusTone==='red'?'student-remain-red':(item.statusTone==='gray'?'student-remain-gray':'')}}">{{item.remainingText}}</text>
+                <text wx:if="{{item.expiringSoon || item.statusTone==='green'}}" class="student-status-text">{{item.statusText}}</text>
+                <view wx:else class="student-status student-status-{{item.statusTone}}"><text>{{item.statusText}}</text></view>
+              </view>
+              <text class="student-arrow">›</text>
+            </view>
+            <view wx:if="{{studentList.length===0}}" class="empty-day"><text>没有找到学员</text></view>
+            <view class="student-scroll-bottom"><text wx:if="{{sheetStudentHasOverflow}}">学员都在这啦~</text></view>
+          </view>
+        </scroll-view>
+      </block>
+
+      <block wx:elif="{{sheetMode==='edit'}}">
+        <scroll-view class="sheet-body form-body" scroll-y="{{sheetBodyScrollEnabled}}" show-scrollbar="{{false}}" upper-threshold="24" bindscroll="onSheetBodyScroll" bindscrolltoupper="onSheetBodyScrollToUpper">
+          <view class="form-student-head">
+            <image class="form-student-av" src="{{form.avatarSrc}}" mode="aspectFill"></image>
+            <text class="form-student-name">{{form.studentName}}</text>
+          </view>
+
+          <view class="form-field">
+            <text class="form-label">日期</text>
+            <picker mode="date" value="{{form.date}}" bindchange="onFormDate">
+              <view class="form-input form-pick"><view class="form-ico form-date-ico"><text></text></view><text>{{form.date}}</text><text class="form-arrow">›</text></view>
+            </picker>
+          </view>
+
+          <view class="form-field">
+            <text class="form-label">上课时间</text>
+            <picker mode="time" value="{{form.startTime}}" bindchange="onFormTime">
+              <view class="form-input form-pick"><view class="form-ico form-time-ico"><text></text></view><text>{{form.startTime}}</text><text class="form-arrow">›</text></view>
+            </picker>
+          </view>
+
+          <view class="form-field">
+            <text class="form-label">排课节数</text>
+            <view class="amount-row">
+              <view class="amount-btn {{!form.customSelected && form.plannedAmount===1?'amount-on':''}}" data-v="1" bindtap="onFormAmountQuick"><text>1节</text></view>
+              <view class="amount-btn {{!form.customSelected && form.plannedAmount===2?'amount-on':''}}" data-v="2" bindtap="onFormAmountQuick"><text>2节</text></view>
+              <input class="amount-input {{form.customSelected?'amount-input-on':''}} {{formAmountShake?'amount-input-shake':''}}" placeholder="{{form.customSelected ? '' : '自定义'}}" placeholder-class="amount-placeholder" type="digit" value="{{form.customAmount}}" bindfocus="onFormAmountFocus" bindtap="onFormAmountFocus" bindinput="onFormAmountInput" />
+            </view>
+          </view>
+
+          <view class="form-field">
+            <text class="form-label">上课备注</text>
+            <view class="ta-wrap">
+              <textarea class="form-ta" style="min-height:92rpx;max-height:210rpx" placeholder="可填写训练内容、注意事项" value="{{form.note}}" maxlength="200" auto-height="{{true}}" disable-default-padding="{{true}}" bindinput="onFormNote" bindblur="onFormNoteBlur" />
+              <text class="ta-count">{{noteCount}}/200</text>
+            </view>
+          </view>
+        </scroll-view>
+        <view class="sheet-foot">
+          <view class="primary-btn" bindtap="saveForm"><text>保存排课</text></view>
+        </view>
+      </block>
+
+      <block wx:elif="{{sheetMode==='detail'}}">
+        <scroll-view class="detail-body" wx:if="{{selectedSchedule}}" scroll-y="true">
+          <view class="detail-card">
+            <view class="detail-head">
+              <image class="detail-av" src="{{selectedSchedule.avatarSrc}}" mode="aspectFill"></image>
+              <view class="detail-main">
+                <view class="detail-name-row">
+                  <text class="detail-name">{{selectedSchedule.studentName}}</text>
+                  <view class="mini-badge mini-early" wx:if="{{selectedSchedule.earlyCompleted}}"><text>提前消课</text></view>
+                </view>
+              </view>
+              <view class="state-pill pill-{{selectedSchedule.stateTone}}"><text>{{selectedSchedule.stateText}}</text></view>
+            </view>
+            <view class="detail-info">
+              <view class="detail-row"><view class="detail-ico detail-date-ico"><text></text></view><text>{{selectedSchedule.date}} {{selectedSchedule.weekday}}</text></view>
+              <view class="detail-row"><view class="detail-ico detail-time-ico"><text></text></view><text>{{selectedSchedule.startTime}}</text></view>
+              <view class="detail-row"><view class="detail-ico detail-lesson-ico"><text>课</text></view><text>原排节数</text><text class="detail-num">{{selectedSchedule.plannedAmountText}}</text><text>节</text></view>
+              <view class="detail-row" wx:if="{{selectedSchedule.completed}}"><view class="detail-ico detail-minus-ico"><text>消</text></view><text>实际消课</text><text class="detail-num detail-red">{{selectedSchedule.actualAmountText}}</text><text class="detail-red">节</text></view>
+            </view>
+          </view>
+          <view class="detail-note" wx:if="{{selectedSchedule.note}}">
+            <view class="note-title-row"><view class="detail-ico note-ico"><text>备</text></view><text class="note-title">备注</text></view>
+            <text class="note-text">{{selectedSchedule.note}}</text>
+          </view>
+        </scroll-view>
+        <view wx:if="{{selectedSchedule}}" class="detail-actions">
+          <view wx:if="{{!selectedSchedule.completed}}" class="detail-actions-inline">
+            <view class="detail-btn detail-act-ok" bindtap="startDeductSelected"><text>消课</text></view>
+            <view class="detail-btn detail-act-change" bindtap="editSelected"><text>改期</text></view>
+            <view class="detail-btn detail-act-del" bindtap="deleteSelected"><text>删除</text></view>
+          </view>
+          <view wx:if="{{selectedSchedule.completed}}" class="detail-actions-single">
+            <view class="detail-btn danger" bindtap="undoSelected"><text>撤销消课</text></view>
+          </view>
+        </view>
+      </block>
+
+    </view>
+  </view>
+
+  <view class="deduct-modal-mask" wx:if="{{showDeductModal}}" catchtap="closeDeductModal">
+    <view class="deduct-modal-box" catchtap="nop">
+      <view class="dm-body">
+        <view class="dm-circle"><image class="dm-check-img" src="/images/class-ok.png"></image></view>
+        <text class="dm-title">{{deductTitle}}</text>
+        <view class="dm-sub dm-schedule-sub dm-early-sub" wx:if="{{selectedSchedule && selectedSchedule.state==='upcoming'}}">
+          <text>原排课时间 </text><text class="dm-sub-time">{{deductScheduleTimeText}}</text>
+        </view>
+        <view class="dm-sub dm-schedule-sub dm-early-confirm" wx:if="{{selectedSchedule && selectedSchedule.state==='upcoming'}}">
+          <text>确认按 </text><text class="dm-sub-time">{{deductConfirmTimeText}}</text><text> 进行消课吗？</text>
+        </view>
+        <view class="dm-sub dm-schedule-sub" wx:elif="{{selectedSchedule && selectedSchedule.state!=='inProgress'}}">
+          <text>按 </text><text class="dm-sub-time">{{deductScheduleTimeText}}</text><text> 的排课处理</text>
+        </view>
+        <view class="dm-divider" wx:if="{{selectedSchedule && selectedSchedule.state!=='inProgress'}}"></view>
+        <view class="dm-plan" wx:if="{{selectedSchedule}}">
+          <text>原排课节数 </text><text class="dm-plan-num">{{selectedSchedule.plannedAmountText}}</text><text> 节</text>
+        </view>
+        <view class="dm-quick">
+          <view class="dm-qbtn {{!deductCustomSelected && deductAmount===1?'dm-qon':''}}" data-v="1" bindtap="onDeductQuick">
+            <text class="dm-qn">1节</text>
+          </view>
+          <view wx:if="{{selectedSchedule && selectedSchedule.remainingLessons >= 2}}" class="dm-qbtn {{!deductCustomSelected && deductAmount===2?'dm-qon':''}}" data-v="2" bindtap="onDeductQuick">
+            <text class="dm-qn">2节</text>
+          </view>
+          <input class="dm-custom {{deductCustomSelected?'dm-custom-on':''}}" type="digit" placeholder="{{deductCustomSelected ? '' : '自定义'}}" value="{{deductCustom}}" bindfocus="onDeductCustomFocus" bindtap="onDeductCustomFocus" bindinput="onDeductCustom" />
+        </view>
+        <view class="dm-warn" wx:if="{{selectedSchedule && deductExtraAmount > 0}}">
+          <text>实际消课节数大于原排课节数，确认消课吗？</text>
+        </view>
+        <text class="dm-desc"><text class="b">{{selectedSchedule.studentName}}</text> 将扣除对应课时</text>
+      </view>
+      <view class="dm-btns">
+        <view class="dm-btn dm-cancel" bindtap="closeDeductModal"><text>取消</text></view>
+        <view class="dm-btn dm-ok" bindtap="confirmDeduct"><text>确认消课</text></view>
+      </view>
+    </view>
+  </view>
+
+  <view class="schedule-del-mask" wx:if="{{showScheduleDel}}" catchtap="closeScheduleDel">
+    <view class="schedule-del-box" catchtap="nop">
+      <view class="sd-body">
+        <text class="sd-title">确认删除这节排课吗？</text>
+      </view>
+      <view class="sd-btns">
+        <view class="sd-btn sd-cancel" bindtap="closeScheduleDel"><text>取消</text></view>
+        <view class="sd-btn sd-ok" bindtap="doScheduleDel"><text>删除</text></view>
+      </view>
+    </view>
+  </view>
+</view>

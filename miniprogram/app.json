@@ -1,7 +1,7 @@
 {
   "pages": [
     "pages/index/index",
-    "pages/history/history"
+    "pages/schedule/schedule"
   ],
   "lazyCodeLoading": "requiredComponents",
   "window": {
