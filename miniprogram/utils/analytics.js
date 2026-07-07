@@ -55,8 +55,12 @@ function flushToCloud() {
   if (!C || !C.isReady()) { _batch = []; return }
   var items = _batch.slice()
   _batch = []
-  for (var i = 0; i < items.length; i++) {
-    C.trackEvent(items[i])
+  if (C.trackEvents) {
+    C.trackEvents(items)
+  } else {
+    for (var i = 0; i < items.length; i++) {
+      C.trackEvent(items[i])
+    }
   }
 }
 

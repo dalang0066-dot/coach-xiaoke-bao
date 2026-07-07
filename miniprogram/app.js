@@ -3,7 +3,10 @@ var cloud = require('./utils/cloud.js')
 var analytics = require('./utils/analytics.js')
 var schedule = require('./utils/schedule.js')
 var BACKFILL_BATCH_SIZE = 20
-var CLOUD_PULL_MIN_INTERVAL = 5000
+var CLOUD_PULL_MIN_INTERVAL = 60000
+var CLOUD_BACKFILL_DEBOUNCE = 3000
+var CLOUD_BACKFILL_MIN_INTERVAL = 30000
+var REAL_OPENID_KEY = '_real_openid'
 var _studentsBackfilling = false
 var _schedulesBackfilling = false
 
@@ -101,34 +104,46 @@ App({
     }
     if (!cloud.isReady() || !wx.cloud || !wx.cloud.callFunction) return
 
+    var afterOpenid = function (openid) {
+      if (!openid) return
+      that.globalData._realOpenid = openid
+      try { wx.setStorageSync(REAL_OPENID_KEY, openid) } catch (e) {}
+      if (refId) that.globalData._pendingRef = refId
+      if (refId) {
+        setTimeout(function () {
+          var pages = getCurrentPages()
+          var page = pages.length ? pages[pages.length - 1] : null
+          if (page && page.processPendingReferral) page.processPendingReferral()
+        }, 0)
+      }
+
+      if (wx.getStorageSync('_pending_easter_sync')) {
+        that.globalData._skipMemberPullOnce = true
+        cloud.syncEasterClaimed()
+        wx.removeStorageSync('_pending_easter_sync')
+      }
+      that.pullCloudData(function () {
+        that.scheduleCloudBackfill(true)
+      })
+      cloud.pullEasterClaimed(function (claimed) {
+        if (claimed) wx.setStorageSync('_easter_egg_claimed', true)
+      })
+    }
+
+    var cachedOpenid = ''
+    try { cachedOpenid = wx.getStorageSync(REAL_OPENID_KEY) || '' } catch (e) {}
+    if (cachedOpenid) {
+      afterOpenid(cachedOpenid)
+      return
+    }
+
     setTimeout(function () {
       try {
         wx.cloud.callFunction({
           name: 'getOpenid',
           success: function (res) {
             if (!res.result || !res.result.openid) return
-            that.globalData._realOpenid = res.result.openid
-            if (refId) that.globalData._pendingRef = refId
-            if (refId) {
-              setTimeout(function () {
-                var pages = getCurrentPages()
-                var page = pages.length ? pages[pages.length - 1] : null
-                if (page && page.processPendingReferral) page.processPendingReferral()
-              }, 0)
-            }
-            markCloudIdentityDirty(that)
-            that.save()
-
-            if (wx.getStorageSync('_pending_easter_sync')) {
-              that.globalData._skipMemberPullOnce = true
-              that.save()
-              cloud.syncEasterClaimed()
-              wx.removeStorageSync('_pending_easter_sync')
-            }
-            that.pullCloudData()
-            cloud.pullEasterClaimed(function (claimed) {
-              if (claimed) wx.setStorageSync('_easter_egg_claimed', true)
-            })
+            afterOpenid(res.result.openid)
           },
           fail: function () {}
         })
@@ -174,6 +189,7 @@ App({
     this.globalData.isProMember = data.isProMember || false
     this.globalData.proExpiry = data.proExpiry || data.easterProExpiry || ''
     this.globalData.upgradeShown = data.upgradeShown || false
+    this.globalData._lastMemberSyncKey = [this.globalData.isProMember ? 1 : 0, this.globalData.memberExpired ? 1 : 0, this.globalData.proExpiry || '', this.globalData.upgradeShown ? 1 : 0].join('|')
     this.globalData.swipeHintDismissed = data.swipeHintDismissed || false
     this.globalData.lastStudentSyncAt = data.lastStudentSyncAt || 0
     this.globalData.lastScheduleSyncAt = data.lastScheduleSyncAt || 0
@@ -184,6 +200,7 @@ App({
       this.globalData.memberExpired = true
       this.globalData.proExpiry = ''
     }
+    this.globalData._lastMemberSyncKey = [this.globalData.isProMember ? 1 : 0, this.globalData.memberExpired ? 1 : 0, this.globalData.proExpiry || '', this.globalData.upgradeShown ? 1 : 0].join('|')
     this.globalData.bannerDismissedToday = data.bannerDismissedToday || {}
     if (this.globalData.bannerDismissedToday.date !== today) {
       this.globalData.bannerDismissedToday = { date: today, sleepy: false, expiry: false, memberExpired: false }
@@ -199,7 +216,7 @@ App({
       return
     }
     var today = util.today()
-    var needFull = !that.globalData.lastFullSyncDate || that.globalData.lastFullSyncDate !== today || !that.globalData.lastStudentSyncAt || !that.globalData.lastScheduleSyncAt
+    var needFull = !that.globalData.lastStudentSyncAt || !that.globalData.lastScheduleSyncAt
     var studentSince = needFull ? 0 : (that.globalData.lastStudentSyncAt || 0)
     var scheduleSince = needFull ? 0 : (that.globalData.lastScheduleSyncAt || 0)
     var pendingPulls = 2
@@ -225,6 +242,7 @@ App({
         that.globalData.welcomeReward = welcomeDays || 0
         that.globalData.pendingReward = pendingDays || 0
         that.globalData.upgradeShown = !!upgradeShown
+        that.globalData._lastMemberSyncKey = [that.globalData.isProMember ? 1 : 0, that.globalData.memberExpired ? 1 : 0, that.globalData.proExpiry || '', that.globalData.upgradeShown ? 1 : 0].join('|')
         that.refreshCurrentPage()
       }
     })
@@ -243,7 +261,7 @@ App({
         that.globalData.lastScheduleSyncAt = nextSyncCursor(that.globalData.lastScheduleSyncAt, cloudSchedules || [])
         if (needFull) that.globalData.lastFullSyncDate = today
         that.save()
-        syncLocalSchedulesToCloud(that.globalData.schedules || [])
+        that.scheduleCloudBackfill(false)
         return
       } finally {
         finishPull()
@@ -326,6 +344,36 @@ App({
     this.globalData._scheduleWatcher = null
   },
 
+  hasDirtyCloudData: function () {
+    var students = this.globalData.students || []
+    for (var i = 0; i < students.length; i++) {
+      if (students[i] && (!students[i]._cloudId || students[i]._dirty)) return true
+    }
+    var schedules = this.globalData.schedules || []
+    for (var j = 0; j < schedules.length; j++) {
+      if (schedules[j] && (!schedules[j]._cloudId || schedules[j]._dirty)) return true
+    }
+    return cloud.getQueueLength && cloud.getQueueLength() > 0
+  },
+
+  scheduleCloudBackfill: function (force) {
+    if (!cloud.isReady() || !cloud.isOnline() || !this.globalData._realOpenid) return
+    var now = Date.now()
+    if (!force && this.globalData._lastBackfillAt && now - this.globalData._lastBackfillAt < CLOUD_BACKFILL_MIN_INTERVAL) return
+    if (!force && !this.hasDirtyCloudData()) return
+    var that = this
+    if (this.globalData._backfillTimer) clearTimeout(this.globalData._backfillTimer)
+    this.globalData._backfillTimer = setTimeout(function () {
+      that.globalData._backfillTimer = null
+      if (!cloud.isReady() || !cloud.isOnline() || !that.globalData._realOpenid) return
+      if (!force && !that.hasDirtyCloudData()) return
+      that.globalData._lastBackfillAt = Date.now()
+      cloud.flushQueue()
+      syncLocalStudentsToCloud(that.globalData.students || [])
+      syncLocalSchedulesToCloud(that.globalData.schedules || [])
+    }, force ? 0 : CLOUD_BACKFILL_DEBOUNCE)
+  },
+
   save: function () {
     var key = 'app_data_' + this.globalData.openid
     this.globalData.students = normalizeStudents(this.globalData.students || [])
@@ -354,8 +402,7 @@ App({
           if (!err) that.globalData._lastMemberSyncKey = memberKey
         })
       }
-      syncLocalStudentsToCloud(this.globalData.students || [])
-      syncLocalSchedulesToCloud(this.globalData.schedules || [])
+      this.scheduleCloudBackfill(false)
     }
   },
 

@@ -555,17 +555,26 @@ function syncSchedule(schedule, cb) {
     }
   }
   if (docId) {
-    coll.doc(docId).get()
-      .then(function (res) {
-        data = mergeScheduleData(res.data || null, data)
-        applySyncedSchedule(schedule, data)
-        coll.doc(docId).update({ data: data })
-          .then(function () { markSynced(schedule); finishSchedule(null) })
-          .catch(function (e) { markDirty(schedule); finishSchedule(e) })
-      })
+    coll.doc(docId).update({ data: data })
+      .then(function () { markSynced(schedule); finishSchedule(null) })
       .catch(function () {
-        coll.doc(docId).update({ data: data })
-          .then(function () { markSynced(schedule); finishSchedule(null) })
+        findScheduleDoc(coll, data)
+          .then(function (res) {
+            if (res.data && res.data.length) {
+              schedule._cloudId = res.data[0]._id
+              data = mergeScheduleData(res.data[0], data)
+              applySyncedSchedule(schedule, data)
+              return coll.doc(schedule._cloudId).update({ data: data })
+            }
+            return coll.add({ data: data }).then(function (addRes) {
+              schedule._cloudId = addRes._id
+            })
+          })
+          .then(function () {
+            markSynced(schedule)
+            try { getApp().save() } catch (e) {}
+            finishSchedule(null)
+          })
           .catch(function (e) { markDirty(schedule); finishSchedule(e) })
       })
   } else {
@@ -752,20 +761,29 @@ function syncStudent(student, cb) {
     }
   }
   if (docId) {
-    coll.doc(docId).get()
-      .then(function (res) {
-        data = mergeStudentData(res.data || null, data)
-        coll.doc(docId).update({ data: data })
-          .then(function () {
-            applySyncedStudent(student, data)
-            markSynced(student)
-            finishStudent(null)
-          })
-          .catch(function (e) { markDirty(student); finishStudent(e) })
+    coll.doc(docId).update({ data: data })
+      .then(function () {
+        markSynced(student)
+        finishStudent(null)
       })
       .catch(function () {
-        coll.doc(docId).update({ data: data })
-          .then(function () { markSynced(student); finishStudent(null) })
+        findStudentDoc(coll, data)
+          .then(function (res) {
+            if (res.data && res.data.length) {
+              student._cloudId = res.data[0]._id
+              data = mergeStudentData(res.data[0], data)
+              applySyncedStudent(student, data)
+              return coll.doc(student._cloudId).update({ data: data })
+            }
+            return coll.add({ data: data }).then(function (addRes) {
+              student._cloudId = addRes._id
+            })
+          })
+          .then(function () {
+            markSynced(student)
+            try { getApp().save() } catch (e) {}
+            finishStudent(null)
+          })
           .catch(function (e) { markDirty(student); finishStudent(e) })
       })
   } else {
@@ -1030,6 +1048,18 @@ function trackEvent(entry) {
     .catch(function () {})
 }
 
+function trackEvents(entries) {
+  if (!_db || !entries || !entries.length) return
+  _db.collection('analytics').add({
+    data: {
+      type: 'batch',
+      count: entries.length,
+      events: entries,
+      ts: Date.now()
+    }
+  }).catch(function () {})
+}
+
 // ===== 分享推荐 =====
 function processReferral(referrerId, cb) {
   if (!_db) { if (cb) cb('cloud_unavailable'); return }
@@ -1094,6 +1124,7 @@ module.exports = {
   syncEasterClaimed: syncEasterClaimed,
   pullEasterClaimed: pullEasterClaimed,
   trackEvent: trackEvent,
+  trackEvents: trackEvents,
   processReferral: processReferral,
   submitFeedback: submitFeedback
 }

@@ -244,7 +244,7 @@ Page({
 
   onShareAppMessage: function () {
     var ref = app.globalData._realOpenid || ''
-    if (ref) this.startSharePoll() // 有真实openid就启动轮询
+    if (ref) this.data._justShared = true
     return {
       title: '教练消课宝——独立教练的消课管理工具',
       path: '/pages/index/index' + (ref ? '?ref=' + ref : ''),
@@ -300,7 +300,9 @@ Page({
     }
     this.reload()
     // 后台查分享奖励，有就弹窗
-    if (C.isReady()) {
+    var rewardPullNow = Date.now()
+    if (C.isReady() && (!app.globalData._lastRewardPullAt || rewardPullNow - app.globalData._lastRewardPullAt > 300000 || app.globalData._pendingRef)) {
+      app.globalData._lastRewardPullAt = rewardPullNow
       C.pullMember(function (isPro, expired, proExp, welcomeDays, pendingDays) {
         if (welcomeDays > 0) {
           app.globalData.isProMember = !!isPro
@@ -2084,7 +2086,6 @@ Page({
   closeUpg: function () { this.setData({ showUpg: false, showShareModal: true }) },
   closeShareModal: function () {
     this.setData({ showShareModal: false })
-    this.startSharePoll()
   },
 
   startSharePoll: function () {
@@ -2103,7 +2104,7 @@ Page({
       }
       var count = 0
       var check = function () {
-        if (count >= 36) { that.data._polling = false; return }
+        if (count >= 6) { that.data._polling = false; return }
         count++
         C.pullMember(function (isPro, expired, proExp, welcomeDays, pendingDays) {
           if (pendingDays > 0) {
@@ -2122,7 +2123,7 @@ Page({
             that._rewardCheckTimer = setTimeout(function () {
               that._rewardCheckTimer = null
               check()
-            }, 5000)
+            }, 10000)
           }
         })
       }
@@ -2130,7 +2131,7 @@ Page({
       that._rewardCheckTimer = setTimeout(function () {
         that._rewardCheckTimer = null
         check()
-      }, 5000)
+      }, 10000)
     }
     startPoll()
   },
