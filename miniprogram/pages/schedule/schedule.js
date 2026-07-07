@@ -3,24 +3,14 @@ var U = require('../../utils/util.js')
 var S = require('../../utils/schedule.js')
 var C = require('../../utils/cloud.js')
 var A = require('../../utils/analytics.js')
+var Sync = require('../../utils/sync.js')
 
 function syncStudentSafe(student) {
-  if (!student || !C.isReady()) return
-  if (C.isOnline()) {
-    C.syncStudent(student, function (err) { if (err) C.queueOp('save', student) })
-  } else {
-    C.queueOp('save', student)
-  }
+  Sync.syncStudentSafe(student)
 }
 
 function syncScheduleSafe(schedule) {
-  if (!schedule || !C.isReady()) return
-  C.ensureScheduleLocalKey(schedule)
-  if (C.isOnline()) {
-    C.syncSchedule(schedule, function (err) { if (err) C.queueOp('saveSchedule', schedule) })
-  } else {
-    C.queueOp('saveSchedule', schedule)
-  }
+  Sync.syncScheduleSafe(schedule)
 }
 
 function clone(obj) {
@@ -59,6 +49,7 @@ Page({
     month: 1,
     monthValue: '',
     monthTitle: '',
+    monthCompletedText: '0',
     weekLabels: ['日', '一', '二', '三', '四', '五', '六'],
     days: [],
     weekDays: [],
@@ -88,6 +79,9 @@ Page({
     daySchedules: [],
     pendingSchedules: [],
     normalSchedules: [],
+    daySchedulesAmountText: '0',
+    pendingSchedulesAmountText: '0',
+    normalSchedulesAmountText: '0',
     studentKeyword: '',
     studentList: [],
     selectedSchedule: null,
@@ -111,16 +105,26 @@ Page({
     deductCustom: '',
     deductCustomSelected: false,
     deductExtraAmount: 0,
+    deductLessAmount: 0,
     deductConfirmTimeText: '',
     showDeductModal: false,
     deductTitle: '选择消课节数',
     deductScheduleTimeText: '',
     detailFromRecent: false,
+    detailSource: '',
     editReturnMode: 'students',
     editingScheduleId: '',
     saving: false,
     deducting: false,
-    showScheduleDel: false
+    showScheduleDel: false,
+    showConfirmDialog: false,
+    confirmDialogTitle: '',
+    confirmDialogContent: '',
+    confirmDialogOkText: '确定',
+    confirmDialogDanger: false,
+    formAmountLimit: 0,
+    showOkT: false,
+    okMsg: '操作成功'
   },
 
   onLoad: function (options) {
@@ -129,6 +133,9 @@ Page({
     var navTop = statusBarHeight
     var today = U.today()
     var selected = (options && options.date) ? options.date : today
+    var targetScheduleId = options && options.scheduleId !== undefined ? options.scheduleId : ''
+    var targetSchedule = targetScheduleId !== '' ? S.findById(app.globalData.schedules || [], targetScheduleId) : null
+    if (targetSchedule && targetSchedule.date) selected = targetSchedule.date
     var d = S.toDate(selected)
     var that = this
     this.setData({
@@ -142,7 +149,15 @@ Page({
       selectedTitle: S.dateTitle(selected)
     }, function () {
       that.reload()
-      if (options && options.date) that.openDay(selected)
+      if (targetScheduleId !== '') {
+        var detailSource = options && options.source === 'student' ? 'student' : 'recent'
+        that.openDay(selected, function () {
+          var latest = S.findById(app.globalData.schedules || [], targetScheduleId)
+          if (latest && !S.isHidden(latest)) that.openDetail(targetScheduleId, detailSource)
+        })
+      } else if (options && options.date) {
+        that.openDay(selected)
+      }
     })
   },
 
@@ -154,14 +169,21 @@ Page({
     this._calendarSwipeLock = false
     this._calendarSwipeDelta = 0
     this.setData({ calendarSwipeCurrent: 1, calendarSwipeDuration: CALENDAR_SWIPE_MS })
+    if (C.isOnline()) {
+      C.flushQueue()
+      if (app.syncCloudQuietly) app.syncCloudQuietly(false)
+      if (app.startRealtimeSync) app.startRealtimeSync()
+    }
     this.reload()
   },
 
   onHide: function () {
+    if (app.stopRealtimeSync) app.stopRealtimeSync()
     this.clearPageTimers()
   },
 
   onUnload: function () {
+    if (app.stopRealtimeSync) app.stopRealtimeSync()
     this.clearPageTimers()
   },
 
@@ -169,11 +191,13 @@ Page({
     var today = U.today()
     var nowTs = Date.now()
     var calendar = this.buildCalendarData(nowTs)
+    var monthCompleted = this.getMonthCompletedAmount(this.data.year, this.data.month)
     var recent = S.getRecentSchedules(app.globalData.schedules || [], app.globalData.students || [], today, nowTs, 14)
     var data = {
       today: today,
       monthTitle: this.formatMonthTitle(this.data.year, this.data.month),
       monthValue: S.monthValue(this.data.year, this.data.month),
+      monthCompletedText: S.formatAmount(monthCompleted || 0),
       days: calendar.days,
       weekDays: calendar.weekDays,
       monthPages: calendar.monthPages,
@@ -187,6 +211,9 @@ Page({
       data.daySchedules = dayData.all
       data.pendingSchedules = dayData.pending
       data.normalSchedules = dayData.normal
+      data.daySchedulesAmountText = dayData.allAmountText
+      data.pendingSchedulesAmountText = dayData.pendingAmountText
+      data.normalSchedulesAmountText = dayData.normalAmountText
     }
     var that = this
     this.setData(data, function () {
@@ -220,6 +247,31 @@ Page({
     return year + '年' + month + '月'
   },
 
+  getMonthCompletedAmount: function (year, month) {
+    var prefix = year + '-' + U.p2(month) + '-'
+    var total = 0
+    var schedules = app.globalData.schedules || []
+    var activeStudents = { byId: {}, byUid: {}, byCloud: {} }
+    var students = app.globalData.students || []
+    for (var j = 0; j < students.length; j++) {
+      if (!students[j] || students[j].deleted) continue
+      activeStudents.byId[students[j].id] = students[j]
+      if (students[j].studentUid) activeStudents.byUid[students[j].studentUid] = students[j]
+      if (students[j]._cloudId) activeStudents.byCloud[students[j]._cloudId] = students[j]
+    }
+    for (var i = 0; i < schedules.length; i++) {
+      var s = schedules[i]
+      if (S.isHidden(s) || s.status !== S.STATUS.COMPLETED) continue
+      var activeById = activeStudents.byId[s.studentId]
+      var activeMatched = s.studentUid ? activeStudents.byUid[s.studentUid] : (s.studentCloudId ? activeStudents.byCloud[s.studentCloudId] : activeById)
+      if (activeById && !s.studentUid && !s.studentCloudId && s.studentName && activeById.name && s.studentName !== activeById.name) activeMatched = false
+      if (!activeMatched) continue
+      if ((s.date || '').indexOf(prefix) !== 0) continue
+      total += S.actualAmount(s)
+    }
+    return Math.round(total * 10) / 10
+  },
+
   buildCalendarSetData: function (date, keepCollapsed, options) {
     var opts = options || {}
     var selectedDate = opts.selectedDate !== undefined ? opts.selectedDate : (this.data.selectedDate || date)
@@ -228,6 +280,7 @@ Page({
     var month = d.getMonth() + 1
     var nowTs = Date.now()
     var calendar = this.buildCalendarDataFor(year, month, date, selectedDate, nowTs)
+    var monthCompleted = this.getMonthCompletedAmount(year, month)
     var data = {
       year: year,
       month: month,
@@ -236,6 +289,7 @@ Page({
       selectedTitle: S.dateTitle(selectedDate),
       monthTitle: this.formatMonthTitle(year, month),
       monthValue: S.monthValue(year, month),
+      monthCompletedText: S.formatAmount(monthCompleted || 0),
       days: calendar.days,
       weekDays: calendar.weekDays,
       monthPages: calendar.monthPages,
@@ -249,6 +303,9 @@ Page({
       data.daySchedules = dayData.all
       data.pendingSchedules = dayData.pending
       data.normalSchedules = dayData.normal
+      data.daySchedulesAmountText = dayData.allAmountText
+      data.pendingSchedulesAmountText = dayData.pendingAmountText
+      data.normalSchedulesAmountText = dayData.normalAmountText
     }
     return data
   },
@@ -348,7 +405,7 @@ Page({
 
   makeDateItem: function (d, viewYear, viewMonth, nowTs, selectedDate) {
     var date = S.fromDate(d)
-    var sum = S.summarizeDay(app.globalData.schedules || [], date, nowTs)
+    var sum = S.summarizeDay(app.globalData.schedules || [], app.globalData.students || [], date, nowTs)
     var isToday = date === U.today()
     return {
       date: date,
@@ -392,7 +449,24 @@ Page({
       if (all[i].overdue) pending.push(all[i])
       else normal.push(all[i])
     }
-    return { all: all, pending: pending, normal: normal }
+    return {
+      all: all,
+      pending: pending,
+      normal: normal,
+      allAmountText: this.sumScheduleAmountText(all),
+      pendingAmountText: this.sumScheduleAmountText(pending),
+      normalAmountText: this.sumScheduleAmountText(normal)
+    }
+  },
+
+  sumScheduleAmountText: function (list) {
+    var total = 0
+    for (var i = 0; i < list.length; i++) {
+      var item = list[i] || {}
+      var amount = item.displayAmount !== undefined ? item.displayAmount : item.plannedAmount
+      total += S.parseAmount(amount, 0)
+    }
+    return S.formatAmount(total)
   },
 
   goBack: function () {
@@ -421,8 +495,10 @@ Page({
     var that = this
     this.setData({ calendarSwipeDuration: 0 }, function () {
       that.setData({ calendarSwipeCurrent: 1 }, function () {
-        setTimeout(function () {
+        if (that._calendarDurationTimer) clearTimeout(that._calendarDurationTimer)
+        that._calendarDurationTimer = setTimeout(function () {
           that.setData({ calendarSwipeDuration: CALENDAR_SWIPE_MS })
+          that._calendarDurationTimer = null
         }, 50)
       })
     })
@@ -461,8 +537,10 @@ Page({
     this.setData(data, function () {
       that._calendarSwipeLock = false
       that._calendarSwipeDelta = 0
-      setTimeout(function () {
+      if (that._calendarDurationTimer) clearTimeout(that._calendarDurationTimer)
+      that._calendarDurationTimer = setTimeout(function () {
         that.setData({ calendarSwipeDuration: CALENDAR_SWIPE_MS })
+        that._calendarDurationTimer = null
       }, 50)
       that.measureRecentScroll()
     })
@@ -591,8 +669,10 @@ Page({
   clearCalendarTimers: function () {
     if (this._calendarTimer) clearTimeout(this._calendarTimer)
     if (this._calendarSwipeTimer) clearTimeout(this._calendarSwipeTimer)
+    if (this._calendarDurationTimer) clearTimeout(this._calendarDurationTimer)
     this._calendarTimer = null
     this._calendarSwipeTimer = null
+    this._calendarDurationTimer = null
     this._calendarAnimating = false
     this._pendingEnableRecentScroll = false
     this._calendarSwipeLock = false
@@ -607,6 +687,13 @@ Page({
     if (this._sheetTimer) clearTimeout(this._sheetTimer)
     if (this._sheetMeasureTimer) clearTimeout(this._sheetMeasureTimer)
     if (this._sheetStudentMeasureTimer) clearTimeout(this._sheetStudentMeasureTimer)
+    if (this._highlightTimer) clearTimeout(this._highlightTimer)
+    if (this._highlightScrollTimer) clearTimeout(this._highlightScrollTimer)
+    if (this._formAmountShakeTimer) clearTimeout(this._formAmountShakeTimer)
+    if (this._formAmountShakeStartTimer) clearTimeout(this._formAmountShakeStartTimer)
+    if (this._calendarDurationTimer) clearTimeout(this._calendarDurationTimer)
+    if (this._sheetCloseResetTimer) clearTimeout(this._sheetCloseResetTimer)
+    if (this._okToastTimer) clearTimeout(this._okToastTimer)
     this.clearStatusRefreshTimer()
     this._measureTimer = null
     this._measureTimer2 = null
@@ -614,11 +701,34 @@ Page({
     this._sheetTimer = null
     this._sheetMeasureTimer = null
     this._sheetStudentMeasureTimer = null
+    this._highlightTimer = null
+    this._highlightScrollTimer = null
+    this._formAmountShakeTimer = null
+    this._formAmountShakeStartTimer = null
+    this._calendarDurationTimer = null
+    this._sheetCloseResetTimer = null
+    this._okToastTimer = null
     this._sheetTouch = null
     this._recentTouch = null
     this._recentTouchActive = false
     this._sheetClosing = false
     this._ignoreGestureTap = false
+  },
+
+  showOkText: function (text) {
+    var that = this
+    if (this._okToastTimer) {
+      clearTimeout(this._okToastTimer)
+      this._okToastTimer = null
+    }
+    this.setData({
+      showOkT: true,
+      okMsg: text || '操作成功'
+    })
+    this._okToastTimer = setTimeout(function () {
+      that._okToastTimer = null
+      that.setData({ showOkT: false })
+    }, 1600)
   },
 
   onRecentTouchStart: function (e) {
@@ -699,14 +809,16 @@ Page({
 
   onRecentTap: function (e) {
     if (this._ignoreGestureTap) return
+    var that = this
     var id = e.currentTarget.dataset.id
     var s = S.findById(app.globalData.schedules || [], id)
     if (!s) return
-    this.openDay(s.date)
-    this.openDetail(id, 'recent')
+    this.openDay(s.date, function () {
+      that.openDetail(id, 'recent')
+    })
   },
 
-  openDay: function (date) {
+  openDay: function (date, afterOpen) {
     var dayData = this.buildDayData(date)
     var d = S.toDate(date)
     var that = this
@@ -731,12 +843,16 @@ Page({
       daySchedules: dayData.all,
       pendingSchedules: dayData.pending,
       normalSchedules: dayData.normal,
+      daySchedulesAmountText: dayData.allAmountText,
+      pendingSchedulesAmountText: dayData.pendingAmountText,
+      normalSchedulesAmountText: dayData.normalAmountText,
       dirty: false
     }, function () {
       that.animateSheetIn(opening)
       that.reload()
       that.resetCalendarSwipe()
       that.measureSheetDayOverflow()
+      if (typeof afterOpen === 'function') afterOpen()
     })
   },
 
@@ -799,10 +915,12 @@ Page({
         deductCustom: '',
         deductCustomSelected: false,
         deductExtraAmount: 0,
+        deductLessAmount: 0,
         deductTitle: '选择消课节数',
         deductScheduleTimeText: '',
       deductConfirmTimeText: '',
       detailFromRecent: false,
+      detailSource: '',
       editReturnMode: 'students',
       editingScheduleId: '',
       saving: false
@@ -822,14 +940,13 @@ Page({
       this.closeSheetAnimated()
       return
     }
-    wx.showModal({
+    this.openConfirmDialog({
       title: '还没保存',
       content: '当前填写的排课信息还没有保存，确定退出吗？',
-      confirmText: '退出',
-      confirmColor: '#b4271d',
-      success: function (res) {
-        if (res.confirm) that.closeSheetAnimated({ dirty: false })
-      }
+      okText: '退出',
+      danger: true
+    }, function () {
+      that.closeSheetAnimated({ dirty: false })
     })
   },
 
@@ -854,7 +971,9 @@ Page({
       sheetTransition: 'transform 240ms cubic-bezier(.2,.8,.2,1)',
       sheetBodyScrollEnabled: true
     }, function () {
-      setTimeout(function () {
+      if (that._sheetCloseResetTimer) clearTimeout(that._sheetCloseResetTimer)
+      that._sheetCloseResetTimer = setTimeout(function () {
+        that._sheetCloseResetTimer = null
         that.tryCloseSheet()
       }, 180)
     })
@@ -948,14 +1067,13 @@ Page({
     if (this.data.sheetMode === 'edit') {
       if (this.data.dirty) {
         var editBackText = this.data.editReturnMode === 'detail' ? '放弃当前修改并返回排课详情吗？' : '放弃当前修改并返回选择学员吗？'
-        wx.showModal({
+        this.openConfirmDialog({
           title: '还没保存',
           content: editBackText,
-          confirmText: '放弃',
-          confirmColor: '#b4271d',
-          success: function (res) {
-            if (res.confirm) that.backFromEdit()
-          }
+          okText: '放弃',
+          danger: true
+        }, function () {
+          that.backFromEdit()
         })
         return
       }
@@ -963,14 +1081,13 @@ Page({
       return
     }
     if (this.data.dirty) {
-      wx.showModal({
+      this.openConfirmDialog({
         title: '还没保存',
         content: '放弃当前修改并返回当天排课吗？',
-        confirmText: '放弃',
-        confirmColor: '#b4271d',
-        success: function (res) {
-          if (res.confirm) that.backToDay()
-        }
+        okText: '放弃',
+        danger: true
+      }, function () {
+        that.backToDay()
       })
       return
     }
@@ -998,14 +1115,19 @@ Page({
       daySchedules: dayData.all,
       pendingSchedules: dayData.pending,
       normalSchedules: dayData.normal,
+      daySchedulesAmountText: dayData.allAmountText,
+      pendingSchedulesAmountText: dayData.pendingAmountText,
+      normalSchedulesAmountText: dayData.normalAmountText,
       sheetDayScrollIntoView: '',
       highlightScheduleId: highlightId || '',
       selectedSchedule: null,
       detailFromRecent: false,
+      detailSource: '',
       editReturnMode: 'students',
       editingScheduleId: '',
       dirty: false,
       deductExtraAmount: 0,
+      deductLessAmount: 0,
       showDeductModal: false,
       deductTitle: '选择消课节数',
       deductScheduleTimeText: '',
@@ -1016,8 +1138,10 @@ Page({
       that.reload()
       that.measureSheetDayOverflow()
       if (scrollId) {
-        setTimeout(function () {
+        if (that._highlightScrollTimer) clearTimeout(that._highlightScrollTimer)
+        that._highlightScrollTimer = setTimeout(function () {
           that.setData({ sheetDayScrollIntoView: scrollId })
+          that._highlightScrollTimer = null
         }, 80)
         that._highlightTimer = setTimeout(function () {
           that.setData({ highlightScheduleId: '', sheetDayScrollIntoView: '' })
@@ -1066,26 +1190,33 @@ Page({
       if (s.deleted) continue
       if (q && (s.name || '').toLowerCase().indexOf(q) === -1) continue
       var remaining = S.parseAmount(s.remainingLessons, 0)
+      var reserved = this.getReservedLessons(s.id, null)
+      var available = Math.max(0, Math.round((remaining - reserved) * 10) / 10)
       var exp = U.isExp(s)
-      var expiringSoon = !exp && remaining > 3 && s.expiryDate && U.daysBetween(U.today(), s.expiryDate) <= 30
-      var statusText = exp ? '已过期' : (remaining <= 0 ? '不可排课' : (remaining <= 3 ? '课时不足' : (expiringSoon ? ('到期 ' + s.expiryDate) : '剩余课时')))
-      var statusTone = exp || remaining <= 0 ? 'gray' : (remaining <= 3 ? 'red' : 'green')
+      var disabled = exp || available <= 0
+      var statusText = exp ? '已过期' : (available <= 0 ? '不可排课' : '可排课时数')
+      var statusTone = disabled ? 'gray' : (available <= 3 ? 'red' : 'green')
       arr.push({
         id: s.id,
         name: s.name,
         avatarSrc: s.avatarSrc || '/images/avatars/avatar_1.png',
         note: s.note || '',
         remainingLessons: remaining,
-        remainingText: S.formatAmount(remaining) + '节',
+        availableLessons: available,
+        reservedLessons: reserved,
+        remainingText: S.formatAmount(available) + '节',
         exp: exp,
-        expiringSoon: expiringSoon,
-        low: !exp && remaining > 0 && remaining <= 3,
+        disabled: disabled,
+        low: !exp && available > 0 && available <= 3,
+        sortGroup: exp ? 3 : (available <= 0 ? 2 : (available <= 3 ? 1 : 0)),
+        sortTime: s.lastModified || s.updatedAt || s.lastClassTs || 0,
         statusText: statusText,
         statusTone: statusTone
       })
     }
     arr.sort(function (a, b) {
-      if (a.exp !== b.exp) return a.exp ? 1 : -1
+      if (a.sortGroup !== b.sortGroup) return a.sortGroup - b.sortGroup
+      if ((a.sortTime || 0) !== (b.sortTime || 0)) return (b.sortTime || 0) - (a.sortTime || 0)
       return (a.name || '').localeCompare(b.name || '')
     })
     return arr
@@ -1102,10 +1233,13 @@ Page({
       wx.showToast({ title: '该学员不可排课', icon: 'none', duration: 1800 })
       return
     }
-    if (S.parseAmount(student.remainingLessons, 0) <= 3) {
-      wx.showToast({ title: '该学员课时不足', icon: 'none', duration: 1800 })
+    var available = this.getFormAmountLimitForStudent(student.id, '')
+    if (available <= 0) {
+      wx.showToast({ title: '该学员不可排课', icon: 'none', duration: 1800 })
       return
     }
+    var defaultAmount = available >= 1 ? 1 : available
+    var defaultCustom = defaultAmount !== 1 && defaultAmount !== 2
     var slot = this.defaultSlot(this.data.selectedDate)
     this._sheetScrollTop = 0
     this._formNoteDraft = ''
@@ -1119,14 +1253,15 @@ Page({
         avatarSrc: student.avatarSrc || '/images/avatars/avatar_1.png',
         date: slot.date,
         startTime: slot.startTime,
-        plannedAmount: 1,
-        customAmount: '',
-        customSelected: false,
+        plannedAmount: defaultAmount,
+        customAmount: defaultCustom ? S.formatAmount(defaultAmount) : '',
+        customSelected: defaultCustom,
         note: ''
       },
       noteHeight: 92,
       noteCount: 0,
       formAmountShake: false,
+      formAmountLimit: available,
       editReturnMode: 'students',
       editingScheduleId: '',
       dirty: false
@@ -1169,21 +1304,56 @@ Page({
 
   getFormAmountLimit: function () {
     var f = this.data.form || {}
-    var student = this.getStudent(f.studentId)
+    return this.getFormAmountLimitForStudent(f.studentId, f.id)
+  },
+
+  getFormAmountUiLimit: function () {
+    var f = this.data.form || {}
+    var hardLimit = this.getFormAmountLimitForStudent(f.studentId, f.id)
+    var sc = this.getSchedule(f.id)
+    var oldAmount = sc ? S.plannedAmount(sc) : 0
+    return Math.max(hardLimit, oldAmount)
+  },
+
+  getFormAmountLimitForStudent: function (studentId, excludeId) {
+    var student = this.getStudent(studentId)
     if (!student) return 0
     var remaining = S.parseAmount(student.remainingLessons, 0)
-    var reserved = this.getReservedLessons(student.id, f.id)
-    return Math.max(0, remaining - reserved)
+    var reserved = this.getReservedLessons(student.id, excludeId)
+    return Math.max(0, Math.round((remaining - reserved) * 10) / 10)
+  },
+
+  findStudentTimeConflict: function (form) {
+    if (!form || !form.studentId || !form.date || !form.startTime) return null
+    var probe = {
+      date: form.date,
+      startTime: form.startTime,
+      plannedAmount: form.plannedAmount
+    }
+    var start = S.startTs(probe)
+    var end = S.endTs(probe)
+    var schedules = app.globalData.schedules || []
+    for (var i = 0; i < schedules.length; i++) {
+      var sc = schedules[i]
+      if (S.isHidden(sc) || sc.status !== S.STATUS.SCHEDULED || sc.studentId != form.studentId || sc.id == form.id) continue
+      var otherStart = S.startTs(sc)
+      var otherEnd = S.endTs(sc)
+      if (start < otherEnd && end > otherStart) return sc
+    }
+    return null
   },
 
   shakeFormAmount: function () {
     var that = this
     if (this._formAmountShakeTimer) clearTimeout(this._formAmountShakeTimer)
     this.setData({ formAmountShake: false }, function () {
-      setTimeout(function () {
+      if (that._formAmountShakeStartTimer) clearTimeout(that._formAmountShakeStartTimer)
+      that._formAmountShakeStartTimer = setTimeout(function () {
+        that._formAmountShakeStartTimer = null
         that.setData({ formAmountShake: true })
         that._formAmountShakeTimer = setTimeout(function () {
           that.setData({ formAmountShake: false })
+          that._formAmountShakeTimer = null
         }, 360)
       }, 20)
     })
@@ -1201,7 +1371,8 @@ Page({
       selectedSchedule: list[0] || null,
       sheetMode: 'detail',
       sheetTitle: '排课详情',
-      detailFromRecent: source === 'recent',
+      detailFromRecent: source === 'recent' || source === 'student',
+      detailSource: source || 'day',
       dirty: false
     })
   },
@@ -1219,6 +1390,7 @@ Page({
     var s = this.getSchedule(id)
     if (!s) return
     var amount = S.plannedAmount(s)
+    var limit = Math.max(this.getFormAmountLimitForStudent(s.studentId, s.id), amount)
     var customSelected = amount !== 1 && amount !== 2
     var note = s.note || ''
     this._sheetScrollTop = 0
@@ -1241,6 +1413,7 @@ Page({
       noteHeight: this.getNoteHeight(note),
       noteCount: note.length,
       formAmountShake: false,
+      formAmountLimit: limit,
       editReturnMode: source === 'detail' ? 'detail' : 'day',
       editingScheduleId: s.id,
       dirty: false
@@ -1253,7 +1426,7 @@ Page({
     if (mode === 'detail' && id !== '' && id !== null && id !== undefined) {
       var s = this.getSchedule(id)
       if (s && !S.isHidden(s)) {
-        this.openDetail(id, this.data.detailFromRecent ? 'recent' : 'day')
+        this.openDetail(id, this.data.detailSource || (this.data.detailFromRecent ? 'recent' : 'day'))
         return
       }
     }
@@ -1284,11 +1457,19 @@ Page({
   },
 
   onFormAmountQuick: function (e) {
+    var v = parseInt(e.currentTarget.dataset.v) || 1
+    var max = this.getFormAmountUiLimit()
+    if (v > max) {
+      wx.showToast({ title: '剩余课时不足', icon: 'none', duration: 2000 })
+      this.shakeFormAmount()
+      return
+    }
     this.setData({
-      'form.plannedAmount': parseInt(e.currentTarget.dataset.v) || 1,
+      'form.plannedAmount': v,
       'form.customAmount': '',
       'form.customSelected': false,
       formAmountShake: false,
+      formAmountLimit: max,
       dirty: true
     })
   },
@@ -1304,11 +1485,10 @@ Page({
   },
 
   onFormAmountInput: function (e) {
-    var max = this.getFormAmountLimit()
+    var max = this.getFormAmountUiLimit()
     var cleaned = S.cleanHalfAmountInput(e.detail.value, max)
     var val = cleaned.value
     var n = cleaned.amount
-    if (n === 0) { val = ''; n = '' }
     if (cleaned.capped) {
       wx.showToast({ title: '剩余课时不足', icon: 'none', duration: 2000 })
       this.shakeFormAmount()
@@ -1319,6 +1499,7 @@ Page({
       'form.customAmount': val,
       'form.plannedAmount': n,
       'form.customSelected': true,
+      formAmountLimit: max,
       dirty: true
     })
   },
@@ -1360,18 +1541,24 @@ Page({
       wx.showToast({ title: '已排课时超过剩余课时', icon: 'none', duration: 2000 })
       return
     }
+    var conflict = this.findStudentTimeConflict(f)
+    if (conflict) {
+      wx.showToast({ title: '该时间已有排课', icon: 'none', duration: 2000 })
+      return
+    }
     var that = this
     this._saving = true
     this.setData({ saving: true })
     if (S.toDateTime(f.date, f.startTime).getTime() < Date.now()) {
-      wx.showModal({
+      this.openConfirmDialog({
         title: '排课时间已过',
         content: '保存后会按当前时间显示为上课中或未消课，确定继续吗？',
-        confirmText: '继续保存',
-        success: function (res) {
-          if (res.confirm) that.commitForm(f, student)
-          else { that._saving = false; that.setData({ saving: false }) }
-        }
+        okText: '继续保存'
+      }, function () {
+        that.commitForm(f, student)
+      }, function () {
+        that._saving = false
+        that.setData({ saving: false })
       })
       return
     }
@@ -1448,7 +1635,7 @@ Page({
       saving: false
     }, function () {
       that._saving = false
-      wx.showToast({ title: '已保存', icon: 'success', duration: 1200 })
+      that.showOkText('已保存')
       that.afterSaveForm(f)
     })
   },
@@ -1457,7 +1644,7 @@ Page({
     if (this.data.editReturnMode === 'detail' && f.id !== '' && f.id !== null && f.id !== undefined) {
       var s = this.getSchedule(f.id)
       if (s && !S.isHidden(s)) {
-        this.openDetail(f.id, this.data.detailFromRecent ? 'recent' : 'day')
+        this.openDetail(f.id, this.data.detailSource || (this.data.detailFromRecent ? 'recent' : 'day'))
         return
       }
     }
@@ -1472,6 +1659,34 @@ Page({
 
   closeScheduleDel: function () {
     this.setData({ showScheduleDel: false })
+  },
+
+  openConfirmDialog: function (opts, onConfirm, onCancel) {
+    this._confirmDialogOk = typeof onConfirm === 'function' ? onConfirm : null
+    this._confirmDialogCancel = typeof onCancel === 'function' ? onCancel : null
+    this.setData({
+      showConfirmDialog: true,
+      confirmDialogTitle: opts.title || '确认操作',
+      confirmDialogContent: opts.content || '',
+      confirmDialogOkText: opts.okText || '确定',
+      confirmDialogDanger: !!opts.danger
+    })
+  },
+
+  closeConfirmDialog: function () {
+    var cb = this._confirmDialogCancel
+    this._confirmDialogOk = null
+    this._confirmDialogCancel = null
+    this.setData({ showConfirmDialog: false })
+    if (cb) cb()
+  },
+
+  confirmDialogOk: function () {
+    var cb = this._confirmDialogOk
+    this._confirmDialogOk = null
+    this._confirmDialogCancel = null
+    this.setData({ showConfirmDialog: false })
+    if (cb) cb()
   },
 
   doScheduleDel: function () {
@@ -1501,6 +1716,15 @@ Page({
   startDeductSelected: function () {
     var d = this.data.selectedSchedule
     if (!d) return
+    var remain = S.parseAmount(d.remainingLessons, 0)
+    if (remain <= 0) {
+      wx.showToast({ title: '学员剩余课时不足', icon: 'none', duration: 1800 })
+      return
+    }
+    var planAmount = S.parseAmount(d.plannedAmount, 1)
+    var deductAmount = planAmount > remain ? remain : planAmount
+    var customSelected = deductAmount !== 1 && deductAmount !== 2
+    var diff = this.calcDeductLessonDiff(deductAmount, planAmount)
     var openedAt = new Date()
     var state = d.state
     var title = state === S.STATE.UPCOMING ? '确认提前消课吗？' : (state === S.STATE.IN_PROGRESS ? '选择消课节数' : '确认排课消课')
@@ -1510,10 +1734,11 @@ Page({
       showDeductModal: true,
       deductTitle: title,
       deductScheduleTimeText: d.dateTitle + ' ' + d.startTime,
-      deductAmount: d.plannedAmount || 1,
-      deductCustom: (d.plannedAmount !== 1 && d.plannedAmount !== 2) ? S.formatAmount(d.plannedAmount) : '',
-      deductCustomSelected: d.plannedAmount !== 1 && d.plannedAmount !== 2,
-      deductExtraAmount: 0,
+      deductAmount: deductAmount,
+      deductCustom: customSelected ? S.formatAmount(deductAmount) : '',
+      deductCustomSelected: customSelected,
+      deductExtraAmount: diff.extra,
+      deductLessAmount: diff.less,
       deductConfirmTimeText: state === S.STATE.UPCOMING ? formatCurrentClassTime(openedAt) : '',
       deducting: false
     })
@@ -1528,6 +1753,7 @@ Page({
       deductCustom: '',
       deductCustomSelected: false,
       deductExtraAmount: 0,
+      deductLessAmount: 0,
       deductConfirmTimeText: '',
       deductScheduleTimeText: '',
       deductTitle: '选择消课节数',
@@ -1540,15 +1766,15 @@ Page({
     var detail = this.data.selectedSchedule
     var remain = S.parseAmount(detail && detail.remainingLessons, 0)
     if (v > remain) { wx.showToast({ title: '学员剩余课时不足', icon: 'none', duration: 1800 }); return }
-    var extra = detail ? Math.max(0, v - detail.plannedAmount) : 0
-    this.setData({ deductAmount: v, deductCustom: '', deductCustomSelected: false, deductExtraAmount: extra })
+    var diff = detail ? this.calcDeductLessonDiff(v, detail.plannedAmount) : { extra: 0, less: 0 }
+    this.setData({ deductAmount: v, deductCustom: '', deductCustomSelected: false, deductExtraAmount: diff.extra, deductLessAmount: diff.less })
   },
 
   onDeductCustomFocus: function () {
     var v = S.parseAmount(this.data.deductCustom, 0)
     var detail = this.data.selectedSchedule
-    var extra = detail ? Math.max(0, v - detail.plannedAmount) : 0
-    this.setData({ deductAmount: v, deductCustomSelected: true, deductExtraAmount: extra })
+    var diff = detail ? this.calcDeductLessonDiff(v, detail.plannedAmount) : { extra: 0, less: 0 }
+    this.setData({ deductAmount: v, deductCustomSelected: true, deductExtraAmount: diff.extra, deductLessAmount: diff.less })
   },
 
   onDeductCustom: function (e) {
@@ -1558,14 +1784,17 @@ Page({
     var cleaned = S.cleanHalfAmountInput(e.detail.value, max)
     var v = cleaned.amount
     var val = cleaned.value
-    if (v === 0) val = ''
     if (cleaned.capped) {
       wx.showToast({ title: '学员剩余课时不足', icon: 'none', duration: 1800 })
     } else if (cleaned.invalidHalf) {
       wx.showToast({ title: '只支持半节课', icon: 'none', duration: 1600 })
     }
-    var extra = detail ? Math.max(0, v - detail.plannedAmount) : 0
-    this.setData({ deductAmount: v, deductCustom: val, deductCustomSelected: true, deductExtraAmount: extra })
+    var diff = detail ? this.calcDeductLessonDiff(v, detail.plannedAmount) : { extra: 0, less: 0 }
+    this.setData({ deductAmount: v, deductCustom: val, deductCustomSelected: true, deductExtraAmount: diff.extra, deductLessAmount: diff.less })
+  },
+
+  calcDeductLessonDiff: function (actual, planned) {
+    return S.lessonDiff(actual, planned)
   },
 
   confirmDeduct: function () {
@@ -1645,7 +1874,7 @@ Page({
     A.track('schedule_deduct', { studentId: student.id, amount: amount })
     this._deducting = false
     this.setData({ deducting: false })
-    wx.showToast({ title: '消课成功', icon: 'success', duration: 1200 })
+    this.showOkText('消课成功')
     this.backToDay(s.date || this.data.selectedDate, s.id)
   },
 
@@ -1653,13 +1882,13 @@ Page({
     var detail = this.data.selectedSchedule
     if (!detail) return
     var that = this
-    wx.showModal({
+    this.openConfirmDialog({
       title: '撤销消课',
-      content: '会恢复学员课时，并把这节课重新变成待上课。',
-      confirmText: '撤销',
-      success: function (res) {
-        if (res.confirm) that.undoSchedule(detail.id)
-      }
+      content: '会恢复学员课时，并删除这条消课记录。',
+      okText: '撤销',
+      danger: true
+    }, function () {
+      that.undoSchedule(detail.id)
     })
   },
 
@@ -1668,6 +1897,7 @@ Page({
     if (!s || s.status !== S.STATUS.COMPLETED) return
     var student = this.getStudent(s.studentId)
     if (!student) return
+    var now = Date.now()
     var amount = S.parseAmount(s.actualAmount, 0) || S.plannedAmount(s)
     student.remainingLessons = s.beforeRemaining !== undefined ? s.beforeRemaining : (S.parseAmount(student.remainingLessons, 0) + amount)
     student.lastClassDate = s.beforeLastClassDate || ''
@@ -1678,31 +1908,21 @@ Page({
       nh.push(h)
     }
     student.history = nh
-    student.lastModified = Date.now()
-    if (s.type === S.TYPE.WALK_IN) {
-      s.status = S.STATUS.DELETED
-      s.deleted = true
-    } else {
-      s.status = S.STATUS.SCHEDULED
-      s.actualAmount = 0
-      if (s.originalDate) {
-        s.date = s.originalDate
-        s.originalDate = ''
-      }
-      if (s.originalStartTime) {
-        s.startTime = s.originalStartTime
-        s.originalStartTime = ''
-      }
-      s.earlyCompleted = false
-      s.completeNote = ''
-      s.completedAt = 0
-      s.linkedHistoryTs = 0
-    }
-    s.updatedAt = Date.now()
+    student.lastModified = now
+    student.updatedAt = now
+    s.status = S.STATUS.DELETED
+    s.deleted = true
+    s.deletedAt = U.today()
+    s.actualAmount = 0
+    s.earlyCompleted = false
+    s.completeNote = ''
+    s.completedAt = 0
+    s.linkedHistoryTs = 0
+    s.updatedAt = now
     syncStudentSafe(student)
     app.save()
     syncScheduleSafe(s)
-    wx.showToast({ title: '已撤销', icon: 'success', duration: 1200 })
+    this.showOkText('已撤销')
     this.backToDay()
   },
 

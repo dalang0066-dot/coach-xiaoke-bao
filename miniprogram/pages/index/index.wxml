@@ -1,12 +1,12 @@
 <view class="pg">
-  <text class="topbar-tt {{empty ? '' : 'topbar-white'}}" style="padding-top:{{sbh}}px">教练消课宝</text>
+  <text class="topbar-tt {{empty ? '' : 'topbar-white'}}" style="padding-top:{{sbh}}px" bindlongpress="onDebug">教练消课宝</text>
   <view class="top-ico" wx:if="{{!empty}}" style="top:{{icoTop}}rpx;left:{{icoLeft}}rpx;width:{{icoSize}}rpx;height:{{icoSize}}rpx;border-radius:{{icoRadius}}rpx" bindtap="onTopIco">
     <image class="top-ico-img" src="/images/feedback-icon.png" mode="aspectFit"></image>
   </view>
 
   <!-- 空状态 -->
   <block wx:if="{{empty}}">
-    <scroll-view class="empty-scroll" scroll-y="true" bindtap="onGuideTap">
+    <scroll-view class="empty-scroll" scroll-y="true" bindtap="onGuideTap" refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}" refresher-background="#f6fbfd" bindrefresherrefresh="onRefreshStudents">
       <image class="empty-bg" src="/images/bg.jpg" mode="widthFix"></image>
     </scroll-view>
     <view class="big-btn" catchtap="onAdd">
@@ -18,7 +18,7 @@
   <!-- 学员列表状态 -->
   <block wx:else>
     <view class="banner banner-swipe" wx:if="{{showSwipeBanner}}">
-      <view class="banner-l"><text class="banner-txt">左滑学员卡片可以查看历史记录哦~</text></view>
+      <view class="banner-l"><text class="banner-txt">左滑学员卡片可以查看排课和历史哦~</text></view>
       <view class="banner-x" bindtap="dismissSwipeHint"><text>×</text></view>
     </view>
     <view class="banner" wx:if="{{showSleepy}}">
@@ -34,38 +34,40 @@
       <view class="banner-x" bindtap="dismissMember"><text>×</text></view>
     </view>
 
-    <scroll-view class="list-scroll" scroll-y="{{scrollY}}" scroll-top="{{scrollTop}}" bindscroll="onScroll" bindtap="onTapBlank">
+    <scroll-view class="list-scroll" scroll-y="{{scrollY}}" scroll-top="{{scrollTop}}" bindscroll="onScroll" bindtap="onTapBlank" refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}" refresher-background="#f6fbfd" bindrefresherrefresh="onRefreshStudents">
       <view class="list-wrap" bindtap="onTapBlank">
         <block wx:for="{{list}}" wx:key="id">
           <view class="card-box {{item.open ? 'card-open' : ''}} {{item.highlight}}">
             <view class="swipe-frame">
               <view class="swipe-actions">
-                <view class="act-btn act-edit" catchtap="onEdit" data-id="{{item.id}}"><image class="act-ico" src="/images/swipe-edit.png"></image><text>编辑</text></view>
-                <view class="act-btn act-hist" catchtap="onHist" data-id="{{item.id}}"><image class="act-ico" src="/images/swipe-history.png"></image><text>历史</text></view>
-                <view class="act-btn act-del" catchtap="onDel" data-id="{{item.id}}"><image class="act-ico" src="/images/swipe-delete.png"></image><text>删除</text></view>
+                <view class="act-btn act-edit" catchtap="onEdit" data-id="{{item.id}}"><image class="act-ico" src="/images/swipe-edit.png"></image><view class="act-label"><text>编辑</text><text>学员</text></view></view>
+                <view class="act-btn act-schedule" catchtap="onViewSchedules" data-id="{{item.id}}"><view class="act-ico act-schedule-ico"></view><view class="act-label"><text>查看</text><text>排课</text></view></view>
+                <view class="act-btn act-hist" catchtap="onHist" data-id="{{item.id}}"><image class="act-ico" src="/images/swipe-history.png"></image><view class="act-label"><text>历史</text><text>记录</text></view></view>
+                <view class="act-btn act-del" catchtap="onDel" data-id="{{item.id}}"><image class="act-ico" src="/images/swipe-delete.png"></image><view class="act-label"><text>删除</text><text>学员</text></view></view>
               </view>
               <view
-                style="transform:translateX({{item.open ? -420 : (item._sx || 0)}}rpx);transition:{{item._st===false?'none':'transform .35s ease'}}"
-                class="card-face {{item.exp ? 'card-gray' : (item.low ? 'card-low-line' : '')}} card-schedule-{{item.scheduleTone}} {{showHintT && index===0 ? 'card-hint' : ''}}"
+                style="transform:translateX({{item.open ? -552 : (item._sx || 0)}}rpx);transition:{{item._st===false?'none':'transform .35s ease'}}"
+                class="card-face {{item.inactive ? 'card-gray' : (item.low ? 'card-low-line' : '')}} card-schedule-{{item.scheduleTone}} {{showHintT && index===0 ? 'card-hint' : ''}}"
                 data-id="{{item.id}}"
                 data-ix="{{index}}"
                 bindtouchstart="ts"
                 bindtouchmove="tm"
                 bindtouchend="te"
+                bindtouchcancel="tc"
                 catchtap="onCardTap"
               >
                 <view class="card-main">
-                  <view class="card-av {{item.exp ? 'av-gray' : ''}}"><image class="av-img" src="{{item.avatarSrc}}" mode="aspectFill"></image></view>
+                  <view class="card-av {{item.inactive ? 'av-gray' : ''}}"><image class="av-img" src="{{item.avatarSrc}}" mode="aspectFill"></image></view>
                   <view class="card-info">
                     <view class="card-name-row">
-                      <text class="card-name {{item.exp ? 'c-gray' : ''}}">{{item.name}}</text>
+                      <text class="card-name {{item.inactive ? 'c-gray' : ''}}">{{item.name}}</text>
                       <text wx:if="{{item.scheduleStatusText}}" class="overdue-tag {{item.scheduleStatusTone==='red' ? 'tag-red' : 'tag-green'}}">{{item.scheduleStatusText}}</text>
                     </view>
-                    <text class="card-note {{item.exp ? 'c-gray' : ''}}">{{item.note || ''}}</text>
+                    <text class="card-note {{item.inactive ? 'c-gray' : ''}}">{{item.note || ''}}</text>
                   </view>
                   <view class="card-num">
-                    <text class="num-val {{item.exp ? 'c-gray' : (item.low ? 'c-red' : 'c-green')}}">{{item.exp ? '已过期' : item.remainingLessons}}</text>
-                    <text class="num-lbl {{item.exp ? 'c-gray' : (item.low ? 'c-red' : '')}}">剩余课时</text>
+                    <text class="num-val {{item.inactive ? 'c-gray' : (item.low ? 'c-red' : 'c-green')}}">{{item.exp ? '已过期' : item.remainingLessons}}</text>
+                    <text class="num-lbl {{item.inactive ? 'c-gray' : (item.low ? 'c-red' : '')}}">剩余课时</text>
                   </view>
                 </view>
                 <view class="schedule-strip">
@@ -107,6 +109,49 @@
       </view>
   </view>
 
+  <!-- ===== 查看排课弹窗 ===== -->
+  <view class="modal modal-overdue" wx:if="{{showStudentSchedules}}" catchtap="closeStudentSchedules">
+    <view class="modal-box overdue-box student-schedules-box" catchtap="nop">
+      <view class="overdue-head">
+        <text class="overdue-title">排课安排</text>
+      </view>
+      <scroll-view class="overdue-scroll" scroll-y="{{true}}" show-scrollbar="{{false}}">
+        <view class="overdue-inner">
+          <view wx:if="{{studentScheduleList.length===0}}" class="student-schedules-empty"><text>暂无排课安排~</text></view>
+          <view wx:for="{{studentScheduleList}}" wx:key="id" class="overdue-item student-schedule-item student-schedule-{{item.stateTone}}">
+            <view data-id="{{item.id}}" catchtap="openStudentScheduleDetail">
+            <view class="overdue-card course-{{item.stateTone}}">
+              <image class="overdue-av" src="{{item.avatarSrc}}" mode="aspectFill"></image>
+              <view class="overdue-main">
+                <view class="overdue-top">
+                  <text class="overdue-name">{{item.studentName}}</text>
+                  <view class="overdue-mini mini-{{item.stateTone}}"><text>{{item.displayAmountText}}节课</text></view>
+                </view>
+                <text class="overdue-note" wx:if="{{item.note}}">{{item.note}}</text>
+                <view class="overdue-meta-line">
+                  <view class="overdue-meta"><view class="overdue-meta-ico overdue-meta-date"><text></text></view><text>{{item.dateShort}} {{item.weekday}}</text></view>
+                  <view class="overdue-meta"><view class="overdue-meta-ico overdue-meta-time"><text></text></view><text>{{item.startTime}}</text></view>
+                </view>
+              </view>
+              <view class="overdue-side">
+                <view class="overdue-pill pill-{{item.stateTone}}"><text>{{item.stateText}}</text></view>
+              </view>
+            </view>
+            </view>
+            <view class="overdue-actions overdue-actions-three">
+              <view class="overdue-act overdue-act-ok" data-id="{{item.id}}" catchtap="onStudentScheduleDeduct"><text>消课</text></view>
+              <view class="overdue-act overdue-act-edit" data-id="{{item.id}}" catchtap="onStudentScheduleReschedule"><text>改期</text></view>
+              <view class="overdue-act overdue-act-del" data-id="{{item.id}}" catchtap="onStudentScheduleDelete"><text>删除</text></view>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+      <view class="overdue-foot">
+        <view class="overdue-cancel" bindtap="closeStudentSchedules"><text>取消</text></view>
+      </view>
+    </view>
+  </view>
+
   <!-- ===== 多节未消课弹窗 ===== -->
   <view class="modal modal-overdue" wx:if="{{showMultiOverdue}}" catchtap="closeMultiOverdue">
     <view class="modal-box overdue-box" catchtap="nop">
@@ -135,6 +180,7 @@
             </view>
             <view class="overdue-actions">
               <view class="overdue-act overdue-act-ok" data-id="{{item.id}}" catchtap="onMultiDeduct"><text>消课</text></view>
+              <view class="overdue-act overdue-act-edit" data-id="{{item.id}}" catchtap="onMultiReschedule"><text>改期</text></view>
               <view class="overdue-act overdue-act-del" data-id="{{item.id}}" catchtap="onMultiDelete"><text>删除</text></view>
             </view>
           </view>
@@ -142,6 +188,68 @@
       </scroll-view>
       <view class="overdue-foot">
         <view class="overdue-cancel" bindtap="closeMultiOverdue"><text>取消</text></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== 首页排课改期面板 ===== -->
+  <view class="schedule-edit-mask" wx:if="{{showScheduleEdit}}" style="opacity:{{scheduleEditMaskOpacity}}" catchtap="closeScheduleEdit">
+    <view class="schedule-edit-sheet" style="transform:translateY({{scheduleEditY}}px);transition:{{scheduleEditTransition}}" catchtap="nop" bindtouchstart="onScheduleEditTouchStart" bindtouchmove="onScheduleEditTouchMove" bindtouchend="onScheduleEditTouchEnd" bindtouchcancel="onScheduleEditTouchCancel">
+      <view class="schedule-edit-handle"></view>
+      <view class="schedule-edit-head">
+        <view class="schedule-edit-side"></view>
+        <text class="schedule-edit-title">编辑排课</text>
+        <view class="schedule-edit-save" bindtap="saveScheduleEdit"><text>保存</text></view>
+      </view>
+      <scroll-view class="schedule-edit-body" scroll-y="{{scheduleEditBodyScrollEnabled}}" show-scrollbar="{{false}}" upper-threshold="24" bindscroll="onScheduleEditBodyScroll" bindscrolltoupper="onScheduleEditBodyScrollToUpper">
+        <view class="schedule-edit-student">
+          <image class="schedule-edit-av" src="{{scheduleEditForm.avatarSrc}}" mode="aspectFill"></image>
+          <text class="schedule-edit-name">{{scheduleEditForm.studentName}}</text>
+        </view>
+        <view class="schedule-edit-field">
+          <text class="schedule-edit-label">日期</text>
+          <picker mode="date" value="{{scheduleEditForm.date}}" bindchange="onScheduleEditDate">
+            <view class="schedule-edit-input schedule-edit-pick"><view class="schedule-edit-ico schedule-edit-date-ico"><text></text></view><text>{{scheduleEditForm.date}}</text><text class="schedule-edit-arrow">›</text></view>
+          </picker>
+        </view>
+        <view class="schedule-edit-field">
+          <text class="schedule-edit-label">上课时间</text>
+          <picker mode="time" value="{{scheduleEditForm.startTime}}" bindchange="onScheduleEditTime">
+            <view class="schedule-edit-input schedule-edit-pick"><view class="schedule-edit-ico schedule-edit-time-ico"><text></text></view><text>{{scheduleEditForm.startTime}}</text><text class="schedule-edit-arrow">›</text></view>
+          </picker>
+        </view>
+        <view class="schedule-edit-field">
+          <text class="schedule-edit-label">排课节数</text>
+          <view class="schedule-edit-amount-row">
+            <view class="schedule-edit-amount {{!scheduleEditForm.customSelected && scheduleEditForm.plannedAmount===1?'schedule-edit-amount-on':''}} {{scheduleEditAmountLimit < 1 ? 'schedule-edit-amount-disabled' : ''}}" data-v="1" bindtap="onScheduleEditAmountQuick"><text>1节</text></view>
+            <view class="schedule-edit-amount {{!scheduleEditForm.customSelected && scheduleEditForm.plannedAmount===2?'schedule-edit-amount-on':''}} {{scheduleEditAmountLimit < 2 ? 'schedule-edit-amount-disabled' : ''}}" data-v="2" bindtap="onScheduleEditAmountQuick"><text>2节</text></view>
+            <input class="schedule-edit-custom {{scheduleEditForm.customSelected?'schedule-edit-custom-on':''}} {{scheduleEditAmountShake?'schedule-edit-amount-shake':''}}" placeholder="{{scheduleEditForm.customSelected ? '' : '自定义'}}" placeholder-class="schedule-edit-placeholder" type="digit" value="{{scheduleEditForm.customAmount}}" bindfocus="onScheduleEditAmountFocus" bindtap="onScheduleEditAmountFocus" bindinput="onScheduleEditAmountInput" />
+          </view>
+        </view>
+        <view class="schedule-edit-field">
+          <text class="schedule-edit-label">上课备注</text>
+          <view class="schedule-edit-ta-wrap">
+            <textarea class="schedule-edit-ta" style="min-height:92rpx;max-height:210rpx" placeholder="可填写训练内容、注意事项" value="{{scheduleEditForm.note}}" maxlength="200" auto-height="{{true}}" disable-default-padding="{{true}}" bindinput="onScheduleEditNote" bindblur="onScheduleEditNoteBlur" />
+            <text class="schedule-edit-count">{{scheduleEditNoteCount}}/200</text>
+          </view>
+        </view>
+      </scroll-view>
+      <view class="schedule-edit-foot">
+        <view class="schedule-edit-primary" bindtap="saveScheduleEdit"><text>保存排课</text></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== 首页排课改期确认弹窗 ===== -->
+  <view class="modal modal-schedule-del" wx:if="{{showScheduleEditConfirm}}" catchtap="closeScheduleEditConfirm">
+    <view class="modal-box schedule-del-box" catchtap="nop">
+      <view class="sd-body">
+        <text class="sd-title">{{scheduleEditConfirmTitle}}</text>
+        <text class="sd-desc" wx:if="{{scheduleEditConfirmDesc}}">{{scheduleEditConfirmDesc}}</text>
+      </view>
+      <view class="sd-btns">
+        <view class="sd-btn sd-cancel" bindtap="closeScheduleEditConfirm"><text>取消</text></view>
+        <view class="sd-btn {{scheduleEditConfirmDanger?'sd-ok':'sd-save-ok'}}" bindtap="confirmScheduleEditDialog"><text>{{scheduleEditConfirmOkText}}</text></view>
       </view>
     </view>
   </view>
@@ -192,6 +300,9 @@
         </view>
         <view class="mc-warn" wx:if="{{classSchedule && classExtraAmount > 0}}">
           <text>实际消课节数大于原排课节数，确认消课吗？</text>
+        </view>
+        <view class="mc-warn mc-warn-less" wx:elif="{{classSchedule && classLessAmount > 0}}">
+          <text>实际消课节数小于原排课节数，确认消课吗？</text>
         </view>
         <text class="mc-desc"><text class="b">{{classTarget.name}}</text> 将扣除对应课时</text>
       </view>
@@ -281,12 +392,17 @@
       <view class="mu-head">
         <view class="mu-badge"><text>PRO VERSION</text></view>
         <view class="mu-crown"><image class="mu-crown-img" src="/images/upgrade-icon.png"></image></view>
-        <text class="mu-htitle">免费版学员已满</text>
+        <text class="mu-htitle">{{upgradeTitle}}</text>
       </view>
       <view class="mu-body">
-        <text class="mu-desc">升级终身版，享受<text class="c-green b">无限学员</text>管理，开启<text class="c-green b">续费预警</text>、<text class="c-green b">数据永久同步</text></text>
-        <view class="plan plan-on" style="text-align:center">
-          <view class="plan-info"><text class="plan-n" style="font-size:44rpx;color:#006d37">终身版 29.9 元</text><text class="plan-s">一次付费 · 终身使用</text></view>
+        <text class="mu-desc">免费版可管理<text class="c-green b">20位学员</text>，升级专业版后可继续添加，并保留<text class="c-green b">续费预警</text>和<text class="c-green b">数据同步</text></text>
+        <view class="plan {{plan==='monthly'?'plan-on':''}}" data-plan="monthly" bindtap="onPlan">
+          <view class="plan-rd {{plan==='monthly'?'rd-on':''}}"><view class="rd-dot" wx:if="{{plan==='monthly'}}"></view></view>
+          <view class="plan-info"><text class="plan-n">专业版 2.9元/月</text><text class="plan-s">按月使用，适合先轻量体验</text></view>
+        </view>
+        <view class="plan {{plan==='lifetime'?'plan-on':''}}" data-plan="lifetime" bindtap="onPlan">
+          <view class="plan-rd {{plan==='lifetime'?'rd-on':''}}"><view class="rd-dot" wx:if="{{plan==='lifetime'}}"></view></view>
+          <view class="plan-info"><text class="plan-n">永久版 68元</text><text class="plan-s">一次付费，长期使用更省心</text></view>
         </view>
         <view class="mu-submit" bindtap="doUpg"><text>{{paying ? '处理中...' : '立即升级'}}</text></view>
         <view class="mu-later" bindtap="closeUpg"><text>稍后再说</text></view>
@@ -331,7 +447,7 @@
       <view class="fb-status {{isPro ? '' : 'fb-status-gray'}}" wx:if="{{fbShowMember}}">
         <image class="fb-status-icon" src="/images/upgrade-icon.png" mode="aspectFit"></image>
         <view class="fb-status-info">
-          <text class="fb-status-txt">{{isPro ? (proExpiry ? '专业版会员' : '终身版会员') : '免费版用户'}}</text>
+          <text class="fb-status-txt">{{isPro ? (proExpiry ? '专业版会员' : '永久版会员') : '免费版用户'}}</text>
           <text class="fb-status-sub" wx:if="{{isPro && proExpiry}}">到期日：{{proExpiry}}</text>
           <text class="fb-status-sub" wx:elif="{{isPro}}"></text>
           <text class="fb-status-sub" wx:else>升级解锁更多功能</text>
@@ -345,7 +461,7 @@
           <view class="fb-ta-wrap">
             <textarea class="fb-ta" placeholder="请输入您的反馈..." value="{{fbContent}}" bindinput="onFbContent" maxlength="500"/>
             <view class="fb-img-row">
-              <view class="fb-img-btn" wx:for="{{fbImgs}}" wx:key="index" catchtap="onFbImg" data-ix="{{index}}">
+              <view class="fb-img-btn" wx:for="{{fbImgs}}" wx:key="index" data-ix="{{index}}" catchtap="onFbImg">
                 <image class="fb-img-thumb" src="{{item}}" mode="aspectFill"></image>
                 <view class="fb-img-del" catchtap="onFbImgDel" data-ix="{{index}}"><text>×</text></view>
               </view>
@@ -366,6 +482,11 @@
         <view class="mff-btn mff-ok" bindtap="submitFeedback"><text>{{feedbackSubmitting ? '提交中...' : '提交反馈'}}</text></view>
       </view>
     </view>
+  </view>
+
+  <view class="fb-preview-mask" wx:if="{{showFbPreview}}" catchtap="closeFbPreview">
+    <view class="fb-preview-close" catchtap="closeFbPreview"><text>×</text></view>
+    <image class="fb-preview-img" src="{{fbPreviewSrc}}" mode="aspectFit"></image>
   </view>
 
   <!-- ===== 彩蛋弹窗 ===== -->
@@ -431,10 +552,28 @@
     </view>
   </view>
 
+  <view class="monthly-report-mask" wx:if="{{showMonthlyReport}}" catchtap="nop">
+    <view class="monthly-report-box" catchtap="nop">
+      <view class="monthly-report-head">
+        <text class="monthly-report-title">{{monthlyReportData.title}}</text>
+        <view class="monthly-report-close" catchtap="closeMonthlyReport"><text>×</text></view>
+      </view>
+      <view class="monthly-report-preview" catchtap="previewMonthlyReport">
+        <image wx:if="{{monthlyReportImg}}" class="monthly-report-img" src="{{monthlyReportImg}}" mode="widthFix"></image>
+        <view wx:else class="monthly-report-loading"><text>正在生成海报...</text></view>
+      </view>
+      <view class="monthly-report-actions">
+        <view class="monthly-report-btn monthly-report-save" bindtap="saveMonthlyReport"><text>保存海报</text></view>
+        <view class="monthly-report-btn monthly-report-share" bindtap="shareMonthlyReport"><text>分享海报</text></view>
+      </view>
+    </view>
+  </view>
+  <canvas canvas-id="monthlyReportCanvas" class="monthly-report-canvas"></canvas>
+
   <!-- Toast -->
   <view class="toast toast-undo {{showUndo?'toast-on':''}}">
     <view class="toast-left"><image class="toast-gr-img" src="/images/toast-ok.png"></image><text class="toast-wt">消课成功</text></view>
-    <view class="toast-div"></view><text class="toast-link" catchtap="undoClass">点击撤销</text>
+    <view class="toast-div"></view><view class="toast-link-hit" catchtap="undoClass"><text class="toast-link">点击撤销</text></view>
   </view>
   <view class="toast toast-top {{showLowT?'toast-on':''}}"><text class="toast-wt">{{lowMsg}}</text></view>
   <!-- 彩蛋toast -->
@@ -453,6 +592,18 @@
           <view class="dbg-btn {{debugOffset===7?'dbg-on':''}}" bindtap="setDebugOffset" data-v="7"><text>+7天</text></view>
           <view class="dbg-btn {{debugOffset===30?'dbg-on':''}}" bindtap="setDebugOffset" data-v="30"><text>+30天</text></view>
         </view>
+      </view>
+
+      <view class="debug-row">
+        <text class="debug-label">月报弹窗测试</text>
+        <view class="debug-btns">
+          <view class="dbg-btn" bindtap="setDebugReportDay" data-day="1"><text>下月1号</text></view>
+          <view class="dbg-btn" bindtap="setDebugReportDay" data-day="2"><text>下月2号</text></view>
+          <view class="dbg-btn" bindtap="setDebugReportDay" data-day="3"><text>下月3号</text></view>
+          <view class="dbg-btn" bindtap="setDebugDecemberReport"><text>测试12月月报</text></view>
+          <view class="dbg-btn" bindtap="clearMonthlyReportSeen"><text>重新弹月报</text></view>
+        </view>
+        <text class="debug-tip">模拟日期：{{debugTodayText}}，统计月份：{{debugReportMonthText}}</text>
       </view>
 
       <view class="debug-row">
@@ -493,6 +644,19 @@
       </view>
 
       <view class="debug-close" bindtap="closeDebug"><text>关闭</text></view>
+    </view>
+  </view>
+
+  <view class="modal modal-schedule-del" wx:if="{{showDebugClearConfirm}}" catchtap="closeDebugClearConfirm">
+    <view class="modal-box schedule-del-box" catchtap="nop">
+      <view class="sd-body">
+        <text class="sd-title">确认清空全部数据吗？</text>
+        <text class="sd-desc">所有学员、历史记录和排课都会删除，无法恢复。</text>
+      </view>
+      <view class="sd-btns">
+        <view class="sd-btn sd-cancel" bindtap="closeDebugClearConfirm"><text>取消</text></view>
+        <view class="sd-btn sd-ok" bindtap="doClearAllData"><text>清空</text></view>
+      </view>
     </view>
   </view>
 

@@ -16,6 +16,12 @@
       <view class="mh-btn" bindtap="onNextMonth"><text>›</text></view>
     </view>
 
+    <view class="month-total">
+      <view class="month-total-ico form-date-ico"><text></text></view>
+      <text class="month-total-label">本月总消课</text>
+      <text class="month-total-num">{{monthCompletedText}}节</text>
+    </view>
+
     <view class="week-row">
       <text wx:for="{{weekLabels}}" wx:key="index">{{item}}</text>
     </view>
@@ -97,6 +103,7 @@
             <view class="mini-badge mini-{{item.stateTone}}"><text>{{item.displayAmountText}}节课</text></view>
             <view class="mini-badge mini-early" wx:if="{{item.earlyCompleted}}"><text>提前消课</text></view>
             <view class="mini-badge mini-extra" wx:if="{{item.overAmount > 0}}"><text>多消{{item.overAmountText}}节</text></view>
+            <view class="mini-badge mini-less" wx:if="{{item.underAmount > 0}}"><text>少消{{item.underAmountText}}节</text></view>
           </view>
           <text class="course-note" wx:if="{{item.note}}">{{item.note}}</text>
           <view class="course-meta-line">
@@ -122,7 +129,7 @@
         </view>
         <view class="sheet-title-wrap">
           <text class="sheet-title">{{sheetMode==='day'?selectedTitle:sheetTitle}}</text>
-          <text class="sheet-subtitle" wx:if="{{sheetMode==='day'}}">小计 {{daySchedules.length}} 条排课</text>
+          <text class="sheet-subtitle" wx:if="{{sheetMode==='day'}}">小计 {{daySchedulesAmountText}} 节课</text>
         </view>
         <view class="sheet-action" wx:if="{{sheetMode==='day'}}" bindtap="openSelectStudent"><text>添加</text></view>
         <view class="sheet-action" wx:elif="{{sheetMode==='edit'}}" bindtap="saveForm"><text>保存</text></view>
@@ -135,7 +142,7 @@
           <view wx:if="{{pendingSchedules.length}}" class="sheet-section">
             <view class="sheet-sec-head">
               <text class="sheet-sec-title red-text">待处理</text>
-              <view class="sec-count sec-red day-total-count"><text>{{pendingSchedules.length}}</text></view>
+              <view class="sec-count sec-red day-total-count"><text>{{pendingSchedulesAmountText}}</text></view>
             </view>
             <view
               wx:for="{{pendingSchedules}}"
@@ -152,6 +159,7 @@
                   <view class="mini-badge mini-red"><text>{{item.displayAmountText}}节课</text></view>
                   <view class="mini-badge mini-early" wx:if="{{item.earlyCompleted}}"><text>提前消课</text></view>
                   <view class="mini-badge mini-extra" wx:if="{{item.overAmount > 0}}"><text>多消{{item.overAmountText}}节</text></view>
+                  <view class="mini-badge mini-less" wx:if="{{item.underAmount > 0}}"><text>少消{{item.underAmountText}}节</text></view>
                 </view>
                 <text class="course-note" wx:if="{{item.note}}">{{item.note}}</text>
                 <view class="course-meta-line">
@@ -169,7 +177,7 @@
           <view class="sheet-section">
             <view class="sheet-sec-head">
               <text class="sheet-sec-title">当天课程</text>
-              <view class="sec-count sec-green day-total-count"><text>{{normalSchedules.length}}</text></view>
+              <view class="sec-count sec-green day-total-count"><text>{{normalSchedulesAmountText}}</text></view>
             </view>
             <view wx:if="{{normalSchedules.length===0 && pendingSchedules.length===0}}" class="empty-day">
               <text>这天还没有排课</text>
@@ -189,6 +197,7 @@
                   <view class="mini-badge mini-{{item.stateTone}}"><text>{{item.displayAmountText}}节课</text></view>
                   <view class="mini-badge mini-early" wx:if="{{item.earlyCompleted}}"><text>提前消课</text></view>
                   <view class="mini-badge mini-extra" wx:if="{{item.overAmount > 0}}"><text>多消{{item.overAmountText}}节</text></view>
+                  <view class="mini-badge mini-less" wx:if="{{item.underAmount > 0}}"><text>少消{{item.underAmountText}}节</text></view>
                 </view>
                 <text class="course-note" wx:if="{{item.note}}">{{item.note}}</text>
                 <view class="course-meta-line">
@@ -216,7 +225,7 @@
             <view
               wx:for="{{studentList}}"
               wx:key="id"
-              class="student-row {{item.exp ? 'student-disabled' : ''}}"
+              class="student-row {{item.disabled ? 'student-disabled' : ''}}"
               bindtap="onChooseStudent"
               data-id="{{item.id}}"
             >
@@ -227,7 +236,7 @@
               </view>
               <view class="student-right">
                 <text class="student-remain {{item.statusTone==='red'?'student-remain-red':(item.statusTone==='gray'?'student-remain-gray':'')}}">{{item.remainingText}}</text>
-                <text wx:if="{{item.expiringSoon || item.statusTone==='green'}}" class="student-status-text">{{item.statusText}}</text>
+                <text wx:if="{{item.statusTone==='green' || item.statusTone==='red'}}" class="student-status-text {{item.statusTone==='red'?'student-status-text-red':''}}">{{item.statusText}}</text>
                 <view wx:else class="student-status student-status-{{item.statusTone}}"><text>{{item.statusText}}</text></view>
               </view>
               <text class="student-arrow">›</text>
@@ -262,8 +271,8 @@
           <view class="form-field">
             <text class="form-label">排课节数</text>
             <view class="amount-row">
-              <view class="amount-btn {{!form.customSelected && form.plannedAmount===1?'amount-on':''}}" data-v="1" bindtap="onFormAmountQuick"><text>1节</text></view>
-              <view class="amount-btn {{!form.customSelected && form.plannedAmount===2?'amount-on':''}}" data-v="2" bindtap="onFormAmountQuick"><text>2节</text></view>
+              <view class="amount-btn {{!form.customSelected && form.plannedAmount===1?'amount-on':''}} {{formAmountLimit < 1 ? 'amount-disabled' : ''}}" data-v="1" bindtap="onFormAmountQuick"><text>1节</text></view>
+              <view class="amount-btn {{!form.customSelected && form.plannedAmount===2?'amount-on':''}} {{formAmountLimit < 2 ? 'amount-disabled' : ''}}" data-v="2" bindtap="onFormAmountQuick"><text>2节</text></view>
               <input class="amount-input {{form.customSelected?'amount-input-on':''}} {{formAmountShake?'amount-input-shake':''}}" placeholder="{{form.customSelected ? '' : '自定义'}}" placeholder-class="amount-placeholder" type="digit" value="{{form.customAmount}}" bindfocus="onFormAmountFocus" bindtap="onFormAmountFocus" bindinput="onFormAmountInput" />
             </view>
           </view>
@@ -290,6 +299,8 @@
                 <view class="detail-name-row">
                   <text class="detail-name">{{selectedSchedule.studentName}}</text>
                   <view class="mini-badge mini-early" wx:if="{{selectedSchedule.earlyCompleted}}"><text>提前消课</text></view>
+                  <view class="mini-badge mini-extra" wx:if="{{selectedSchedule.overAmount > 0}}"><text>多消{{selectedSchedule.overAmountText}}节</text></view>
+                  <view class="mini-badge mini-less" wx:if="{{selectedSchedule.underAmount > 0}}"><text>少消{{selectedSchedule.underAmountText}}节</text></view>
                 </view>
               </view>
               <view class="state-pill pill-{{selectedSchedule.stateTone}}"><text>{{selectedSchedule.stateText}}</text></view>
@@ -351,11 +362,27 @@
         <view class="dm-warn" wx:if="{{selectedSchedule && deductExtraAmount > 0}}">
           <text>实际消课节数大于原排课节数，确认消课吗？</text>
         </view>
+        <view class="dm-warn dm-warn-less" wx:elif="{{selectedSchedule && deductLessAmount > 0}}">
+          <text>实际消课节数小于原排课节数，确认消课吗？</text>
+        </view>
         <text class="dm-desc"><text class="b">{{selectedSchedule.studentName}}</text> 将扣除对应课时</text>
       </view>
       <view class="dm-btns">
         <view class="dm-btn dm-cancel" bindtap="closeDeductModal"><text>取消</text></view>
         <view class="dm-btn dm-ok" bindtap="confirmDeduct"><text>确认消课</text></view>
+      </view>
+    </view>
+  </view>
+
+  <view class="schedule-confirm-mask" wx:if="{{showConfirmDialog}}" catchtap="closeConfirmDialog">
+    <view class="schedule-confirm-box" catchtap="nop">
+      <view class="sc-body">
+        <text class="sc-title">{{confirmDialogTitle}}</text>
+        <text class="sc-content">{{confirmDialogContent}}</text>
+      </view>
+      <view class="sc-btns">
+        <view class="sc-btn sc-cancel" bindtap="closeConfirmDialog"><text>取消</text></view>
+        <view class="sc-btn {{confirmDialogDanger ? 'sc-danger' : 'sc-ok'}}" bindtap="confirmDialogOk"><text>{{confirmDialogOkText}}</text></view>
       </view>
     </view>
   </view>
@@ -370,5 +397,9 @@
         <view class="sd-btn sd-ok" bindtap="doScheduleDel"><text>删除</text></view>
       </view>
     </view>
+  </view>
+
+  <view class="toast toast-bot {{showOkT?'toast-on':''}}">
+    <view class="toast-left"><image class="toast-gr-img" src="/images/toast-ok.png"></image><text class="toast-wt">{{okMsg}}</text></view>
   </view>
 </view>

@@ -2,6 +2,39 @@ var util = require('./utils/util.js')
 var cloud = require('./utils/cloud.js')
 var analytics = require('./utils/analytics.js')
 var schedule = require('./utils/schedule.js')
+var BACKFILL_BATCH_SIZE = 20
+var CLOUD_PULL_MIN_INTERVAL = 5000
+var _studentsBackfilling = false
+var _schedulesBackfilling = false
+
+function makeUid(prefix) {
+  return prefix + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10)
+}
+
+function hashText(text) {
+  var str = String(text || '')
+  var hash = 0
+  for (var i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i)
+    hash = hash & hash
+  }
+  return Math.abs(hash).toString(36)
+}
+
+function legacyStudentKey(student) {
+  if (!student) return ''
+  var localId = student.studentLocalId !== undefined && student.studentLocalId !== null ? student.studentLocalId : student.id
+  if (localId === undefined || localId === null || localId === '' || !student.createdAt || !student.name) return ''
+  return localId + '|' + student.createdAt + '|' + hashText(student.name)
+}
+
+function isCloudDerivedStudentUid(uid) {
+  return !!(uid && String(uid).indexOf('stu_cloud_') === 0)
+}
+
+function isCloudDerivedScheduleUid(uid) {
+  return !!(uid && String(uid).indexOf('sch_cloud_') === 0)
+}
 
 App({
   globalData: {
@@ -20,7 +53,10 @@ App({
     _pendingWelcome: null,
     bannerDismissedToday: {},
     statusBarHeight: 20,
-    _lastMemberSyncKey: ''
+    _lastMemberSyncKey: '',
+    lastStudentSyncAt: 0,
+    lastScheduleSyncAt: 0,
+    lastFullSyncDate: ''
   },
 
   onLaunch: function () {
@@ -28,7 +64,7 @@ App({
     var sys = wx.getSystemInfoSync()
     this.globalData.statusBarHeight = sys.statusBarHeight
 
-    // 隐私授权（用户首次打开时弹窗同意隐私政策）
+    // 闅愮鎺堟潈锛堢敤鎴烽娆℃墦寮€鏃跺脊绐楀悓鎰忛殣绉佹斂绛栵級
     if (wx.requirePrivacyAuthorize) {
       wx.requirePrivacyAuthorize({
         success: function () {},
@@ -36,52 +72,71 @@ App({
       })
     }
 
-    // 本地持久化身份
+    // 鏈湴鎸佷箙鍖栬韩浠?
     this.globalData.openid = this.getLocalId()
     this.loadData()
     analytics.track('launch')
 
-    // 静默登录：获取微信code备用
+    // 闈欓粯鐧诲綍锛氳幏鍙栧井淇ode澶囩敤
     wx.login({
       success: function (res) {
         if (res.code) { that.globalData._wxCode = res.code }
       }
     })
 
-    // 初始化云开发（未开通时静默跳过）
-    cloud.init()
-
-    // 处理分享推荐（需在getOpenid之前拿到ref）
     var opts = wx.getLaunchOptionsSync()
     var refId = (opts.query && opts.query.ref) ? opts.query.ref : ''
 
-    if (cloud.isReady()) {
-      // 获取微信真实openid，拿到后再拉云端数据
-      wx.cloud.callFunction({ name: 'getOpenid' }).then(function (res) {
-        if (res.result && res.result.openid) {
-          that.globalData._realOpenid = res.result.openid
-        }
-        // openid就位了，现在拉云端数据
-        if (refId) that.globalData._pendingRef = refId
-        if (wx.getStorageSync('_pending_easter_sync')) {
-          that.globalData._skipMemberPullOnce = true
-          that.save()
-          cloud.syncEasterClaimed()
-          wx.removeStorageSync('_pending_easter_sync')
-        }
-        that.pullCloudData()
-        // 同步彩蛋标记
-        cloud.pullEasterClaimed(function (claimed) {
-          if (claimed) wx.setStorageSync('_easter_egg_claimed', true)
-        })
-      }).catch(function () {
-        // 即使失败也拉数据（会员信息会缺失，但学员数据能拉）
-        if (!refId) that.pullCloudData()
-      })
-    }
+    setTimeout(function () {
+      that.initCloudSync(refId)
+    }, 0)
   },
 
-  // 本地设备标识
+  initCloudSync: function (refId) {
+    var that = this
+    try {
+      cloud.init()
+    } catch (e) {
+      return
+    }
+    if (!cloud.isReady() || !wx.cloud || !wx.cloud.callFunction) return
+
+    setTimeout(function () {
+      try {
+        wx.cloud.callFunction({
+          name: 'getOpenid',
+          success: function (res) {
+            if (!res.result || !res.result.openid) return
+            that.globalData._realOpenid = res.result.openid
+            if (refId) that.globalData._pendingRef = refId
+            if (refId) {
+              setTimeout(function () {
+                var pages = getCurrentPages()
+                var page = pages.length ? pages[pages.length - 1] : null
+                if (page && page.processPendingReferral) page.processPendingReferral()
+              }, 0)
+            }
+            markCloudIdentityDirty(that)
+            that.save()
+
+            if (wx.getStorageSync('_pending_easter_sync')) {
+              that.globalData._skipMemberPullOnce = true
+              that.save()
+              cloud.syncEasterClaimed()
+              wx.removeStorageSync('_pending_easter_sync')
+            }
+            that.pullCloudData()
+            cloud.pullEasterClaimed(function (claimed) {
+              if (claimed) wx.setStorageSync('_easter_egg_claimed', true)
+            })
+          },
+          fail: function () {}
+        })
+      } catch (e) {}
+    }, 300)
+  },
+
+  // 鏈湴璁惧鏍囪瘑
   getLocalId: function () {
     var id = wx.getStorageSync('_local_id')
     if (!id) {
@@ -96,7 +151,7 @@ App({
     var data = wx.getStorageSync(key) || {}
     var today = util.today()
 
-    // 迁移旧数据
+    // 杩佺Щ鏃ф暟鎹?
     if (!data.students || !data.students.length) {
       var oldData = wx.getStorageSync('app_data')
       if (oldData && oldData.students && oldData.students.length) {
@@ -105,9 +160,9 @@ App({
       }
     }
 
-    this.globalData.students = data.students || []
+    this.globalData.students = normalizeStudents(data.students || [])
     this.globalData.nextId = data.nextId || 0
-    this.globalData.schedules = schedule.cleanOld(data.schedules || [], today)
+    this.globalData.schedules = schedule.cleanOld(normalizeSchedules(data.schedules || []), today)
     var idFix = normalizeStudentIds(this.globalData.students, this.globalData.schedules, this.globalData.nextId)
     this.globalData.nextId = idFix.nextId
     this.globalData.nextScheduleId = data.nextScheduleId || 0
@@ -120,7 +175,10 @@ App({
     this.globalData.proExpiry = data.proExpiry || data.easterProExpiry || ''
     this.globalData.upgradeShown = data.upgradeShown || false
     this.globalData.swipeHintDismissed = data.swipeHintDismissed || false
-    // Pro过期检测
+    this.globalData.lastStudentSyncAt = data.lastStudentSyncAt || 0
+    this.globalData.lastScheduleSyncAt = data.lastScheduleSyncAt || 0
+    this.globalData.lastFullSyncDate = data.lastFullSyncDate || ''
+    // Pro杩囨湡妫€娴?
     if (this.globalData.proExpiry && today > this.globalData.proExpiry) {
       this.globalData.isProMember = false
       this.globalData.memberExpired = true
@@ -133,10 +191,27 @@ App({
     if (idFix.changed) this.save()
   },
 
-  // 云端数据拉取 + 合并（云端优先）
-  pullCloudData: function () {
+  // 浜戠鏁版嵁鎷夊彇 + 鍚堝苟锛堜簯绔紭鍏堬級
+  pullCloudData: function (cb) {
     var that = this
-    // 拉取会员状态
+    if (!that.globalData._realOpenid) {
+      if (typeof cb === 'function') cb()
+      return
+    }
+    var today = util.today()
+    var needFull = !that.globalData.lastFullSyncDate || that.globalData.lastFullSyncDate !== today || !that.globalData.lastStudentSyncAt || !that.globalData.lastScheduleSyncAt
+    var studentSince = needFull ? 0 : (that.globalData.lastStudentSyncAt || 0)
+    var scheduleSince = needFull ? 0 : (that.globalData.lastScheduleSyncAt || 0)
+    var pendingPulls = 2
+    var finishPull = function () {
+      pendingPulls--
+      if (pendingPulls <= 0) {
+        that.globalData._lastCloudPullAt = Date.now()
+        that.refreshCurrentPage()
+        if (typeof cb === 'function') cb()
+      }
+    }
+    // 鎷夊彇浼氬憳鐘舵€?
     cloud.pullMember(function (isPro, expired, proExp, welcomeDays, pendingDays, upgradeShown) {
       if (isPro !== null) {
         if (that.globalData._skipMemberPullOnce) {
@@ -153,93 +228,108 @@ App({
         that.refreshCurrentPage()
       }
     })
-    // 拉取学员数据（本地有活跃学员时跳过，避免云端合并导致重复/丢失）
-    var hasLocal = false, ss = that.globalData.students || []
-    for (var n = 0; n < ss.length; n++) { if (!ss[n].deleted) { hasLocal = true; break } }
-    if (!hasLocal) {
-      cloud.pullFromCloud(function (cloudList) {
-      if (!cloudList || !cloudList.length) { return }
-      var local = that.globalData.students || []
-      var merged = {}
-      // 先放本地数据
-      for (var i = 0; i < local.length; i++) {
-        merged[local[i].id] = local[i]
-      }
-      // 云端覆盖（云端较新则覆盖）
-      for (var j = 0; j < cloudList.length; j++) {
-        var cs = cloudList[j]
-        // 查找本地匹配（通过 _cloudId 或 name+createdAt）
-        var found = false
-        for (var k = 0; k < local.length; k++) {
-          if (local[k]._cloudId === cs._cloudId) {
-            if ((cs.lastModified || 0) >= (local[k].lastModified || 0)) {
-              local[k] = mergeCloudToLocal(local[k], cs)
-            }
-            found = true
-            break
-          }
-        }
-        if (!found) {
-          // _cloudId 匹配失败，用姓名+创建时间兜底匹配（防止首次同步后 _cloudId 未及时存入本地导致重复）
-          for (var m = 0; m < local.length; m++) {
-            if (local[m].name === cs.name && local[m].createdAt === cs.createdAt) {
-              local[m] = mergeCloudToLocal(local[m], cs); found = true; break
-            }
-          }
-        }
-        if (!found) {
-          var newId = pickCloudStudentId(cs, merged, that.globalData.nextId)
-          if (newId >= that.globalData.nextId) that.globalData.nextId = newId + 1
-          cs.id = newId
-          merged[newId] = cs
-        }
-      }
-      var list = []
-      for (var key in merged) { if (merged.hasOwnProperty(key)) list.push(merged[key]) }
-      var wasEmpty = local.length === 0
-      that.globalData.students = list
-      repairScheduleStudentLinks(that.globalData.schedules || [], that.globalData.students || [])
+    // 鎷夊彇瀛﹀憳鏁版嵁锛堟湰鍦版湁娲昏穬瀛﹀憳鏃惰烦杩囷紝閬垮厤浜戠鍚堝苟瀵艰嚧閲嶅/涓㈠け锛?
+    cloud.pullFromCloud(function (cloudList) {
+      applyCloudStudents(that, cloudList || [])
+      that.globalData.lastStudentSyncAt = nextSyncCursor(that.globalData.lastStudentSyncAt, cloudList || [])
+      if (needFull) that.globalData.lastFullSyncDate = today
       that.save()
-      // 本地没数据但云端有 → 刷新页面显示云端数据
-      if (wasEmpty && list.length > 0) {
-        setTimeout(function () {
-          var pages = getCurrentPages()
-          if (pages.length > 0 && pages[pages.length - 1].reload) {
-            pages[pages.length - 1].reload()
-          }
-        }, 300)
-      }
-      })
-    }
+      finishPull()
+      return
+    }, studentSince)
     cloud.pullSchedules(function (cloudSchedules) {
-      if (!cloudSchedules || !cloudSchedules.length) {
+      try {
+        applyCloudSchedules(that, cloudSchedules || [])
+        that.globalData.lastScheduleSyncAt = nextSyncCursor(that.globalData.lastScheduleSyncAt, cloudSchedules || [])
+        if (needFull) that.globalData.lastFullSyncDate = today
+        that.save()
         syncLocalSchedulesToCloud(that.globalData.schedules || [])
         return
+      } finally {
+        finishPull()
       }
-      var localSchedules = that.globalData.schedules || []
-      if (!localSchedules.length) {
-        that.globalData.schedules = schedule.cleanOld(cloudSchedules, util.today())
-        repairScheduleStudentLinks(that.globalData.schedules, that.globalData.students || [])
-        updateNextScheduleId(that)
-        that.save()
-        that.refreshCurrentPage()
-      } else {
-        var changed = mergeScheduleCloudIds(localSchedules, cloudSchedules)
-        if (mergeMissingCloudSchedules(localSchedules, cloudSchedules)) changed = true
-        if (repairScheduleStudentLinks(localSchedules, that.globalData.students || [])) changed = true
-        if (changed) {
-          that.globalData.schedules = schedule.cleanOld(localSchedules, util.today())
-          updateNextScheduleId(that)
-        }
-        syncLocalSchedulesToCloud(that.globalData.schedules || localSchedules)
-        if (changed) that.save()
-      }
+    }, scheduleSince)
+  },
+
+  syncCloudQuietly: function (force, cb) {
+    if (!cloud.isReady() || !cloud.isOnline()) {
+      if (typeof cb === 'function') cb()
+      return
+    }
+    if (!this.globalData._realOpenid) {
+      if (typeof cb === 'function') cb()
+      return
+    }
+    var now = Date.now()
+    if (!force && this.globalData._cloudPulling) {
+      if (typeof cb === 'function') cb()
+      return
+    }
+    if (!force && this.globalData._lastCloudPullAt && now - this.globalData._lastCloudPullAt < CLOUD_PULL_MIN_INTERVAL) {
+      if (typeof cb === 'function') cb()
+      return
+    }
+    var that = this
+    this.globalData._cloudPulling = true
+    this.pullCloudData(function () {
+      that.globalData._cloudPulling = false
+      that.refreshCurrentPage()
+      if (typeof cb === 'function') cb()
     })
+  },
+
+  startRealtimeSync: function () {
+    var that = this
+    if (!cloud.isReady() || !cloud.isOnline()) return
+    if (!this.globalData._realOpenid) {
+      if (this.globalData._watchWaitTimer) clearTimeout(this.globalData._watchWaitTimer)
+      this.globalData._watchWaitTimer = setTimeout(function () { that.startRealtimeSync() }, 800)
+      return
+    }
+    var since = Math.max(0, Date.now() - 5000)
+    if (!this.globalData._studentWatcher) {
+      this.globalData._studentWatcher = cloud.watchOwned('students', since, function (docs) {
+        if (applyCloudStudents(that, docs || [])) {
+          that.globalData.lastStudentSyncAt = nextSyncCursor(that.globalData.lastStudentSyncAt, docs || [])
+          that.save()
+          that.refreshCurrentPage()
+        }
+      }, function () {
+        that.stopRealtimeSync()
+      })
+    }
+    if (!this.globalData._scheduleWatcher) {
+      this.globalData._scheduleWatcher = cloud.watchOwned('schedules', since, function (docs) {
+        if (applyCloudSchedules(that, docs || [])) {
+          that.globalData.lastScheduleSyncAt = nextSyncCursor(that.globalData.lastScheduleSyncAt, docs || [])
+          that.save()
+          that.refreshCurrentPage()
+        }
+      }, function () {
+        that.stopRealtimeSync()
+      })
+    }
+  },
+
+  stopRealtimeSync: function () {
+    if (this.globalData._watchWaitTimer) {
+      clearTimeout(this.globalData._watchWaitTimer)
+      this.globalData._watchWaitTimer = null
+    }
+    if (this.globalData._studentWatcher && this.globalData._studentWatcher.close) {
+      try { this.globalData._studentWatcher.close() } catch (e) {}
+    }
+    if (this.globalData._scheduleWatcher && this.globalData._scheduleWatcher.close) {
+      try { this.globalData._scheduleWatcher.close() } catch (e) {}
+    }
+    this.globalData._studentWatcher = null
+    this.globalData._scheduleWatcher = null
   },
 
   save: function () {
     var key = 'app_data_' + this.globalData.openid
-    this.globalData.schedules = schedule.cleanOld(this.globalData.schedules || [], util.today())
+    this.globalData.students = normalizeStudents(this.globalData.students || [])
+    this.globalData.schedules = schedule.cleanOld(normalizeSchedules(this.globalData.schedules || []), util.today())
     wx.setStorageSync(key, {
       students: this.globalData.students,
       nextId: this.globalData.nextId,
@@ -250,10 +340,13 @@ App({
       proExpiry: this.globalData.proExpiry,
       upgradeShown: this.globalData.upgradeShown,
       swipeHintDismissed: this.globalData.swipeHintDismissed,
-      bannerDismissedToday: this.globalData.bannerDismissedToday
+      bannerDismissedToday: this.globalData.bannerDismissedToday,
+      lastStudentSyncAt: this.globalData.lastStudentSyncAt || 0,
+      lastScheduleSyncAt: this.globalData.lastScheduleSyncAt || 0,
+      lastFullSyncDate: this.globalData.lastFullSyncDate || ''
     })
-    // 云端同步（静默，失败不阻塞）
-    if (cloud.isReady()) {
+    // 浜戠鍚屾锛堥潤榛橈紝澶辫触涓嶉樆濉烇級
+    if (cloud.isReady() && this.globalData._realOpenid) {
       var memberKey = [this.globalData.isProMember ? 1 : 0, this.globalData.memberExpired ? 1 : 0, this.globalData.proExpiry || '', this.globalData.upgradeShown ? 1 : 0].join('|')
       var that = this
       if (memberKey !== this.globalData._lastMemberSyncKey) {
@@ -261,6 +354,8 @@ App({
           if (!err) that.globalData._lastMemberSyncKey = memberKey
         })
       }
+      syncLocalStudentsToCloud(this.globalData.students || [])
+      syncLocalSchedulesToCloud(this.globalData.schedules || [])
     }
   },
 
@@ -274,18 +369,178 @@ App({
   }
 })
 
-// 云端数据合并到本地记录（保留本地字段结构）
-function syncLocalSchedulesToCloud(schedules) {
-  if (!cloud.isReady() || !cloud.isOnline()) return
-  for (var i = 0; i < (schedules || []).length; i++) {
-    if (!schedules[i] || schedules[i]._cloudId) continue
-    cloud.ensureScheduleLocalKey(schedules[i])
-    cloud.syncSchedule(schedules[i], function (err) {
-      if (err) {
-        // 单条失败会在下次具体修改时重新入队，启动补同步不阻塞页面。
-      }
-    })
+// 浜戠鏁版嵁鍚堝苟鍒版湰鍦拌褰曪紙淇濈暀鏈湴瀛楁缁撴瀯锛?
+function syncLocalStudentsToCloud(students) {
+  if (!cloud.isReady() || !cloud.isOnline() || _studentsBackfilling) return
+  var sent = 0, pending = 0
+  _studentsBackfilling = true
+  var done = function () {
+    pending--
+    if (pending <= 0) _studentsBackfilling = false
   }
+  for (var i = 0; i < (students || []).length; i++) {
+    if (sent >= BACKFILL_BATCH_SIZE) break
+    var item = students[i]
+    if (!item || (item._cloudId && !item._dirty)) continue
+    sent++
+    pending++
+    ;(function (studentItem) {
+      cloud.syncStudent(studentItem, function (err) {
+        if (err) cloud.queueOp('save', studentItem)
+        done()
+      })
+    })(item)
+  }
+  if (!sent) _studentsBackfilling = false
+}
+
+function syncLocalSchedulesToCloud(schedules) {
+  if (!cloud.isReady() || !cloud.isOnline() || _schedulesBackfilling) return
+  var sent = 0, pending = 0
+  var activeStudents = {}
+  var students = getApp().globalData.students || []
+  for (var si = 0; si < students.length; si++) {
+    if (students[si] && !students[si].deleted) {
+      activeStudents[students[si].id] = students[si]
+      if (students[si].studentUid) activeStudents['uid:' + students[si].studentUid] = students[si]
+      if (students[si]._cloudId) activeStudents['cloud:' + students[si]._cloudId] = students[si]
+    }
+  }
+  _schedulesBackfilling = true
+  var done = function () {
+    pending--
+    if (pending <= 0) _schedulesBackfilling = false
+  }
+  for (var i = 0; i < (schedules || []).length; i++) {
+    if (sent >= BACKFILL_BATCH_SIZE) break
+    var item = schedules[i]
+    if (!item || (item._cloudId && !item._dirty)) continue
+    var hasActiveStudent = item.studentUid ? activeStudents['uid:' + item.studentUid] : (item.studentCloudId ? activeStudents['cloud:' + item.studentCloudId] : activeStudents[item.studentId])
+    if (hasActiveStudent && !item.studentUid && !item.studentCloudId && item.studentName && hasActiveStudent.name && item.studentName !== hasActiveStudent.name) hasActiveStudent = null
+    if (!item.deleted && item.status !== schedule.STATUS.DELETED && !hasActiveStudent) continue
+    sent++
+    pending++
+    cloud.ensureScheduleLocalKey(item)
+    ;(function (scheduleItem) {
+      cloud.syncSchedule(scheduleItem, function (err) {
+        if (err) cloud.queueOp('saveSchedule', scheduleItem)
+        done()
+      })
+    })(item)
+  }
+  if (!sent) _schedulesBackfilling = false
+}
+
+function markCloudIdentityDirty(app) {
+  if (!app || !app.globalData || app.globalData._cloudIdentityBackfilled) return
+  app.globalData._cloudIdentityBackfilled = true
+  var students = app.globalData.students || []
+  for (var i = 0; i < students.length; i++) {
+    if (students[i]) students[i]._dirty = true
+  }
+  var schedules = app.globalData.schedules || []
+  for (var j = 0; j < schedules.length; j++) {
+    if (schedules[j]) schedules[j]._dirty = true
+  }
+}
+
+function nextSyncCursor(current, docs) {
+  var max = current || 0
+  docs = docs || []
+  for (var i = 0; i < docs.length; i++) {
+    var d = docs[i] || {}
+    var ts = parseInt(d.updatedAt || d.lastModified || d.completedAt || d.createdAt || 0)
+    if (!isNaN(ts) && ts > max) max = ts
+  }
+  return Math.max(max, Date.now() - 5000)
+}
+
+function applyCloudStudents(app, cloudList) {
+  if (!app || !app.globalData) return false
+  cloudList = cloudList || []
+  if (!cloudList.length) {
+    repairScheduleStudentLinks(app.globalData.schedules || [], app.globalData.students || [])
+    return false
+  }
+  var local = app.globalData.students || []
+  var merged = {}
+  for (var i = 0; i < local.length; i++) {
+    if (local[i]) merged[local[i].id] = local[i]
+  }
+  var changed = false
+  for (var j = 0; j < cloudList.length; j++) {
+    var cs = cloudList[j]
+    if (!cs) continue
+    if (!cs._cloudId && cs._id) cs._cloudId = cs._id
+    if (!cs.studentUid) {
+      ensureStudentUid(cs)
+      cs._dirty = true
+    }
+    var found = false
+    for (var k = 0; k < local.length; k++) {
+      if (sameStudentRecord(local[k], cs)) {
+        var beforeTs = local[k].updatedAt || local[k].lastModified || 0
+        var beforeCloudId = local[k]._cloudId || ''
+        local[k] = mergeCloudToLocal(local[k], cs)
+        local[k]._dirty = false
+        merged[local[k].id] = local[k]
+        found = true
+        if ((local[k].updatedAt || local[k].lastModified || 0) > beforeTs || (!beforeCloudId && local[k]._cloudId)) changed = true
+        break
+      }
+    }
+    if (!found) {
+      var newId = pickCloudStudentId(cs, merged, app.globalData.nextId)
+      if (newId >= app.globalData.nextId) app.globalData.nextId = newId + 1
+      cs.id = newId
+      cs._dirty = !!cs._dirty
+      merged[newId] = cs
+      changed = true
+    }
+  }
+  var list = []
+  for (var key in merged) { if (merged.hasOwnProperty(key)) list.push(merged[key]) }
+  app.globalData.students = normalizeStudents(list)
+  if (repairScheduleStudentLinks(app.globalData.schedules || [], app.globalData.students || [])) changed = true
+  return changed
+}
+
+function applyCloudSchedules(app, cloudSchedules) {
+  if (!app || !app.globalData) return false
+  cloudSchedules = cloudSchedules || []
+  var localSchedules = app.globalData.schedules || []
+  var changed = false
+  if (cloudSchedules.length) {
+    for (var ci = 0; ci < cloudSchedules.length; ci++) {
+      if (cloudSchedules[ci] && !cloudSchedules[ci]._cloudId && cloudSchedules[ci]._id) cloudSchedules[ci]._cloudId = cloudSchedules[ci]._id
+      if (cloudSchedules[ci] && !cloudSchedules[ci].scheduleUid) {
+        ensureScheduleUid(cloudSchedules[ci])
+        cloudSchedules[ci]._dirty = true
+      }
+    }
+    if (!localSchedules.length) {
+      app.globalData.schedules = schedule.cleanOld(normalizeSchedules(cloudSchedules), util.today())
+      changed = true
+    } else {
+      if (mergeScheduleCloudIds(localSchedules, cloudSchedules)) changed = true
+      if (mergeMissingCloudSchedules(localSchedules, cloudSchedules)) changed = true
+      if (changed) app.globalData.schedules = schedule.cleanOld(normalizeSchedules(localSchedules), util.today())
+    }
+  }
+  if (repairScheduleStudentLinks(app.globalData.schedules || [], app.globalData.students || [])) changed = true
+  updateNextScheduleId(app)
+  return changed
+}
+
+function sameStudentRecord(local, cloudStudent) {
+  if (!local || !cloudStudent) return false
+  if (cloudStudent._cloudId && local._cloudId === cloudStudent._cloudId) return true
+  if (cloudStudent._id && local._cloudId === cloudStudent._id) return true
+  if (local.studentUid && cloudStudent.studentUid && local.studentUid === cloudStudent.studentUid) return true
+  var localLegacy = legacyStudentKey(local)
+  var cloudLegacy = legacyStudentKey(cloudStudent)
+  if (localLegacy && cloudLegacy && localLegacy === cloudLegacy && (!local.studentUid || !cloudStudent.studentUid || isCloudDerivedStudentUid(local.studentUid) || isCloudDerivedStudentUid(cloudStudent.studentUid))) return true
+  return false
 }
 
 function mergeScheduleCloudIds(localSchedules, cloudSchedules) {
@@ -294,16 +549,59 @@ function mergeScheduleCloudIds(localSchedules, cloudSchedules) {
     var cs = cloudSchedules[i]
     for (var j = 0; j < (localSchedules || []).length; j++) {
       var local = localSchedules[j]
-      if (!local || local._cloudId) continue
-      if ((local.localKey && cs.localKey && local.localKey === cs.localKey) || (local.id == cs.id && local.studentId == cs.studentId && local.createdAt === cs.createdAt)) {
-        local._cloudId = cs._cloudId
-        if (!local.localKey && cs.localKey) local.localKey = cs.localKey
-        changed = true
+      if (!local) continue
+      if (sameScheduleRecord(local, cs)) {
+        if (mergeCloudScheduleToLocal(local, cs)) changed = true
         break
       }
     }
   }
   return changed
+}
+
+function sameScheduleRecord(local, cloudSchedule) {
+  if (!local || !cloudSchedule) return false
+  if (cloudSchedule._cloudId && local._cloudId === cloudSchedule._cloudId) return true
+  if (local.localKey && cloudSchedule.localKey && local.localKey === cloudSchedule.localKey) return true
+  var localKey = scheduleIdentity(local)
+  var cloudKey = scheduleIdentity(cloudSchedule)
+  if (localKey && cloudKey && localKey === cloudKey) return true
+  return false
+}
+
+function mergeCloudScheduleToLocal(local, cs) {
+  if (!local || !cs) return
+  var before = JSON.stringify({
+    cloudId: local._cloudId || '',
+    updatedAt: local.updatedAt || 0,
+    status: local.status || '',
+    date: local.date || '',
+    startTime: local.startTime || '',
+    plannedAmount: local.plannedAmount,
+    actualAmount: local.actualAmount,
+    deleted: !!local.deleted
+  })
+  var shouldOverwrite = scheduleTimeScore(cs) >= scheduleTimeScore(local)
+  if (shouldOverwrite) {
+    var keys = ['scheduleUid', 'id', 'studentId', 'studentUid', 'studentCloudId', 'studentName', 'avatarSrc', 'date', 'startTime', 'plannedAmount', 'actualAmount', 'note', 'completeNote', 'type', 'status', 'deleted', 'deletedAt', 'earlyCompleted', 'originalDate', 'originalStartTime', 'completedAt', 'linkedHistoryTs', 'beforeRemaining', 'beforeLastClassDate', 'createdAt', 'updatedAt']
+    for (var i = 0; i < keys.length; i++) {
+      if (hasCloudField(cs, keys[i])) local[keys[i]] = cs[keys[i]]
+    }
+  }
+  local._cloudId = cs._cloudId || cs._id || local._cloudId
+  if (!local.localKey && cs.localKey) local.localKey = cs.localKey
+  local._dirty = false
+  var after = JSON.stringify({
+    cloudId: local._cloudId || '',
+    updatedAt: local.updatedAt || 0,
+    status: local.status || '',
+    date: local.date || '',
+    startTime: local.startTime || '',
+    plannedAmount: local.plannedAmount,
+    actualAmount: local.actualAmount,
+    deleted: !!local.deleted
+  })
+  return before !== after
 }
 
 function mergeMissingCloudSchedules(localSchedules, cloudSchedules) {
@@ -319,14 +617,119 @@ function mergeMissingCloudSchedules(localSchedules, cloudSchedules) {
 }
 
 function hasLocalSchedule(localSchedules, cloudSchedule) {
+  var targetKey = scheduleIdentity(cloudSchedule)
   for (var i = 0; i < (localSchedules || []).length; i++) {
     var local = localSchedules[i]
     if (!local) continue
     if (cloudSchedule._cloudId && local._cloudId === cloudSchedule._cloudId) return true
+    if (cloudSchedule.scheduleUid && local.scheduleUid === cloudSchedule.scheduleUid) return true
     if (cloudSchedule.localKey && local.localKey === cloudSchedule.localKey) return true
-    if (local.id == cloudSchedule.id && local.createdAt === cloudSchedule.createdAt && local.studentName === cloudSchedule.studentName) return true
+    if (targetKey && scheduleIdentity(local) === targetKey) return true
   }
   return false
+}
+
+function normalizeSchedules(schedules) {
+  var map = {}, order = [], result = []
+  schedules = schedules || []
+  for (var i = 0; i < schedules.length; i++) {
+    var item = schedules[i]
+    if (!item) continue
+    ensureScheduleUid(item)
+    var key = scheduleIdentity(item) || ('idx:' + i)
+    if (!map[key]) order.push(key)
+    map[key] = mergeScheduleRecord(map[key], item)
+  }
+  for (var j = 0; j < order.length; j++) result.push(map[order[j]])
+  return normalizeSchedulesBySlot(result)
+}
+
+function scheduleIdentity(s) {
+  if (!s) return ''
+  if (s.scheduleUid && !isCloudDerivedScheduleUid(s.scheduleUid)) return 'scheduleUid:' + s.scheduleUid
+  if (s.localKey) return 'localKey:' + s.localKey
+  var id = s.id !== undefined && s.id !== null ? s.id : ''
+  var studentId = s.studentId !== undefined && s.studentId !== null ? s.studentId : ''
+  if (id !== '' && studentId !== '' && s.createdAt) return 'created:' + id + '|' + studentId + '|' + s.createdAt
+  var studentKey = s.studentUid || s.studentCloudId || studentId || ''
+  var slot = [studentKey, s.date || '', s.startTime || '', s.type || '', s.linkedHistoryTs || '', s.plannedAmount || ''].join('|')
+  if (slot.replace(/\|/g, '')) return 'slot:' + slot
+  if (s.scheduleUid) return 'scheduleUid:' + s.scheduleUid
+  if (s._cloudId || s._id) return 'cloud:' + (s._cloudId || s._id)
+  return ''
+}
+
+function scheduleSlotIdentity(s) {
+  if (!s) return ''
+  var studentKey = s.studentUid || s.studentCloudId || s.studentId || ''
+  var slot = [studentKey, s.date || '', s.startTime || '', s.type || '', s.linkedHistoryTs || '', s.plannedAmount || ''].join('|')
+  return slot.replace(/\|/g, '') ? 'slot:' + slot : ''
+}
+
+function normalizeSchedulesBySlot(schedules) {
+  var map = {}, order = [], result = []
+  schedules = schedules || []
+  for (var i = 0; i < schedules.length; i++) {
+    var item = schedules[i]
+    if (!item) continue
+    var key = scheduleIdentity(item) || scheduleSlotIdentity(item) || ('idx:' + i)
+    if (!map[key]) order.push(key)
+    map[key] = mergeScheduleRecord(map[key], item)
+  }
+  for (var j = 0; j < order.length; j++) result.push(map[order[j]])
+  return result
+}
+
+function mergeScheduleRecord(a, b) {
+  if (!a) return b
+  if (!b) return a
+  var best = newerSchedule(a, b)
+  var other = best === a ? b : a
+  copyScheduleMissing(best, other)
+  return best
+}
+
+function copyScheduleMissing(target, source) {
+  if (!target || !source) return
+  var keys = ['_cloudId', 'localKey', 'scheduleUid', 'studentUid', 'studentCloudId', 'studentName', 'avatarSrc', 'beforeRemaining', 'beforeLastClassDate', 'originalDate', 'originalStartTime', 'linkedHistoryTs']
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i]
+    if ((target[k] === undefined || target[k] === null || target[k] === '') && source[k] !== undefined && source[k] !== null && source[k] !== '') {
+      target[k] = source[k]
+    }
+  }
+}
+
+function newerSchedule(a, b) {
+  if (!a) return b
+  if (!b) return a
+  var at = scheduleTimeScore(a)
+  var bt = scheduleTimeScore(b)
+  if (bt > at) return b
+  if (bt < at) return a
+  var ar = scheduleRank(a)
+  var br = scheduleRank(b)
+  if (br > ar) return b
+  return a
+}
+
+function scheduleTimeScore(s) {
+  if (!s) return 0
+  var vals = [s.updatedAt, s.completedAt, s.createdAt]
+  var max = 0
+  for (var i = 0; i < vals.length; i++) {
+    var n = parseInt(vals[i])
+    if (!isNaN(n) && n > max) max = n
+  }
+  return max
+}
+
+function scheduleRank(s) {
+  if (!s) return 0
+  if (s.deleted || s.status === schedule.STATUS.DELETED) return 4
+  if (s.status === schedule.STATUS.COMPLETED) return 3
+  if (s.status === schedule.STATUS.CANCELED) return 2
+  return 1
 }
 
 function updateNextScheduleId(app) {
@@ -340,24 +743,144 @@ function updateNextScheduleId(app) {
 }
 
 function mergeCloudToLocal(local, cs) {
-  local.name = hasCloudField(cs, 'name') ? cs.name : local.name
-  local.avatarSrc = hasCloudField(cs, 'avatarSrc') ? cs.avatarSrc : local.avatarSrc
-  local.totalLessons = hasCloudField(cs, 'totalLessons') ? cs.totalLessons : local.totalLessons
-  local.remainingLessons = hasCloudField(cs, 'remainingLessons') ? cs.remainingLessons : local.remainingLessons
-  local.expiryDate = hasCloudField(cs, 'expiryDate') ? cs.expiryDate : local.expiryDate
-  local.note = hasCloudField(cs, 'note') ? cs.note : local.note
-  local.lastClassDate = hasCloudField(cs, 'lastClassDate') ? cs.lastClassDate : local.lastClassDate
-  local.lastModified = hasCloudField(cs, 'lastModified') ? cs.lastModified : (local.lastModified || 0)
-  local.history = hasCloudField(cs, 'history') ? cs.history : (local.history || [])
-  local.deleted = hasCloudField(cs, 'deleted') ? cs.deleted : (local.deleted || false)
-  local.deletedAt = hasCloudField(cs, 'deletedAt') ? cs.deletedAt : (local.deletedAt || '')
+  ensureStudentUid(local)
+  ensureStudentUid(cs)
+  var cloudNewer = (cs.updatedAt || cs.lastModified || 0) >= (local.updatedAt || local.lastModified || 0)
+  var mergedHistory = mergeHistory(local.history || [], cs.history || [])
+  if (cloudNewer) {
+    local.name = hasCloudField(cs, 'name') ? cs.name : local.name
+    local.avatarSrc = hasCloudField(cs, 'avatarSrc') ? cs.avatarSrc : local.avatarSrc
+    local.expiryDate = hasCloudField(cs, 'expiryDate') ? cs.expiryDate : local.expiryDate
+    local.note = hasCloudField(cs, 'note') ? cs.note : local.note
+    local.lastClassDate = hasCloudField(cs, 'lastClassDate') ? cs.lastClassDate : local.lastClassDate
+    local.deleted = hasCloudField(cs, 'deleted') ? cs.deleted : (local.deleted || false)
+    local.deletedAt = hasCloudField(cs, 'deletedAt') ? cs.deletedAt : (local.deletedAt || '')
+  }
+  local.history = mergedHistory
+  if (cloudNewer) {
+    local.totalLessons = hasCloudField(cs, 'totalLessons') ? cs.totalLessons : local.totalLessons
+    local.remainingLessons = hasCloudField(cs, 'remainingLessons') ? cs.remainingLessons : local.remainingLessons
+  }
+  local.lastModified = Math.max(local.lastModified || 0, cs.lastModified || 0)
+  local.updatedAt = Math.max(local.updatedAt || local.lastModified || 0, cs.updatedAt || cs.lastModified || 0)
   local.createdAt = hasCloudField(cs, 'createdAt') ? cs.createdAt : local.createdAt
-  local._cloudId = cs._cloudId
+  local.studentUid = cs.studentUid || local.studentUid
+  local._cloudId = cs._cloudId || cs._id || local._cloudId
+  local._dirty = false
   return local
 }
 
 function hasCloudField(obj, key) {
   return obj && Object.prototype.hasOwnProperty.call(obj, key) && obj[key] !== undefined && obj[key] !== null
+}
+
+function ensureStudentUid(student) {
+  if (!student) return ''
+  if (!student.studentUid) {
+    var legacy = legacyStudentKey(student)
+    if (legacy) student.studentUid = 'stu_legacy_' + legacy.replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 80)
+    else if (student._cloudId || student._id) student.studentUid = 'stu_cloud_' + (student._cloudId || student._id)
+    else student.studentUid = makeUid('stu')
+  }
+  return student.studentUid
+}
+
+function ensureScheduleUid(item) {
+  if (!item) return ''
+  if (!item.scheduleUid) {
+    if (item.localKey) item.scheduleUid = 'sch_' + item.localKey
+    else if (item._cloudId || item._id) item.scheduleUid = 'sch_cloud_' + (item._cloudId || item._id)
+    else item.scheduleUid = makeUid('sch')
+  }
+  return item.scheduleUid
+}
+
+function ensureHistoryUid(rec) {
+  if (!rec) return ''
+  if (!rec.recordUid) {
+    var base = historyIdentity(rec)
+    rec.recordUid = base ? ('rec_' + encodeURIComponent(base).replace(/%/g, '').slice(0, 80)) : makeUid('rec')
+  }
+  return rec.recordUid
+}
+
+function normalizeStudentIdentity(student) {
+  if (!student) return ''
+  var legacy = legacyStudentKey(student)
+  if (student.studentUid && !isCloudDerivedStudentUid(student.studentUid)) return 'uid:' + student.studentUid
+  if (legacy) return 'legacy:' + legacy
+  if (student.studentUid) return 'uid:' + student.studentUid
+  if (student._cloudId || student._id) return 'cloud:' + (student._cloudId || student._id)
+  if (student.id !== undefined && student.id !== null && student.id !== '') return 'id:' + student.id
+  return ''
+}
+
+function mergeStudentRecord(target, source) {
+  if (!target) return source
+  if (!source) return target
+  var dirty = !!(target._dirty || source._dirty)
+  var merged = mergeCloudToLocal(target, source)
+  merged._dirty = dirty
+  return merged
+}
+
+function normalizeStudents(students) {
+  students = students || []
+  var map = {}, order = [], list = []
+  for (var i = 0; i < students.length; i++) {
+    if (students[i]) {
+      ensureStudentUid(students[i])
+      students[i].history = normalizeHistory(students[i].history || [])
+      students[i].updatedAt = students[i].updatedAt || students[i].lastModified || 0
+      var key = normalizeStudentIdentity(students[i]) || ('idx:' + i)
+      if (!map[key]) order.push(key)
+      map[key] = mergeStudentRecord(map[key], students[i])
+    }
+  }
+  for (var j = 0; j < order.length; j++) list.push(map[order[j]])
+  return list
+}
+
+function mergeHistory(a, b) {
+  return normalizeHistory((a || []).concat(b || []))
+}
+
+function normalizeHistory(history) {
+  var map = {}, order = [], list = []
+  history = history || []
+  for (var i = 0; i < history.length; i++) {
+    var rec = history[i]
+    if (!rec) continue
+    ensureHistoryUid(rec)
+    var key = historyIdentity(rec)
+    if (!key) {
+      list.push(rec)
+      continue
+    }
+    if (!map[key]) order.push(key)
+    map[key] = newerHistory(map[key], rec)
+  }
+  for (var j = 0; j < order.length; j++) list.push(map[order[j]])
+  list.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0) })
+  return list
+}
+
+function historyIdentity(rec) {
+  if (!rec) return ''
+  if (rec.recordUid) return 'recordUid:' + rec.recordUid
+  if (rec.opId) return 'opId:' + rec.opId
+  var type = rec.type || ''
+  if (rec.scheduleId !== undefined && rec.scheduleId !== null && rec.scheduleId !== '') {
+    return [type, 'schedule', rec.scheduleId, rec.scheduleDate || '', rec.originalScheduleDate || ''].join('|')
+  }
+  if (rec.ts) return [type, 'ts', rec.ts, rec.amount || ''].join('|')
+  return [type, rec.time || '', rec.amount || ''].join('|')
+}
+
+function newerHistory(a, b) {
+  if (!a) return b
+  if (!b) return a
+  return (b.ts || 0) >= (a.ts || 0) ? b : a
 }
 
 function pickCloudStudentId(student, usedMap, nextId) {
@@ -376,32 +899,32 @@ function repairScheduleStudentLinks(schedules, students) {
   var changed = false
   var byId = {}
   var byCloud = {}
-  var byProfile = {}
+  var byUid = {}
   for (var i = 0; i < (students || []).length; i++) {
     var st = students[i]
     if (!st || st.deleted) continue
+    ensureStudentUid(st)
     byId[st.id] = st
     if (st._cloudId) byCloud[st._cloudId] = st
-    var profileKey = (st.name || '') + '|' + (st.avatarSrc || '')
-    byProfile[profileKey] = byProfile[profileKey] ? false : st
+    if (st.studentUid) byUid[st.studentUid] = st
   }
   for (var j = 0; j < (schedules || []).length; j++) {
     var sc = schedules[j]
     if (!sc || sc.deleted) continue
-    if (byId[sc.studentId]) {
-      if (!sc.studentCloudId && byId[sc.studentId]._cloudId) {
-        sc.studentCloudId = byId[sc.studentId]._cloudId
-        changed = true
-      }
-      continue
-    }
     var matched = null
-    if (sc.studentCloudId && byCloud[sc.studentCloudId]) matched = byCloud[sc.studentCloudId]
-    if (!matched) matched = byProfile[(sc.studentName || '') + '|' + (sc.avatarSrc || '')]
+    if (sc.studentUid && byUid[sc.studentUid]) matched = byUid[sc.studentUid]
+    else if (sc.studentUid) continue
+    else if (sc.studentCloudId && byCloud[sc.studentCloudId]) matched = byCloud[sc.studentCloudId]
+    else if (sc.studentCloudId) continue
+    else if (byId[sc.studentId]) {
+      if (sc.studentName && byId[sc.studentId].name && sc.studentName !== byId[sc.studentId].name) continue
+      matched = byId[sc.studentId]
+    }
     if (!matched) continue
     sc.studentId = matched.id
     sc.studentName = matched.name || sc.studentName || ''
     sc.avatarSrc = matched.avatarSrc || sc.avatarSrc || ''
+    sc.studentUid = matched.studentUid || sc.studentUid || ''
     sc.studentCloudId = matched._cloudId || sc.studentCloudId || ''
     sc.updatedAt = Date.now()
     changed = true

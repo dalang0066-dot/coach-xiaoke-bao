@@ -101,6 +101,16 @@ function actualAmount(s) {
   return n > 0 ? n : plannedAmount(s)
 }
 
+function lessonDiff(actual, planned) {
+  actual = parseAmount(actual, 0)
+  planned = parseAmount(planned, 0)
+  if (actual <= 0 || planned <= 0) return { extra: 0, less: 0 }
+  return {
+    extra: Math.max(0, Math.round((actual - planned) * 10) / 10),
+    less: Math.max(0, Math.round((planned - actual) * 10) / 10)
+  }
+}
+
 function startTs(s) {
   return toDateTime(s.date, s.startTime || '00:00').getTime()
 }
@@ -259,20 +269,31 @@ function buildAllStudentMeta(schedules, students, today, nowTs) {
   return map
 }
 
-function summarizeBadge(schedules, today, nowTs) {
+function summarizeBadge(schedules, students, today, nowTs) {
+  if (typeof students === 'string') {
+    nowTs = today
+    today = students
+    students = null
+  }
+  var refs = students ? studentRefs(students) : null
   var red = 0
-  var green = 0
   for (var i = 0; i < (schedules || []).length; i++) {
     var s = schedules[i]
     if (isHidden(s)) continue
+    if (refs && !hasActiveStudent(s, refs)) continue
     var st = stateOf(s, nowTs)
     if (st === STATE.OVERDUE) red += plannedAmount(s)
-    else if (s.date === today && (st === STATE.UPCOMING || st === STATE.IN_PROGRESS)) green += plannedAmount(s)
   }
-  return { red: red, green: green, count: red || green, tone: red ? 'red' : (green ? 'green' : '') }
+  return { red: red, green: 0, count: red, tone: red ? 'red' : '' }
 }
 
-function summarizeDay(schedules, date, nowTs) {
+function summarizeDay(schedules, students, date, nowTs) {
+  if (typeof students === 'string') {
+    nowTs = date
+    date = students
+    students = null
+  }
+  var refs = students ? studentRefs(students) : null
   var red = 0
   var green = 0
   var gray = 0
@@ -280,6 +301,7 @@ function summarizeDay(schedules, date, nowTs) {
   for (var i = 0; i < (schedules || []).length; i++) {
     var s = schedules[i]
     if (isHidden(s) || s.date !== date) continue
+    if (refs && !hasActiveStudent(s, refs)) continue
     var st = stateOf(s, nowTs)
     if (st === STATE.COMPLETED) {
       if (date <= today) gray += actualAmount(s)
@@ -289,16 +311,39 @@ function summarizeDay(schedules, date, nowTs) {
       green += plannedAmount(s)
     }
   }
-  if (date === today && (red || green)) gray = 0
+  if (green > 0) gray = 0
   return { red: red, green: green, gray: gray }
 }
 
 function studentMap(students) {
   var map = {}
   for (var i = 0; i < (students || []).length; i++) {
+    if (!students[i] || students[i].deleted) continue
     map[students[i].id] = students[i]
   }
   return map
+}
+
+function studentRefs(students) {
+  var refs = { byId: {}, byUid: {}, byCloud: {} }
+  for (var i = 0; i < (students || []).length; i++) {
+    var st = students[i]
+    if (!st || st.deleted) continue
+    refs.byId[st.id] = st
+    if (st.studentUid) refs.byUid[st.studentUid] = st
+    if (st._cloudId) refs.byCloud[st._cloudId] = st
+  }
+  return refs
+}
+
+function hasActiveStudent(s, refs) {
+  if (!refs || !s) return true
+  if (s.studentUid) return !!refs.byUid[s.studentUid]
+  if (s.studentCloudId) return !!refs.byCloud[s.studentCloudId]
+  var st = refs.byId[s.studentId]
+  if (!st) return false
+  if (s.studentName && st.name && s.studentName !== st.name) return false
+  return true
 }
 
 function decorate(s, studentsById, nowTs) {
@@ -310,6 +355,7 @@ function decorate(s, studentsById, nowTs) {
   var displayAmount = completed ? actual : planned
   var earlyCompleted = completed && !!s.earlyCompleted
   var overAmount = (completed && !earlyCompleted) ? Math.max(0, Math.round((actual - planned) * 10) / 10) : 0
+  var underAmount = (completed && !earlyCompleted) ? Math.max(0, Math.round((planned - actual) * 10) / 10) : 0
   return {
     id: s.id,
     studentId: s.studentId,
@@ -331,6 +377,8 @@ function decorate(s, studentsById, nowTs) {
     displayAmountText: formatAmount(displayAmount),
     overAmount: overAmount,
     overAmountText: formatAmount(overAmount),
+    underAmount: underAmount,
+    underAmountText: formatAmount(underAmount),
     earlyCompleted: earlyCompleted,
     note: s.note || '',
     completeNote: s.completeNote || '',
@@ -349,10 +397,12 @@ function decorate(s, studentsById, nowTs) {
 
 function getDaySchedules(schedules, students, date, nowTs) {
   var map = studentMap(students)
+  var refs = studentRefs(students)
   var arr = []
   for (var i = 0; i < (schedules || []).length; i++) {
     var s = schedules[i]
     if (isHidden(s) || s.date !== date) continue
+    if (!hasActiveStudent(s, refs)) continue
     arr.push(decorate(s, map, nowTs))
   }
   arr.sort(function (a, b) {
@@ -367,15 +417,43 @@ function getDaySchedules(schedules, students, date, nowTs) {
 function getRecentSchedules(schedules, students, today, nowTs, days) {
   var end = addDays(today, days || 7)
   var map = studentMap(students)
+  var refs = studentRefs(students)
   var arr = []
   for (var i = 0; i < (schedules || []).length; i++) {
     var s = schedules[i]
     if (isHidden(s) || !isActive(s, nowTs)) continue
+    if (!hasActiveStudent(s, refs)) continue
     if (s.date > end && stateOf(s, nowTs) !== STATE.OVERDUE) continue
     arr.push(decorate(s, map, nowTs))
   }
   arr.sort(function (a, b) {
     if (a.overdue !== b.overdue) return a.overdue ? -1 : 1
+    return a.startTs - b.startTs
+  })
+  return arr
+}
+
+function activeStateRank(st) {
+  if (st === STATE.OVERDUE) return 0
+  if (st === STATE.IN_PROGRESS) return 1
+  if (st === STATE.UPCOMING) return 2
+  return 9
+}
+
+function getStudentActiveSchedules(schedules, students, studentId, nowTs) {
+  var map = studentMap(students)
+  var arr = []
+  for (var i = 0; i < (schedules || []).length; i++) {
+    var s = schedules[i]
+    if (isHidden(s) || s.studentId != studentId || s.status !== STATUS.SCHEDULED) continue
+    var st = stateOf(s, nowTs)
+    if (activeStateRank(st) > 2) continue
+    arr.push(decorate(s, map, nowTs))
+  }
+  arr.sort(function (a, b) {
+    var ar = activeStateRank(a.state)
+    var br = activeStateRank(b.state)
+    if (ar !== br) return ar - br
     return a.startTs - b.startTs
   })
   return arr
@@ -439,6 +517,7 @@ module.exports = {
   cleanHalfAmountInput: cleanHalfAmountInput,
   plannedAmount: plannedAmount,
   actualAmount: actualAmount,
+  lessonDiff: lessonDiff,
   startTs: startTs,
   endTs: endTs,
   graceTs: graceTs,
@@ -461,6 +540,7 @@ module.exports = {
   summarizeDay: summarizeDay,
   getDaySchedules: getDaySchedules,
   getRecentSchedules: getRecentSchedules,
+  getStudentActiveSchedules: getStudentActiveSchedules,
   findById: findById,
   cleanOld: cleanOld,
   nextRefreshTs: nextRefreshTs

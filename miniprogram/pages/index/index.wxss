@@ -47,12 +47,17 @@
 .card-box{ position:relative; border-radius:20rpx; margin-bottom:18rpx; overflow:visible; background:transparent; box-shadow:0 2rpx 6rpx rgba(15,35,42,.04),0 14rpx 34rpx rgba(15,35,42,.09) }
 .card-box:active{ box-shadow:0 1rpx 3rpx rgba(15,35,42,.04),0 8rpx 22rpx rgba(15,35,42,.07) }
 .swipe-frame{ position:relative; border-radius:20rpx; overflow:hidden; background:#f6fbfd; min-height:184rpx }
-.swipe-actions{ position:absolute; top:1rpx; right:1rpx; bottom:1rpx; width:417rpx; display:flex; z-index:1; border-radius:20rpx; overflow:hidden; background:linear-gradient(90deg,#247fc6 0%,#247fc6 33.333%,#d58512 33.333%,#d58512 66.666%,#b62822 66.666%,#b62822 100%); box-shadow:inset 0 -1rpx 0 rgba(10,25,30,.06) }
-.act-btn{ flex:1; width:0; min-width:0; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; font-size:25rpx; font-weight:800; gap:4rpx; box-sizing:border-box; border-left:1rpx solid rgba(255,255,255,.2) }
+.swipe-actions{ position:absolute; top:1rpx; right:1rpx; bottom:1rpx; width:552rpx; display:flex; z-index:1; border-radius:20rpx; overflow:hidden; background:#f6fbfd; box-shadow:inset 0 -1rpx 0 rgba(10,25,30,.06) }
+.act-btn{ flex:1; width:0; min-width:0; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; font-size:23rpx; font-weight:800; gap:4rpx; box-sizing:border-box; border-left:1rpx solid rgba(255,255,255,.18) }
 .act-btn:first-child{ border-left:none }
 .act-btn:active{ opacity:.88 }
 .act-btn text{ margin-top:0; text-shadow:0 1rpx 2rpx rgba(0,0,0,.12) }
-.act-ico{ width:56rpx; height:56rpx; opacity:.96 }
+.act-label{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1rpx; line-height:1.08 }
+.act-label text{ display:block; font-size:23rpx; line-height:25rpx; font-weight:900 }
+.act-schedule .act-label{ transform:translateY(10rpx) }
+.act-ico{ width:48rpx; height:48rpx; opacity:.96 }
+.act-btn image.act-ico{ width:62rpx; height:62rpx }
+.act-edit image.act-ico{ width:68rpx; height:68rpx }
 .banner-ico-img{ width:48rpx; height:48rpx }
 .mc-check-img{ width:150rpx; height:150rpx }
 .toast-gr-img{ width:52rpx; height:52rpx }
@@ -60,9 +65,11 @@
 .me-mark-img{ display:block; width:150rpx; height:150rpx }
 .mu-crown-img{ display:block; width:150rpx; height:150rpx }
 .hrec-ico-img{ width:90rpx; height:90rpx }
-.act-edit{ background:linear-gradient(180deg,#4aa4e8 0%,#247fc6 100%) }
-.act-hist{ background:linear-gradient(180deg,#f5b444 0%,#d58512 100%) }
-.act-del{ background:linear-gradient(180deg,#d94b43 0%,#b62822 100%) }
+.act-edit{ background:linear-gradient(180deg,#3f9fe2 0%,#247fc6 100%) }
+.act-schedule{ background:linear-gradient(180deg,#16a765 0%,#008946 100%) }
+.act-hist{ background:linear-gradient(180deg,#efad35 0%,#d58512 100%) }
+.act-del{ background:linear-gradient(180deg,#d44740 0%,#b62822 100%) }
+.act-schedule-ico{ width:44rpx; height:44rpx; background-color:#fff; -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='18%209.5%2064%2067'%3E%3Cpath%20d='m71%2016.8h-4.5v-3.5c0-1.5-1.2-2.8-2.6-2.8s-3%201.2-3%202.7v3.5h-21.7v-3.5c0-1.5-1.2-2.7-2.7-2.7s-2.7%201.2-2.7%202.7v3.5h-4.9c-4.9%200.1-9.9%204.3-9.9%209.7v39.5c0%204.9%204.1%209.7%209.7%209.7h42c5.3%200%2010.3-4.2%2010.3-9.7v-39.5c0-4.9-4.4-9.6-10-9.6zm4.6%2048.4c0%202.7-1.7%204.7-4.6%204.7h-41.9c-2.3%200-4.5-2-4.5-4.7v-24.9h50.4l0.6%2024.9zm0-30.8h-51v-7.5c0-2%201.8-4.4%204.3-4.4h4.5v2.8c0%201.5%201.1%202.5%202.6%202.5s2.7-1%202.7-2.5v-2.8h21.7v2.8c0%201.4%201.1%202.5%202.7%202.5%201.5%200%203.2-1%203.2-2.5v-2.8h4.1c2.2%200%205%201.5%205.1%204.4l0.1%207.5z'%20fill='black'/%3E%3C/svg%3E"); -webkit-mask-repeat:no-repeat; -webkit-mask-size:contain; -webkit-mask-position:center }
 
 .card-face{ position:relative; z-index:2; background:linear-gradient(180deg,#fff 0%,#fff 62%,#fbfdfe 100%); transition:transform .25s ease,opacity .25s ease; overflow:hidden; min-height:184rpx; border:1rpx solid rgba(178,194,201,.55); border-radius:20rpx; box-sizing:border-box; box-shadow:inset 0 1rpx 0 rgba(255,255,255,.95) }
 .card-face:active{ transform:translateY(2rpx) scale(.996); opacity:.98 }
@@ -175,6 +182,8 @@
 .mc-custom-on{ border:4rpx solid #008946; background:#e6f6ee; color:#008946; font-weight:700 }
 .mc-warn{ width:100%; margin-top:20rpx; padding:18rpx 20rpx; border-radius:18rpx; background:#fff0ee; box-sizing:border-box; text-align:left }
 .mc-warn text{ font-size:25rpx; color:#b4271d; line-height:1.45 }
+.mc-warn-less{ background:#fff6e8 }
+.mc-warn-less text{ color:#9a5a00 }
 .mc-btns{ display:flex; gap:22rpx; padding:42rpx }
 .mc-btn{ flex:1; height:88rpx; border-radius:88rpx; display:flex; align-items:center; justify-content:center; font-size:32rpx; font-weight:700 }
 .mc-btn:active{ transform:scale(.98); opacity:.8 }
@@ -209,6 +218,10 @@
 .fb-img-add:active{ background:rgba(0,0,0,.04) }
 .fb-add-h{ position:absolute; width:40rpx; height:4rpx; background:#9ca3af; border-radius:2rpx }
 .fb-add-v{ position:absolute; width:4rpx; height:40rpx; background:#9ca3af; border-radius:2rpx }
+.fb-preview-mask{ position:fixed; top:0; left:0; right:0; bottom:0; z-index:999; background:rgba(0,0,0,.92); display:flex; align-items:center; justify-content:center; padding:44rpx; box-sizing:border-box }
+.fb-preview-close{ position:absolute; top:96rpx; right:34rpx; width:72rpx; height:72rpx; border-radius:50%; background:rgba(255,255,255,.16); display:flex; align-items:center; justify-content:center; z-index:2 }
+.fb-preview-close text{ color:#fff; font-size:54rpx; line-height:54rpx; font-weight:300; transform:translateY(-3rpx) }
+.fb-preview-img{ width:100%; height:100% }
 .mf-av{ width:160rpx; height:160rpx; border-radius:50%; margin:16rpx auto 32rpx; display:flex; align-items:center; justify-content:center; position:relative; flex-shrink:0; overflow:hidden }
 .mf-av:active{ transform:scale(.95) }
 .mf-av-img{ width:100%; height:100%; border-radius:50% }
@@ -324,8 +337,9 @@
 .toast-gr{ display:flex; align-items:center }
 .toast-wt{ color:#f4fafd; font-size:30rpx; font-weight:500; white-space:nowrap }
 .toast-div{ width:2rpx; height:28rpx; background:#dde4e6; flex-shrink:0 }
+.toast-link-hit{ min-height:64rpx; padding:0 10rpx; margin:-18rpx -10rpx; display:flex; align-items:center; justify-content:center; flex-shrink:0 }
 .toast-link{ color:#6bfe9c; font-size:30rpx; font-weight:500; white-space:nowrap }
-.toast-link:active{ opacity:.7 }
+.toast-link-hit:active{ opacity:.7 }
 
 /* 绀艰姳鐗规晥 */
 .confetti-wrap{ position:fixed; top:0; left:0; right:0; bottom:0; z-index:210; pointer-events:none; overflow:hidden }
@@ -356,6 +370,7 @@
 .debug-title{ display:block; font-size:40rpx; font-weight:600; color:#161d1f; text-align:center; margin-bottom:32rpx }
 .debug-row{ margin-bottom:24rpx }
 .debug-label{ display:block; font-size:26rpx; color:#5c5f60; margin-bottom:12rpx }
+.debug-tip{ display:block; margin-top:12rpx; font-size:23rpx; line-height:32rpx; color:#829096 }
 .debug-btns{ display:flex; gap:12rpx; flex-wrap:wrap }
 .dbg-btn{ padding:12rpx 24rpx; border-radius:96rpx; border:2rpx solid #bbcbbb; font-size:26rpx; color:#3d4a3e; background:#fff }
 .dbg-on{ border-color:#008946; background:rgba(0,137,70,.1); color:#008946 }
@@ -364,7 +379,7 @@
 
 /* Multi overdue schedule modal */
 .modal-overdue{ z-index:190; align-items:center; justify-content:center; padding:32rpx 24rpx }
-.modal-schedule-del{ z-index:210 }
+.modal-schedule-del{ z-index:230 }
 .overdue-box{ max-width:690rpx; max-height:78vh; border-radius:38rpx; overflow:hidden; background:#f6fbfc; box-shadow:0 42rpx 96rpx rgba(10,30,36,.18) }
 .schedule-del-box{ max-width:632rpx; border-radius:42rpx; overflow:hidden; background:#fff; box-shadow:0 32rpx 78rpx rgba(0,0,0,.16) }
 .sd-body{ padding:54rpx 42rpx 0; text-align:center; display:flex; flex-direction:column; align-items:center }
@@ -376,6 +391,7 @@
 .sd-btn:active{ transform:scale(.98); opacity:.86 }
 .sd-cancel{ background:#f6f8f9; color:#5f696e; border:2rpx solid #dce4e7 }
 .sd-ok{ background:#d81920; color:#fff; box-shadow:0 10rpx 26rpx rgba(216,25,32,.16) }
+.sd-save-ok{ background:#008946; color:#fff; box-shadow:0 10rpx 26rpx rgba(0,137,70,.16) }
 .overdue-head{ display:flex; align-items:center; justify-content:center; padding:34rpx 34rpx 24rpx; background:#fff; border-bottom:2rpx solid #edf2f4; text-align:center }
 .overdue-title{ display:block; width:100%; font-size:40rpx; line-height:50rpx; color:#11191c; font-weight:900; text-align:center }
 .overdue-scroll{ height:54vh; background:#f6fbfc }
@@ -383,6 +399,19 @@
 .overdue-item{ position:relative; margin-bottom:18rpx; border-radius:22rpx; overflow:hidden; box-shadow:0 2rpx 6rpx rgba(15,35,42,.04),0 14rpx 34rpx rgba(15,35,42,.09) }
 .overdue-item::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:8rpx; background:#d81920; z-index:2 }
 .overdue-card{ position:relative; display:flex; align-items:center; gap:20rpx; min-height:124rpx; padding:14rpx 22rpx 8rpx 32rpx; border-radius:20rpx 20rpx 0 0; border-top:1rpx solid rgba(244,190,190,.68); border-right:1rpx solid rgba(244,190,190,.68); background:linear-gradient(180deg,#fff7f6 0%,#fff 72%,#fbfdfe 100%); box-sizing:border-box; overflow:hidden }
+.student-schedule-item::before{ background:#008946 }
+.student-schedule-red::before{ background:#d81920 }
+.student-schedule-green::before,
+.student-schedule-darkgreen::before{ background:#008946 }
+.student-schedule-item .overdue-card{ border-radius:20rpx 20rpx 0 0; border-top:1rpx solid rgba(195,219,210,.58); border-right:1rpx solid rgba(195,219,210,.58); background:linear-gradient(180deg,#fff 0%,#fff 70%,#fbfdfe 100%) }
+.student-schedule-item .course-red{ border-top-color:rgba(244,190,190,.68); border-right-color:rgba(244,190,190,.68); border-bottom-color:rgba(244,190,190,.48); background:linear-gradient(180deg,#fff7f6 0%,#fff 72%,#fbfdfe 100%) }
+.student-schedule-item .course-red .overdue-pill{ background:#d81920; box-shadow:0 8rpx 18rpx rgba(216,25,32,.14) }
+.student-schedule-item .course-green .overdue-pill,
+.student-schedule-item .course-darkgreen .overdue-pill{ background:#008946; box-shadow:0 8rpx 18rpx rgba(0,137,70,.14) }
+.student-schedule-item .course-red .overdue-mini{ background:#fde6e4; color:#d11b20 }
+.student-schedule-item .course-green .overdue-mini,
+.student-schedule-item .course-darkgreen .overdue-mini{ background:#e6f6ee; color:#008946 }
+.student-schedules-empty{ min-height:260rpx; display:flex; align-items:center; justify-content:center; color:#9aa6ac; font-size:28rpx; font-weight:700 }
 .overdue-av{ width:100rpx; height:100rpx; border-radius:50%; flex-shrink:0; background:#eef5f7 }
 .overdue-main{ flex:1; min-width:0 }
 .overdue-top{ display:flex; align-items:center; gap:14rpx; min-width:0 }
@@ -400,15 +429,70 @@
 .overdue-side{ display:flex; align-items:center; justify-content:flex-end; flex-shrink:0 }
 .overdue-pill{ min-width:118rpx; height:54rpx; padding:0 22rpx; border-radius:54rpx; display:flex; align-items:center; justify-content:center; flex-shrink:0; box-sizing:border-box; background:#d81920; color:#fff; box-shadow:0 8rpx 18rpx rgba(216,25,32,.14) }
 .overdue-pill text{ font-size:28rpx; line-height:1; font-weight:900; white-space:nowrap }
-.overdue-actions{ display:flex; gap:16rpx; padding:6rpx 20rpx 16rpx 32rpx; background:#fff; border-right:1rpx solid rgba(244,190,190,.48); border-bottom:1rpx solid rgba(244,190,190,.48); border-radius:0 0 20rpx 20rpx }
+.overdue-actions{ display:flex; gap:14rpx; padding:10rpx 20rpx 16rpx 32rpx; background:#fff; border-right:1rpx solid rgba(244,190,190,.48); border-bottom:1rpx solid rgba(244,190,190,.48); border-radius:0 0 20rpx 20rpx }
 .overdue-act{ flex:1; height:68rpx; border-radius:68rpx; display:flex; align-items:center; justify-content:center; box-sizing:border-box; font-size:28rpx; font-weight:900 }
 .overdue-act:active{ transform:scale(.98); opacity:.86 }
 .overdue-act-ok{ background:#008946; color:#fff; box-shadow:0 10rpx 24rpx rgba(0,137,70,.16) }
+.overdue-act-edit{ background:#f0faf5; color:#008946; border:2rpx solid rgba(0,137,70,.24) }
 .overdue-act-del{ background:#fff; color:#b4271d; border:2rpx solid rgba(180,39,29,.36) }
+.student-schedule-item .overdue-actions{ border-right-color:rgba(195,219,210,.5); border-bottom-color:rgba(195,219,210,.5) }
+.student-schedule-red .overdue-actions{ border-right-color:rgba(244,190,190,.48); border-bottom-color:rgba(244,190,190,.48) }
 .overdue-foot{ padding:16rpx 28rpx 28rpx; background:#f6fbfc; border-top:2rpx solid #edf2f4 }
 .overdue-cancel{ height:78rpx; border-radius:78rpx; background:#fff; border:2rpx solid #d8e1e4; color:#5f696e; display:flex; align-items:center; justify-content:center; box-sizing:border-box; box-shadow:0 8rpx 20rpx rgba(15,35,42,.045) }
 .overdue-cancel text{ font-size:30rpx; font-weight:800; line-height:1 }
 .overdue-cancel:active{ transform:scale(.98); opacity:.86 }
+
+.schedule-edit-mask{ position:fixed; top:0; left:0; right:0; bottom:0; z-index:220; background:rgba(22,29,31,.36); display:flex; align-items:flex-end; justify-content:center; transition:opacity 250ms ease }
+.schedule-edit-sheet{ width:100%; height:75vh; background:#fff; border-radius:36rpx 36rpx 0 0; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 -24rpx 72rpx rgba(0,0,0,.14); will-change:transform }
+.schedule-edit-handle{ width:86rpx; height:9rpx; border-radius:9rpx; background:#d9e1e4; margin:16rpx auto 6rpx; flex-shrink:0 }
+.schedule-edit-head{ min-height:94rpx; display:flex; align-items:center; justify-content:space-between; padding:0 24rpx; border-bottom:2rpx solid #eef2f4; flex-shrink:0; box-sizing:border-box }
+.schedule-edit-side{ width:96rpx; height:58rpx; flex-shrink:0 }
+.schedule-edit-title{ flex:1; min-width:0; text-align:center; font-size:34rpx; line-height:42rpx; font-weight:900; color:#161d1f; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.schedule-edit-save{ width:96rpx; height:58rpx; display:flex; align-items:center; justify-content:flex-end; color:#008946; font-size:30rpx; font-weight:900; flex-shrink:0 }
+.schedule-edit-body{ flex:1; min-height:0; padding:22rpx 44rpx 10rpx; box-sizing:border-box }
+.schedule-edit-body::-webkit-scrollbar,.schedule-edit-body ::-webkit-scrollbar{ width:0; height:0; display:none; color:transparent }
+.schedule-edit-student{ display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 0 12rpx; box-sizing:border-box }
+.schedule-edit-av{ width:128rpx; height:128rpx; border-radius:50%; background:#eef5f7; box-shadow:0 8rpx 24rpx rgba(15,35,42,.08) }
+.schedule-edit-name{ max-width:520rpx; margin-top:14rpx; font-size:34rpx; line-height:42rpx; color:#161d1f; font-weight:900; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.schedule-edit-field{ margin-bottom:24rpx }
+.schedule-edit-label{ display:block; font-size:27rpx; color:#5c676b; font-weight:800; margin-bottom:14rpx }
+.schedule-edit-input{ height:88rpx; display:flex; align-items:center; padding:0 24rpx; border-radius:14rpx; box-sizing:border-box; font-size:31rpx; color:#161d1f; font-weight:700 }
+.schedule-edit-pick{ background:#fff; border:2rpx solid #e1e7e9; box-shadow:0 2rpx 8rpx rgba(15,35,42,.025) }
+.schedule-edit-ico{ width:46rpx; height:46rpx; margin-right:24rpx; flex-shrink:0; position:relative; box-sizing:border-box }
+.schedule-edit-ico text{ display:none }
+.schedule-edit-date-ico{ background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNSAxNSI+PHBhdGggZmlsbD0iIzAwODk0NiIgZD0ibTEyLjYgMS40OGgtMS41di0wLjY4YzAuMDQtMC4wMy0wLjAxLTAuNS0wLjUtMC41LTAuMzEgMC0wLjUyIDAuMjUtMC41MiAwLjV2MC42OWgtNS4xNnYtMC42OWMwLTAuMjctMC4yMy0wLjUtMC41MS0wLjVzLTAuNTMgMC4yMy0wLjUzIDAuNXYwLjY5bC0xLjU0LTAuMDFjLTEuMTUgMC0yLjE0IDAuOTgtMi4xNCAyLjIxdjguODVjMCAxLjE0IDAuODUgMi4xOSAyLjE0IDIuMTloMTAuMzJjMS4yNyAwLjAzIDIuMTctMC45OSAyLjE3LTIuMjJ2LTguNzdjMC0xLjI1LTAuOTUtMi4yNy0yLjItMi4yN2wtMC4wMyAwLjAxem0xLjIzIDExLjAyYzAgMC42NC0wLjUgMS4yLTEuMiAxLjJoLTEwLjI1Yy0wLjYzIDAtMS4yMS0wLjUtMS4yMS0xLjJ2LTYuNmgxMi42NnY2LjZ6bTAtNy43LTEyLjY3LTAuMDF2LTEuMDhjMC0wLjYyIDAuNS0xLjIyIDEuMjEtMS4yMmgxLjUxdjAuN2MwIDAuMjcgMC4yMSAwLjQ5IDAuNTIgMC40OXMwLjUtMC4yMiAwLjUtMC40OXYtMC42OWg1LjE4djAuNjljMCAwLjI3IDAuMjEgMC40OSAwLjUgMC40OSAwLjM0IDAgMC41LTAuMjIgMC41MS0wLjQ5bDAuMDItMC43aDEuNTNjMC42MyAwIDEuMTkgMC41MSAxLjE5IDEuMjJ2MS4wOXoiLz48L3N2Zz4="); background-size:contain; background-repeat:no-repeat; background-position:center }
+.schedule-edit-time-ico{ background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMTguNiAxMjAiPjxwYXRoIGQ9Im01OS4zIDExOC40Yy0zMS43IDAtNTcuNS0yNi4yLTU3LjUtNThzMjUuOC01OC43IDU3LjUtNTguN2MzMS0wLjIgNTcuNSAyNS40IDU3LjUgNTguNyAwIDMxLjUtMjUuNSA1OC01Ny41IDU4em0wLTEwOS4zYy0yNi43IDAtNTAuNiAyMi41LTUwLjYgNTEuMSAwIDI4LjIgMjIuMiA1MC44IDUwLjUgNTAuOCAyNi44IDAuMiA1MC44LTIxLjcgNTAuNi01MC45IDAtMjcuMy0yMy4zLTUxLTUwLjUtNTF6IiBmaWxsPSIjMDA4OTQ2Ii8+PHBhdGggZD0ibTg1LjEgNTcuOWgtMjIuM3YtMjYuN2MwLTEuOC0xLjQtMy42LTMuNS0zLjZzLTMuNiAxLjYtMy43IDMuNHYzMC44YzAgMS44IDEuOSAzLjQgMy41IDMuNGgyNi4yYzEuOSAwLjEgMy42LTEuNiAzLjYtMy43IDAtMi0xLjYtMy42LTMuOC0zLjZ6IiBmaWxsPSIjMDA4OTQ2Ii8+PC9zdmc+"); background-size:contain; background-repeat:no-repeat; background-position:center }
+.schedule-edit-arrow{ margin-left:auto; color:#aeb8bd; font-size:48rpx; line-height:1; font-weight:300 }
+.schedule-edit-amount-row{ display:flex; gap:16rpx; align-items:center }
+.schedule-edit-amount{ flex:1; height:78rpx; border-radius:12rpx; border:2rpx solid #dfe6e8; color:#3d4a3e; display:flex; align-items:center; justify-content:center; font-size:29rpx; font-weight:700; box-sizing:border-box; background:#fff; box-shadow:0 2rpx 8rpx rgba(15,35,42,.025) }
+.schedule-edit-amount-on{ border:3rpx solid #008946 !important; background:#fff !important; color:#161d1f !important }
+.schedule-edit-amount-disabled{ opacity:.45; background:#f5f7f8; color:#9aa5aa }
+.schedule-edit-custom{ flex:1; width:0; min-width:0; height:78rpx; border-radius:12rpx; border:2rpx solid #dfe6e8; background:#fff; text-align:center; font-size:29rpx; color:#161d1f; box-sizing:border-box; font-weight:700; box-shadow:0 2rpx 8rpx rgba(15,35,42,.025) }
+.schedule-edit-custom-on{ border:3rpx solid #008946 }
+.schedule-edit-placeholder{ color:#a8b2b7; font-weight:700 }
+.schedule-edit-amount-shake{ animation:scheduleEditAmountShake .32s ease }
+@keyframes scheduleEditAmountShake{ 0%,100%{ transform:translateX(0) } 20%{ transform:translateX(-8rpx) } 40%{ transform:translateX(7rpx) } 60%{ transform:translateX(-5rpx) } 80%{ transform:translateX(4rpx) } }
+.schedule-edit-ta-wrap{ position:relative; background:#f0f4f5; border-radius:14rpx; padding:18rpx 24rpx 38rpx; box-sizing:border-box; box-shadow:inset 0 1rpx 0 rgba(255,255,255,.75) }
+.schedule-edit-ta{ width:100%; max-height:210rpx; font-size:30rpx; line-height:40rpx; color:#161d1f; box-sizing:border-box; margin:0; padding:0; background:transparent; overflow-y:auto }
+.schedule-edit-count{ position:absolute; right:24rpx; bottom:18rpx; color:#5c676b; font-size:25rpx }
+.schedule-edit-foot{ padding:14rpx 44rpx 64rpx; flex-shrink:0; background:#fff }
+.schedule-edit-primary{ height:92rpx; border-radius:92rpx; background:#008946; color:#fff; display:flex; align-items:center; justify-content:center; font-size:32rpx; font-weight:900; box-shadow:0 16rpx 42rpx rgba(0,137,70,.18) }
+.schedule-edit-primary:active,.schedule-edit-save:active{ transform:scale(.98); opacity:.86 }
+
+.monthly-report-mask{ position:fixed; top:0; left:0; right:0; bottom:0; z-index:245; background:rgba(17,24,27,.45); display:flex; align-items:center; justify-content:center; padding:28rpx 24rpx; box-sizing:border-box }
+.monthly-report-box{ width:100%; max-width:650rpx; max-height:92vh; background:#fff; border-radius:34rpx; padding:22rpx; box-sizing:border-box; display:flex; flex-direction:column; box-shadow:0 28rpx 90rpx rgba(0,0,0,.22) }
+.monthly-report-head{ height:68rpx; display:flex; align-items:center; justify-content:center; position:relative; flex-shrink:0 }
+.monthly-report-title{ font-size:38rpx; line-height:46rpx; color:#101719; font-weight:900 }
+.monthly-report-close{ position:absolute; right:0; top:0; width:62rpx; height:62rpx; display:flex; align-items:center; justify-content:center; color:#5e686d; font-size:40rpx; font-weight:500 }
+.monthly-report-preview{ margin-top:12rpx; width:100%; max-height:70vh; border-radius:24rpx; overflow:hidden; background:#078b3f; box-shadow:0 12rpx 34rpx rgba(0,137,70,.14); flex-shrink:1 }
+.monthly-report-img{ width:100%; display:block; border-radius:24rpx }
+.monthly-report-loading{ height:620rpx; display:flex; align-items:center; justify-content:center; color:#fff; font-size:28rpx; font-weight:800 }
+.monthly-report-actions{ margin-top:20rpx; display:flex; gap:18rpx; flex-shrink:0 }
+.monthly-report-btn{ flex:1; height:78rpx; border-radius:78rpx; display:flex; align-items:center; justify-content:center; font-size:30rpx; font-weight:900; box-sizing:border-box }
+.monthly-report-save{ background:#f1fbf6; color:#008946; border:2rpx solid rgba(0,137,70,.22) }
+.monthly-report-share{ background:#008946; color:#fff; box-shadow:0 16rpx 34rpx rgba(0,137,70,.18) }
+.monthly-report-btn:active,.monthly-report-close:active{ transform:scale(.98); opacity:.86 }
+.monthly-report-canvas{ position:fixed; left:-9999px; top:-9999px; width:1842px; height:2304px; pointer-events:none; opacity:0 }
 
 /* Date icon from source SVG path */
 .chip-calendar,
