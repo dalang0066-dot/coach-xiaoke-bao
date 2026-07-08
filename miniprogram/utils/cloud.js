@@ -46,12 +46,12 @@ function isCloudDerivedScheduleUid(uid) {
 
 // ===== 初始化 =====
 function init() {
-  if (_inited) return
-  _inited = true
+  if (_inited && _db) return
   try {
     if (ENV_ID && wx.cloud && wx.cloud.init && wx.cloud.database) {
       wx.cloud.init({ env: ENV_ID })
       _db = wx.cloud.database()
+      _inited = true
       checkNetwork()
       if (wx.onNetworkStatusChange) {
         try {
@@ -62,7 +62,7 @@ function init() {
         } catch (e) {}
       }
     }
-  } catch (e) { _db = null }
+  } catch (e) { _db = null; _inited = false }
 }
 
 function isReady() { return !!_db }
@@ -349,7 +349,6 @@ function fetchOwnedSince(collName, since) {
   var tasks = []
   if (realOpenid) {
     tasks.push(fetchAll(coll, { openid: realOpenid, updatedAt: cmd.gt(since) }).catch(function () { return [] }))
-    tasks.push(fetchAll(coll, { _openid: realOpenid, updatedAt: cmd.gt(since) }).catch(function () { return [] }))
   }
   return Promise.all(tasks).then(function (res) {
     return uniqueDocs.apply(null, res)
@@ -866,12 +865,24 @@ function uniqueUserRecords(a, b) {
 
 function getUserRecords(realOpenid) {
   var coll = _db.collection('users')
+  var legacyChecked = false
+  var legacyKey = '_users_legacy_checked_' + hashText(realOpenid)
+  try { legacyChecked = !!wx.getStorageSync(legacyKey) } catch (e) {}
   return coll.where({ openid: realOpenid }).get()
     .then(function (res) {
       var byOpenid = res.data || []
+      if (byOpenid.length && legacyChecked) return byOpenid
       return coll.where({ _openid: '{openid}' }).get()
-        .then(function (ownRes) { return uniqueUserRecords(byOpenid, ownRes.data || []) })
-        .catch(function () { return byOpenid })
+        .then(function (ownRes) {
+          try { wx.setStorageSync(legacyKey, true) } catch (e) {}
+          return uniqueUserRecords(byOpenid, ownRes.data || [])
+        })
+        .catch(function () {
+          if (byOpenid.length) {
+            try { wx.setStorageSync(legacyKey, true) } catch (e) {}
+          }
+          return byOpenid
+        })
     })
 }
 
@@ -974,20 +985,20 @@ function ensureScheduleLocalKey(schedule) {
 }
 
 function pullMember(cb) {
-  if (!_db) { if (cb) cb(null, null, null, null, null, null); return }
+  if (!_db) { if (cb) cb(null, null, null, null, null, null, null); return }
   var app = getApp()
   var realOpenid = (app && app.globalData && app.globalData._realOpenid) ? app.globalData._realOpenid : ''
-  if (!realOpenid) { if (cb) cb(null, null, null, null, null, null); return }
+  if (!realOpenid) { if (cb) cb(null, null, null, null, null, null, null); return }
   getUserRecords(realOpenid)
     .then(function (res) {
       if (res.length) {
         var d = mergeMemberState(res, null, realOpenid)
-        if (cb) cb(d.isProMember, d.memberExpired, d.proExpiry || '', d.welcomeReward || 0, d.pendingReward || 0, d.upgradeShown || false)
+        if (cb) cb(d.isProMember, d.memberExpired, d.proExpiry || '', d.welcomeReward || 0, d.pendingReward || 0, d.upgradeShown || false, !!d.easterClaimed)
       } else {
-        if (cb) cb(false, false, '', 0, 0, false)
+        if (cb) cb(false, false, '', 0, 0, false, false)
       }
     })
-    .catch(function () { if (cb) cb(null, null, null, null, null, null) })
+    .catch(function () { if (cb) cb(null, null, null, null, null, null, null) })
 }
 
 function clearRewardFlags(cb) {

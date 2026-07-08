@@ -1,5 +1,5 @@
 <view class="pg">
-  <text class="topbar-tt {{empty ? '' : 'topbar-white'}}" style="padding-top:{{sbh}}px" bindlongpress="onDebug">教练消课宝</text>
+  <text class="topbar-tt {{empty ? '' : 'topbar-white'}}" style="padding-top:{{sbh}}px">教练消课宝</text>
   <view class="top-ico" wx:if="{{!empty}}" style="top:{{icoTop}}rpx;left:{{icoLeft}}rpx;width:{{icoSize}}rpx;height:{{icoSize}}rpx;border-radius:{{icoRadius}}rpx" bindtap="onTopIco">
     <image class="top-ico-img" src="/images/feedback-icon.png" mode="aspectFit"></image>
   </view>

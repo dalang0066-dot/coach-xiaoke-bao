@@ -125,9 +125,6 @@ App({
       that.pullCloudData(function () {
         that.scheduleCloudBackfill(true)
       })
-      cloud.pullEasterClaimed(function (claimed) {
-        if (claimed) wx.setStorageSync('_easter_egg_claimed', true)
-      })
     }
 
     var cachedOpenid = ''
@@ -229,7 +226,7 @@ App({
       }
     }
     // 鎷夊彇浼氬憳鐘舵€?
-    cloud.pullMember(function (isPro, expired, proExp, welcomeDays, pendingDays, upgradeShown) {
+    cloud.pullMember(function (isPro, expired, proExp, welcomeDays, pendingDays, upgradeShown, easterClaimed) {
       if (isPro !== null) {
         if (that.globalData._skipMemberPullOnce) {
           that.globalData._skipMemberPullOnce = false
@@ -243,6 +240,7 @@ App({
         that.globalData.pendingReward = pendingDays || 0
         that.globalData.upgradeShown = !!upgradeShown
         that.globalData._lastMemberSyncKey = [that.globalData.isProMember ? 1 : 0, that.globalData.memberExpired ? 1 : 0, that.globalData.proExpiry || '', that.globalData.upgradeShown ? 1 : 0].join('|')
+        if (easterClaimed) wx.setStorageSync('_easter_egg_claimed', true)
         that.refreshCurrentPage()
       }
     })

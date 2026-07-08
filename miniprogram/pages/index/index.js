@@ -8,7 +8,8 @@ var MR = require('../../utils/monthlyReportAssets.js')
 var AVATARS = []
 var SWIPE_ACTION_WIDTH = 552
 var FREE_STUDENT_LIMIT = 20
-var MONTHLY_REPORT_BG = '/images/monthly-report-bg.jpg'
+var MONTHLY_REPORT_BG_FILE_ID = 'cloud://cloud1-d3g6bbdp839f36607.636c-cloud1-d3g6bbdp839f36607-1435330111/monthly-report/monthly-report-bg.jpg'
+var MONTHLY_REPORT_BG_CACHE_KEY = '_monthly_report_bg_path_v1'
 var MONTHLY_REPORT_W = 1842
 var MONTHLY_REPORT_H = 2304
 for (var ai = 1; ai <= 40; ai++) { AVATARS.push('/images/avatars/avatar_' + ai + '.png') }
@@ -81,16 +82,16 @@ function prevMonthInfo(today) {
 }
 
 function reportQuoteKey(total) {
-  if (total < 30) return 'low'
-  if (total <= 100) return 'mid'
+  if (total < 20) return 'low'
+  if (total < 60) return 'mid'
   return 'high'
 }
 
 function reportQuote(total) {
   var key = reportQuoteKey(total)
-  if (key === 'low') return '这个月稳稳开局，每一节课都在攒口碑'
-  if (key === 'mid') return '这个月带课节奏很稳，继续保持'
-  return '这个月火力全开，课表密度拉满'
+  if (key === 'low') return '这个月认真开了个好头，每一节课都算数'
+  if (key === 'mid') return '这个月状态很在线，学员都被你安排得明明白白'
+  return '这个月真的很能打，课表拉满也稳稳拿下'
 }
 
 function reportStudentRefs(students) {
@@ -613,51 +614,242 @@ Page({
 
   drawMonthlyReport: function (report, done) {
     var that = this
-    var ctx = wx.createCanvasContext('monthlyReportCanvas', this)
-    ctx.drawImage(MONTHLY_REPORT_BG, 0, 0, MONTHLY_REPORT_W, MONTHLY_REPORT_H)
-    if (ctx.setTextBaseline) ctx.setTextBaseline('top')
+    this._monthlyReportFailReason = ''
+    this.getMonthlyReportBgPath(function (bgPath) {
+      if (!bgPath) {
+        done('')
+        return
+      }
+      var render = function (path) {
+        try {
+          var ctx = wx.createCanvasContext('monthlyReportCanvas', that)
+          ctx.drawImage(path, 0, 0, MONTHLY_REPORT_W, MONTHLY_REPORT_H)
+          if (ctx.setTextBaseline) ctx.setTextBaseline('top')
 
-    var titleAsset = MR.title[p2Local(report.month || 1)]
-    drawReportAsset(ctx, titleAsset, 52, -50, titleAsset.w, Math.round(titleAsset.h * 1.22))
-    drawReportText(ctx, 'month', report.monthText, 70, 350, -12)
+          var titleAsset = MR.title[p2Local(report.month || 1)]
+          drawReportAsset(ctx, titleAsset, 52, -50, titleAsset.w, Math.round(titleAsset.h * 1.22))
+          drawReportText(ctx, 'month', report.monthText, 70, 350, -12)
 
-    var totalText = report.totalLessons || '0'
-    var totalY = 515
-    var totalScaleY = 1.3
-    var totalRight = drawReportText(ctx, 'total', totalText, 55, totalY, -22, 1, totalScaleY)
-    var totalUnit = MR.totalUnit['节']
-    drawReportAsset(ctx, totalUnit, totalRight + 26, totalY + Math.round(MR.total['0'].h * totalScaleY) - totalUnit.h)
+          var totalText = report.totalLessons || '0'
+          var totalY = 515
+          var totalScaleY = 1.3
+          var totalRight = drawReportText(ctx, 'total', totalText, 55, totalY, -22, 1, totalScaleY)
+          var totalUnit = MR.totalUnit['节']
+          drawReportAsset(ctx, totalUnit, totalRight + 26, totalY + Math.round(MR.total['0'].h * totalScaleY) - totalUnit.h)
 
-    var smallScale = 1.52
-    var smallUnitScale = 1.36
-    var smallDigitH = Math.round(MR.small['0'].h * smallScale)
-    var drawSmallStat = function (text, unitText, y) {
-      var right = drawReportText(ctx, 'small', String(text || 0), 286, y, -9, smallScale, smallScale)
-      var unitAsset = MR.smallUnit[unitText]
-      var unitW = Math.round(unitAsset.w * smallUnitScale)
-      var unitH = Math.round(unitAsset.h * smallUnitScale)
-      drawReportAsset(ctx, unitAsset, right + 10, y + smallDigitH - unitH, unitW, unitH)
-    }
-    drawSmallStat(report.studentCount, '人', 1058)
-    drawSmallStat(report.classCount, '次', 1303)
-    drawSmallStat(report.activeDays, '天', 1550)
+          var smallScale = 1.52
+          var smallUnitScale = 1.36
+          var smallDigitH = Math.round(MR.small['0'].h * smallScale)
+          var drawSmallStat = function (text, unitText, y) {
+            var right = drawReportText(ctx, 'small', String(text || 0), 286, y, -9, smallScale, smallScale)
+            var unitAsset = MR.smallUnit[unitText]
+            var unitW = Math.round(unitAsset.w * smallUnitScale)
+            var unitH = Math.round(unitAsset.h * smallUnitScale)
+            drawReportAsset(ctx, unitAsset, right + 10, y + smallDigitH - unitH, unitW, unitH)
+          }
+          drawSmallStat(report.studentCount, '人', 1058)
+          drawSmallStat(report.classCount, '次', 1303)
+          drawSmallStat(report.activeDays, '天', 1550)
 
-    var quoteAsset = MR.quote[report.quoteKey || 'mid']
-    drawReportAsset(ctx, quoteAsset, 104, 1948)
+          var quoteAsset = MR.quote[report.quoteKey || 'mid']
+          drawReportAsset(ctx, quoteAsset, 104, 1948)
 
-    ctx.draw(false, function () {
-      wx.canvasToTempFilePath({
-        canvasId: 'monthlyReportCanvas',
-        width: MONTHLY_REPORT_W,
-        height: MONTHLY_REPORT_H,
-        destWidth: MONTHLY_REPORT_W,
-        destHeight: MONTHLY_REPORT_H,
-        fileType: 'jpg',
-        quality: 0.98,
-        success: function (res) { done(res.tempFilePath) },
-        fail: function () { done('') }
-      }, that)
+          ctx.draw(false, function () {
+            wx.canvasToTempFilePath({
+              canvasId: 'monthlyReportCanvas',
+              width: MONTHLY_REPORT_W,
+              height: MONTHLY_REPORT_H,
+              destWidth: MONTHLY_REPORT_W,
+              destHeight: MONTHLY_REPORT_H,
+              fileType: 'jpg',
+              quality: 0.98,
+              success: function (res) { done(res.tempFilePath) },
+              fail: function (err) {
+                that._monthlyReportFailReason = '画布导出失败'
+                console.warn('monthly report canvas export fail', err)
+                done('')
+              }
+            }, that)
+          })
+        } catch (err) {
+          that._monthlyReportFailReason = '画布绘制失败'
+          console.warn('monthly report draw fail', err)
+          done('')
+        }
+      }
+      render(bgPath)
     })
+  },
+
+  getMonthlyReportBgPath: function (cb) {
+    var page = this
+    var cached = ''
+    try { cached = wx.getStorageSync(MONTHLY_REPORT_BG_CACHE_KEY) || '' } catch (e) {}
+    var called = false
+    var setFail = function (reason, detail) {
+      page._monthlyReportFailReason = reason
+      console.warn('monthly report fail: ' + reason, detail || '')
+    }
+    var finish = function (path) {
+      if (called) return
+      called = true
+      if (cb) cb(path || '')
+    }
+    var clearCache = function () {
+      try { wx.removeStorageSync(MONTHLY_REPORT_BG_CACHE_KEY) } catch (e) {}
+    }
+    var usePath = function (path, onInvalid) {
+      if (!path) {
+        finish('')
+        return
+      }
+      if (!wx.getImageInfo) {
+        finish(path)
+        return
+      }
+      wx.getImageInfo({
+        src: path,
+        success: function (info) { finish(info.path || path) },
+        fail: function (e) {
+          setFail('背景图读取失败', e)
+          if (onInvalid) onInvalid(e)
+          else finish('')
+        }
+      })
+    }
+    var saveAndUse = function (tempPath) {
+      if (!tempPath) {
+        finish('')
+        return
+      }
+      try {
+        var fs = wx.getFileSystemManager && wx.getFileSystemManager()
+        if (!fs || !fs.saveFile) {
+          usePath(tempPath)
+          return
+        }
+        fs.saveFile({
+          tempFilePath: tempPath,
+          success: function (saved) {
+            var savedPath = saved.savedFilePath || tempPath
+            try { wx.setStorageSync(MONTHLY_REPORT_BG_CACHE_KEY, savedPath) } catch (e) {}
+            usePath(savedPath)
+          },
+          fail: function (e) {
+            setFail('背景图缓存失败', e)
+            usePath(tempPath)
+          }
+        })
+      } catch (e) {
+        usePath(tempPath)
+      }
+    }
+    var downloadByUrl = function () {
+      if (!wx.cloud || !wx.cloud.getTempFileURL) {
+        setFail('云端临时链接不可用')
+        finish('')
+        return
+      }
+      wx.cloud.getTempFileURL({
+        fileList: [MONTHLY_REPORT_BG_FILE_ID],
+        success: function (res) {
+          var item = res.fileList && res.fileList[0]
+          var url = item && item.tempFileURL
+          if (!url) {
+            setFail('云端临时链接为空', res)
+            finish('')
+            return
+          }
+          var useUrlByImageInfo = function () {
+            if (!wx.getImageInfo) return false
+            wx.getImageInfo({
+              src: url,
+              success: function (info) { saveAndUse(info.path || url) },
+              fail: function (e) {
+                setFail('临时链接图片读取失败', e)
+                downloadUrlFile(url)
+              }
+            })
+            return true
+          }
+          var downloadUrlFile = function (tempUrl) {
+            if (!wx.downloadFile) {
+              finish('')
+              return
+            }
+            wx.downloadFile({
+              url: tempUrl,
+              success: function (dl) {
+                if (dl.statusCode && dl.statusCode !== 200) {
+                  setFail('临时链接下载失败 ' + dl.statusCode, dl)
+                  finish('')
+                  return
+                }
+                saveAndUse(dl.tempFilePath || '')
+              },
+              fail: function (e) { setFail('临时链接下载失败', e); finish('') }
+            })
+          }
+          if (useUrlByImageInfo()) return
+          wx.downloadFile({
+            url: url,
+            success: function (dl) {
+              if (dl.statusCode && dl.statusCode !== 200) {
+                setFail('临时链接下载失败 ' + dl.statusCode, dl)
+                finish('')
+                return
+              }
+              saveAndUse(dl.tempFilePath || '')
+            },
+            fail: function (e) { setFail('临时链接下载失败', e); finish('') }
+          })
+        },
+        fail: function (e) { setFail('云端临时链接获取失败', e); finish('') }
+      })
+    }
+    var download = function () {
+      try { if (C && C.init) C.init() } catch (e) {}
+      if (!wx.cloud || !wx.cloud.downloadFile) {
+        downloadByUrl()
+        return
+      }
+      wx.cloud.downloadFile({
+        fileID: MONTHLY_REPORT_BG_FILE_ID,
+        success: function (res) {
+          saveAndUse(res.tempFilePath || '')
+        },
+        fail: function (e) { setFail('云端背景下载失败', e); downloadByUrl() }
+      })
+    }
+    if (!cached) {
+      download()
+      return
+    }
+    try {
+      var fs = wx.getFileSystemManager && wx.getFileSystemManager()
+      if (!fs || !fs.access) {
+        usePath(cached, function () {
+          clearCache()
+          download()
+        })
+        return
+      }
+      fs.access({
+        path: cached,
+        success: function () {
+          usePath(cached, function () {
+            clearCache()
+            download()
+          })
+        },
+        fail: function () {
+          clearCache()
+          download()
+        }
+      })
+    } catch (e) {
+      download()
+    }
   },
 
   getById: function (id) {
@@ -2486,7 +2678,7 @@ Page({
       that.drawMonthlyReport(report, function (path) {
         if (!path) {
           that.setData({ monthlyReportGenerating: false })
-          that.showOkText('海报生成失败')
+          that.showOkText(that._monthlyReportFailReason ? ('海报生成失败：' + that._monthlyReportFailReason) : '海报生成失败')
           return
         }
         that.setData({
