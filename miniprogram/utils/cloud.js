@@ -1093,10 +1093,14 @@ function pay(plan, cb) {
   }).then(function (res) {
     var payResult = res.result
     if (!payResult || payResult.code !== 0 || !payResult.payment) {
-      if (cb) cb('pay_error')
+      if (cb) cb((payResult && (payResult.errMsg || payResult.message)) || 'pay_error', payResult)
       return
     }
     var p = payResult.payment
+    if (!p.timeStamp || !p.nonceStr || !p.package || !p.paySign) {
+      if (cb) cb('invalid payment params', payResult)
+      return
+    }
     wx.requestPayment({
       timeStamp: p.timeStamp,
       nonceStr: p.nonceStr,
@@ -1105,11 +1109,11 @@ function pay(plan, cb) {
       paySign: p.paySign,
       success: function () { if (cb) cb(null, payResult) },
       fail: function (e) {
-        if (cb) cb(e.errMsg || 'pay_cancel')
+        if (cb) cb((e && e.errMsg) || 'pay_cancel', e)
       }
     })
   }).catch(function (e) {
-    if (cb) cb(e.errMsg || 'pay_error')
+    if (cb) cb((e && (e.errMsg || e.message)) || 'pay_error', e)
   })
 }
 

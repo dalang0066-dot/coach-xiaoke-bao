@@ -2454,7 +2454,14 @@ Page({
       wx.hideLoading()
       that.setData({ paying: false })
       if (err) {
-        if (err !== 'pay_cancel') { wx.showToast({ title: '支付失败，请重试', icon: 'none', duration: 2000 }) }
+        if (err !== 'pay_cancel' && String(err).indexOf('cancel') === -1) {
+          console.log('pay failed:', err, payResult || '')
+          wx.showModal({
+            title: '支付失败',
+            content: String(err || '请稍后重试'),
+            showCancel: false
+          })
+        }
       } else {
         app.globalData.isProMember = true
         app.globalData.memberExpired = false

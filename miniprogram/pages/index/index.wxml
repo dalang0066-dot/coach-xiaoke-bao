@@ -335,7 +335,7 @@
           <view class="mq-btn {{fd.totalLessons==36?'mq-on':''}}" data-v="36" bindtap="onQuick"><text>36节</text></view>
         </view>
         <view class="mf-f">
-          <text class="mf-lbl">有效期至（默认1个月）</text>
+          <text class="mf-lbl">有效期至（默认6个月）</text>
           <picker mode="date" value="{{fd.expiryDate}}" bindchange="onFdDate">
             <view class="mf-inp mf-date"><text class="{{fd.expiryDate?'':'mf-ph'}}">{{fd.expiryDate||'请选择日期'}}</text></view>
           </picker>
